@@ -1,0 +1,147 @@
+%% ============================================================
+%% Appendix D: Periodic Solutions and Floquet Theory
+%% ============================================================
+
+\chapter{Periodic Solutions and Floquet Theory}
+\label{app:floquet}
+
+For models with periodic forcing or limit-cycle behavior, SA of the
+periodic orbit requires tools beyond those developed in Chapter~4.
+This appendix introduces Floquet theory and the sensitivity of
+periodic solutions, based on the 2009 monograph~\cite{arriola2009sensitivity}.
+
+%%------------------------------------------------------------
+\section{Floquet Theory}
+\label{appsec:floquet}
+%%------------------------------------------------------------
+
+Consider the linear, $T$-periodic ODE $\dot{\vec{u}} = A(t)\vec{u}$
+where $A(t+T) = A(t)$. The \textbf{fundamental matrix solution}
+$\Phi(t)$ satisfies $\dot{\Phi} = A(t)\Phi$, $\Phi(0) = I$.
+
+The \textbf{monodromy matrix}\index{monodromy matrix} is $M = \Phi(T)$: the fundamental
+matrix evaluated at the end of one period. Its eigenvalues
+$\mu_1, \ldots, \mu_n$ are the \textbf{Floquet multipliers}.\index{Floquet multipliers}
+
+\textbf{Floquet's Theorem.}\index{Floquet theory} The fundamental matrix has the form
+$\Phi(t) = P(t)e^{Bt}$ where $P(t+T) = P(t)$ is periodic and
+$B$ is a constant matrix satisfying $e^{BT} = M$.
+
+The Floquet multipliers determine stability:
+if all $|\mu_k| < 1$ (except the trivial multiplier $\mu = 1$
+corresponding to time translation), the periodic orbit is stable.
+If any $|\mu_k| > 1$, the orbit is unstable.
+
+%%------------------------------------------------------------
+\section{Sensitivity of the Period}
+\label{appsec:periodsens}
+%%------------------------------------------------------------
+
+For a nonlinear system $\dot{\vec{u}} = \vec{F}(\vec{u}; \vec{p})$
+with a periodic orbit $\vec{u}^*(t; \vec{p})$ of period $T(\vec{p})$,
+the period itself is a \QOI. Its sensitivity with respect to parameter
+$p_j$ is:
+\begin{equation}
+  \dd{T}{p_j} = -\frac{\vec{s}^T\pd{\vec{F}}{p_j}(\vec{u}^*(T), \vec{p})}
+                       {\vec{s}^T\vec{F}(\vec{u}^*(T), \vec{p})},
+  \label{eq:periodsens}
+\end{equation}
+where $\vec{s}$ is the left eigenvector of $M$ corresponding to
+the unit eigenvalue ($M^T\vec{s} = \vec{s}$, $\|\vec{s}\| = 1$).
+
+This formula is derived by differentiating the period-map condition
+$\vec{u}^*(0) = \vec{u}^*(T)$ with respect to $p_j$, accounting for
+the fact that the period $T$ itself changes.
+
+%%------------------------------------------------------------
+\section{The van der Pol Example}
+\label{appsec:vanderpol}
+%%------------------------------------------------------------
+
+The van der Pol oscillator $\ddot{u} - \epsilon(1-u^2)\dot{u} + u = 0$
+(written as a system: $\dot{u}_1 = u_2$, $\dot{u}_2 = \epsilon(1-u_1^2)u_2 - u_1$)
+has a stable limit cycle for $\epsilon > 0$.
+
+For small $\epsilon$, the period is approximately $T \approx 2\pi(1 + \epsilon^2/16)$.
+The period sensitivity is $\SI{\epsilon}{T} \approx \epsilon^2/(8\pi)$,
+which is small for small $\epsilon$ but grows with increasing nonlinearity.
+
+For larger $\epsilon$, the limit cycle becomes increasingly asymmetric
+and the period sensitivity must be computed numerically using the
+monodromy matrix approach described above.
+
+%%------------------------------------------------------------
+\section{Sensitivity of Floquet Multipliers}
+\label{appsec:floquetsens}
+%%------------------------------------------------------------
+
+The sensitivity of the Floquet multiplier $\mu_k$ with respect to
+parameter $p_j$ uses the eigenvalue sensitivity formula from
+Appendix~\ref{appsec:eigensens} applied to the monodromy matrix:
+\begin{equation}
+  \dd{\mu_k}{p_j} = \frac{\vec{y}_k^T\pd{M}{p_j}\vec{x}_k}{\vec{y}_k^T\vec{x}_k},
+  \label{eq:floquetsens}
+\end{equation}
+where $\vec{x}_k$ and $\vec{y}_k$ are the right and left eigenvectors
+of $M$ for eigenvalue $\mu_k$, and $\partial M/\partial p_j$ is computed
+by integrating the variational equation for $\partial\Phi/\partial p_j$
+over one period.
+
+When $|\mu_k| \to 1$ for $k \neq 1$, the periodic orbit approaches
+a bifurcation (Hopf, period-doubling, or Neimark-Sacker), and the
+sensitivity of $\mu_k$ diverges, exactly analogous to the
+divergence of SI near a transcritical bifurcation discussed in Chapter~8.
+
+%%------------------------------------------------------------
+\section{Exercises}
+\label{appsec:D_exercises}
+%%------------------------------------------------------------
+
+\begin{selfcheck}
+The van der Pol oscillator with $\epsilon = 0.5$ has a stable limit cycle.
+(a) Using the approximation $T \approx 2\pi(1 + \epsilon^2/16)$,
+compute the period and the normalized sensitivity $\SI{\epsilon}{T}$.
+(b) Is the period more or less sensitive to $\epsilon$ than a linear oscillator's
+period is to its natural frequency? Explain.
+(c) As $\epsilon$ increases from $0.5$ to $2.0$, does the period sensitivity
+increase or decrease? What does this imply about using local SA at
+large $\epsilon$?
+\end{selfcheck}
+\begin{scAnswer}
+(a) $T \approx 2\pi(1 + 0.25/16) = 2\pi \times 1.01563 \approx 6.377$.
+$dT/d\epsilon = 2\pi(\epsilon/8) = 2\pi(0.0625) \approx 0.393$.
+$\SI{\epsilon}{T} = (\epsilon/T)(dT/d\epsilon) = (0.5/6.377)(0.393) \approx 0.031$.
+(b) A linear oscillator's period is independent of amplitude (and $\epsilon$ corresponds
+to the nonlinear damping coefficient, not the natural frequency). For $\epsilon=0.5$,
+the period sensitivity $\approx 0.031$ is small: the period is nearly insensitive
+to $\epsilon$ in the weakly nonlinear regime.
+(c) As $\epsilon$ increases, $d\lambda_k/d\varepsilon$ grows because the limit cycle
+becomes more asymmetric and the monodromy matrix changes more rapidly with $\epsilon$.
+The local SI underestimates the true sensitivity at large $\epsilon$, which is precisely
+the scenario where global SA (Chapter~9) is needed.
+\end{scAnswer}
+
+\begin{selfcheck}
+A compartmental epidemic model exhibits a periodic outbreak pattern with
+period $T^* = 365$~days (annual epidemic) under seasonal forcing.
+The Floquet multiplier associated with the periodic orbit is $\mu = 0.85$.
+(a) Is this periodic orbit stable or unstable? How do you know?
+(b) If a parameter perturbation changes $\mu$ to $1.02$, what happens
+to the epidemic dynamics?
+(c) The sensitivity of $\mu$ to the transmission rate $\beta$ is
+$d\mu/d\beta = 3.2$ (computed via~\eqref{eq:floquetsens}).
+If $\beta$ increases by $5\%$, estimate the new value of $\mu$.
+Is the periodic outbreak still stable?
+\end{selfcheck}
+\begin{scAnswer}
+(a) Stable: $|\mu| = 0.85 < 1$, so perturbations from the periodic orbit
+decay over successive periods. The orbit is an attractor.
+(b) If $\mu = 1.02 > 1$, the periodic orbit becomes unstable: nearby
+trajectories drift away from the annual cycle. The epidemic may lose its
+annual periodicity or transition to a different attractor (period-doubling,
+chaos, or endemic equilibrium).
+(c) $\Delta\mu \approx (d\mu/d\beta)\,\Delta\beta = 3.2\times(0.05\times\beta)$.
+If $\beta^* = 0.3$ (typical), $\Delta\mu \approx 3.2\times0.015 = 0.048$.
+New $\mu \approx 0.85 + 0.048 = 0.898 < 1$: still stable.
+The first-order approximation suggests stability is preserved for this perturbation size.
+\end{scAnswer}

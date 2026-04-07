@@ -1,0 +1,789 @@
+\chapter{Introduction and Overview}
+
+\begin{flushright}
+\textit{Sensitivity analysis begins when a model is forced to say what matters.}
+\end{flushright}
+
+\bigskip
+
+An infectious disease has just entered a new country.
+The public health response team has built a compartmental model with fourteen
+parameters: transmission rates, recovery rates, contact patterns,
+immunity duration, disease-induced mortality, and more.
+The team has funding to deploy exactly two interventions
+and time to measure exactly three parameters with high precision
+before a policy decision must be made.
+
+The question due by tomorrow morning is this: \emph{which three parameters
+are worth measuring, and which two interventions will most effectively
+reduce the spread?}
+
+This is the problem that sensitivity analysis is designed to answer.
+Before the mathematics, we need a language for asking the question precisely.
+
+%%------------------------------------------------------------
+\section{The Central Question}
+\label{sec:centralquestion}
+%%------------------------------------------------------------
+
+Every mathematical model takes inputs and produces outputs.
+The inputs include parameters whose exact values may be uncertain
+or whose values might be changed through intervention.
+The outputs include whatever the model is designed to predict.
+Sensitivity analysis asks: \emph{which inputs have the most
+effect on the outputs we care about?}
+
+To answer this precisely, we adopt two terms used throughout the book.
+
+\medskip
+
+A \textbf{Parameter of Interest} (\POI)\index{parameter of interest (POI)} is any input to the model
+whose variation is worth studying. In practice, a parameter becomes a \POI
+for one of three reasons, and the reason matters for how you interpret
+the sensitivity index.
+
+\begin{enumerate}
+
+\item \textbf{Epistemic uncertainty} (uncertainty from lack of knowledge).
+The parameter is fixed by nature but imperfectly known: different studies
+report different estimates, the data are sparse, or the measurement process
+is imprecise. Epistemic uncertainty is \emph{reducible} --- better data,
+improved experiments, or longer observation windows can sharpen the estimate.
+Sensitivity analysis identifies which epistemically uncertain parameters
+most affect the output, directing limited data-collection resources
+toward the measurements that would reduce output uncertainty the most.
+In the disease example, the transmission probability per contact is
+epistemically uncertain: studies estimate it from contact-tracing data,
+but estimates vary across populations and settings.
+
+\item \textbf{Aleatory uncertainty} (inherent stochastic variability).
+The parameter genuinely varies from individual to individual, place to
+place, or time to time, and this variation is \emph{irreducible}---
+it persists even with unlimited data. More observations characterize
+the distribution more precisely but do not eliminate the randomness.
+In the disease example, the contact rate varies stochastically
+across the population: individuals differ in how many contacts they
+make per day. Sensitivity analysis with aleatory uncertainty typically
+asks how much of the output variance is attributable to each
+stochastic source, motivating the global SA methods of Chapter~9.
+
+\item \textbf{Control variable} (a lever the investigator can move).
+The parameter is known and could, in principle, be changed by a policy
+decision, intervention, or design choice. Sensitivity analysis in this
+context answers the question: which intervention has the most leverage
+over the outcome I care about? In the disease example, the contact rate
+can be reduced by social distancing policies, and the transmission
+probability can be reduced by mask requirements or vaccination. The
+sensitivity index tells the policy maker which reduction --- contacts
+or transmission --- produces the largest reduction in $R_0$.
+
+\end{enumerate}
+
+Many parameters fall into more than one category simultaneously:
+the contact rate is both uncertain (its current value is imprecisely
+known) and controllable (it can be targeted by policy).
+In practice, the interpretation of a sensitivity index should
+always be read in light of which role the \POI is playing.
+A large sensitivity index for an epistemically uncertain parameter
+is a call to collect better data; for an aleatory parameter, it is
+a call to characterize the distribution more carefully; for a control
+variable, it is a call to prioritize that intervention.
+
+In the disease example above, the transmission probability
+per contact is primarily a \POI because it is epistemically uncertain
+(different studies report different values) and because it can be
+targeted by an intervention (vaccines reduce it).
+The contact rate is a \POI for both the same reasons:
+it varies across populations (epistemic and aleatory uncertainty)
+and can be reduced through social distancing policies (control variable).
+
+A \textbf{Quantity of Interest} (\QOI)\index{quantity of interest (QOI)} is any model output that the
+investigator cares about predicting or controlling. The peak number of
+infectious individuals, the total number of deaths over a six-month
+period, and the basic reproduction number $\mathcal{R}_0$ are all
+plausible \QOIs for an epidemic model. The choice of \QOI is not neutral:
+different choices lead to different rankings of parameter importance.
+
+The relationship between \POIs and \QOIs is the subject of this book.
+Specifically, we want to know how much each \POI affects each \QOI,
+so that we can rank parameters by importance, design interventions
+efficiently, and allocate measurement resources wisely.
+
+One of the most persistent misconceptions in mathematical modeling
+is the assumption that all parameters matter equally until proven
+otherwise. They do not. In virtually every model studied in this
+book, a small number of \POIs account for most of the variation
+in the \QOIs, while the remaining parameters have negligible effect.
+Identifying that small number is one of the primary goals of
+sensitivity analysis, and the answer is rarely obvious from the
+model equations alone.
+
+\begin{selfcheck}
+In the outbreak scenario above, classify each of the following
+as a \POI, a \QOI, or neither:
+the transmission probability per contact;
+the peak number of infectious individuals;
+the day the first case was reported;
+the mean number of days a patient is infectious.
+\end{selfcheck}
+\begin{scAnswer}
+\POI: transmission probability (uncertain; can be reduced by vaccines),
+mean infectious period (uncertain; can be reduced by treatment).
+\QOI: peak number of infectious individuals (model output we care about).
+Neither: day of first case (a historical fact, not a model parameter
+or prediction). Note that the mean infectious period could also be
+a \QOI in a different study; this classification depends on
+the question being asked.
+\end{scAnswer}
+
+Figure~\ref{fig:forwardproblem} illustrates the basic structure.
+The forward problem takes nominal \POI values as input
+and produces the \QOI as output. Sensitivity analysis adds one
+more step: it asks how the \QOI changes as the \POIs vary.
+
+\begin{figure}[htb]
+  \begin{center}
+  \begin{tikzpicture}[
+    node distance = 2.6cm,
+    box/.style = {
+      rectangle, rounded corners=4pt, draw=black, thick,
+      minimum width=2.5cm, minimum height=1.1cm,
+      text centered, font=\small
+    },
+    sarrow/.style = {-{Latex[length=3mm]}, thick}
+  ]
+    %% Main flow nodes — single-line labels avoid \\[...] issues
+    \node[box, fill=black!8]  (pois)  {\textbf{\POIs}};
+    \node[box, fill=black!15, right=of pois]  (model) {\textbf{Model}};
+    \node[box, fill=black!8,  right=of model] (qois)  {\textbf{\QOIs}};
+
+    %% Sub-labels below each box
+    \node[font=\footnotesize\itshape, below=2pt of pois]  {parameters};
+    \node[font=\footnotesize\itshape, below=2pt of model] {equations};
+    \node[font=\footnotesize\itshape, below=2pt of qois]  {outputs};
+
+    %% Forward arrows
+    \draw[sarrow] (pois)  -- node[above, font=\footnotesize]{$\vec{p}$} (model);
+    \draw[sarrow] (model) -- node[above, font=\footnotesize]{$\vec{q}(\vec{p})$} (qois);
+
+    %% SA brace and formula below
+    \draw[thick, decorate,
+          decoration={brace, amplitude=6pt, mirror}]
+      ([yshift=-18pt]pois.south west) -- ([yshift=-18pt]qois.south east)
+      node[midway, below=9pt, font=\small\itshape]{
+        Sensitivity Analysis:\quad
+        $\SI{p_i}{q_j} = \dfrac{p_i}{q_j}\,\dfrac{\partial q_j}{\partial p_i}$
+      };
+  \end{tikzpicture}
+  \end{center}
+  \caption{The forward problem takes nominal values for the input \POIs
+           and produces the associated output \QOI. Sensitivity analysis
+           quantifies how changes in the \POIs propagate to the \QOI
+           by computing the normalized partial derivative $\SI{p_i}{q_j}$
+           for each \POI--\QOI pair.}
+  \label{fig:forwardproblem}
+\end{figure}
+
+%%------------------------------------------------------------
+\section{Two Directions: Forward and Adjoint Sensitivity}
+\label{sec:twoDirections}
+%%------------------------------------------------------------
+
+There are two complementary ways to ask the sensitivity question,
+and they differ in a fundamental way.
+
+Figure~\ref{fig:forwardadjoint} captures the distinction geometrically.
+In panel~(a), a perturbation originates at a specific input location
+and spreads forward through the model, influencing a broad region of
+the output. This is \textbf{forward sensitivity analysis}\index{forward sensitivity analysis}.
+Panel~(b) reverses the direction: a specified variation in the output
+is traced backward to the input locations that could have caused it.
+This is \textbf{adjoint sensitivity analysis}\index{adjoint sensitivity analysis}.
+
+\begin{figure}[htb]
+  \begin{center}
+  \begin{tikzpicture}[
+    modelbox/.style = {
+      rectangle, rounded corners=5pt, draw=black, line width=1.2pt,
+      minimum width=1.6cm, minimum height=4.4cm,
+      text centered, fill=black!12, font=\small\bfseries
+    },
+    qoibox/.style = {
+      rectangle, rounded corners=4pt, draw=black, thick,
+      minimum width=1.4cm, minimum height=0.9cm,
+      text centered, fill=black!6, font=\small
+    },
+    farrow/.style  = {-{Latex[length=3mm]}, thick},
+    garrow/.style  = {-{Latex[length=2.5mm]}, thin, black!35},
+    aarrow/.style  = {-{Latex[length=3.5mm]}, very thick, dashed},
+    seclabel/.style = {font=\small\bfseries},
+    sublabel/.style = {font=\footnotesize\itshape},
+    plab/.style     = {font=\small},
+  ]
+
+    %%----------------------------------------------------------
+    %% Panel (a): Forward SA
+    %% One POI (p_j) is perturbed; its effect flows through the
+    %% Model and appears at the QOI. Other POIs shown faded to
+    %% indicate the process repeats for each one.
+    %%----------------------------------------------------------
+    \node[seclabel] at (2.8, 2.55) {(a) Forward SA \quad ``What if?''};
+
+    %% POI column
+    \node[plab]                      (fp1) at (0.0,  1.50) {$p_1$};
+    \node[plab]                      (fp2) at (0.0,  0.75) {$p_2$};
+    \node[font=\small]                     at (0.0,  0.10) {$\vdots$};
+    \node[plab, font=\small\bfseries](fpj) at (0.0, -0.55) {$p_j$};
+    \node[font=\small]                     at (0.0, -1.10) {$\vdots$};
+    \node[plab]                      (fpm) at (0.0, -1.70) {$p_m$};
+
+    \node[modelbox] (fmod) at (2.8, -0.10) {Model};
+    \node[qoibox]   (fqoi) at (5.4, -0.10) {\QOI};
+
+    %% Faded arrows: all other POIs enter model at their y-level
+    \draw[garrow] (fp1.east) -- (fmod.west |- fp1.center);
+    \draw[garrow] (fp2.east) -- (fmod.west |- fp2.center);
+    \draw[garrow] (fpm.east) -- (fmod.west |- fpm.center);
+
+    %% Bold path: p_j through Model to QOI
+    \draw[farrow, line width=1.4pt] (fpj.east) -- (fmod.west |- fpj.center);
+    \draw[farrow, line width=1.4pt] (fmod.east) -- (fqoi.west);
+
+    %% Perturbation indicator at p_j
+    \fill[black!70] (-0.85,-0.55) circle (4pt);
+    \draw[->,thick] (-0.85,-0.55) -- (fpj.west);
+    \node[sublabel, left=20pt of fpj, align=right] {perturb\\$p_j$};
+
+    \node[sublabel, align=center, text width=5.0cm] at (2.8, -3.20)
+      {Perturb one \POI, observe the \QOI.\\
+       Repeat for each \POI: $m$ solves total.};
+
+    %%----------------------------------------------------------
+    %% Dividing rule
+    %%----------------------------------------------------------
+    \draw[thin, gray!50] (7.0,-3.50) -- (7.0,2.80);
+
+    %%----------------------------------------------------------
+    %% Panel (b): Adjoint SA
+    %% A specified QOI variation enters the Model from the right
+    %% and flows BACKWARD, producing all POI sensitivities at once.
+    %% Arrowhead at END of each dashed path (−{Latex}): points left.
+    %%----------------------------------------------------------
+    \node[seclabel] at (10.5, 2.55) {(b) Adjoint SA \quad ``How come?''};
+
+    %% POI column
+    \node[plab] (ap1) at (7.7,  1.50) {$p_1$};
+    \node[plab] (ap2) at (7.7,  0.75) {$p_2$};
+    \node[font=\small]  at (7.7,  0.10) {$\vdots$};
+    \node[plab] (apj) at (7.7, -0.55) {$p_j$};
+    \node[font=\small]  at (7.7, -1.10) {$\vdots$};
+    \node[plab] (apm) at (7.7, -1.70) {$p_m$};
+
+    \node[modelbox] (amod) at (10.5, -0.10) {Model};
+    \node[qoibox]   (aqoi) at (13.1, -0.10) {\QOI};
+
+    %% ONE dashed arrow: QOI → Model (backward; arrowhead enters model)
+    \draw[aarrow] (aqoi.west) -- (amod.east);
+
+    %% ALL dashed arrows: Model → each POI (backward; arrowhead at each POI)
+    \draw[aarrow] (amod.west |- ap1.center) -- (ap1.east);
+    \draw[aarrow] (amod.west |- ap2.center) -- (ap2.east);
+    \draw[aarrow] (amod.west |- apj.center) -- (apj.east);
+    \draw[aarrow] (amod.west |- apm.center) -- (apm.east);
+
+    %% "specify δq_j" below the QOI box
+    \node[sublabel, below=5pt of aqoi, align=center] {specify $\delta q_j$};
+
+    \node[sublabel, align=center, text width=5.2cm] at (10.5, -3.20)
+      {Specify one \QOI variation, solve adjoint backward.\\
+       All \POI sensitivities recovered: 1 solve.};
+
+  \end{tikzpicture}
+  \end{center}
+  \caption{(a)~Forward sensitivity analysis answers ``What if?''\ questions.
+           A perturbation to one input \POI $p_j$ propagates forward through
+           the model and produces a change in the output \QOI\@.
+           Because the model must be solved once for each \POI, forward
+           sensitivity requires $m$ solves for $m$ \POIs.
+           (b)~Adjoint sensitivity analysis answers ``How come?''\ questions.
+           A specified variation $\delta q_j$ in the output \QOI enters the
+           model from the right and is propagated \emph{backward} through it.
+           A single adjoint solve simultaneously recovers the sensitivity of
+           $q_j$ with respect to every \POI $p_1, \ldots, p_m$.
+           The adjoint is developed in Chapters~5 and~6; for now, the key
+           contrast is computational: forward SA costs $m$ solves,
+           adjoint SA costs~$1$.}
+  \label{fig:forwardadjoint}
+\end{figure}
+
+The ``What if?'' and ``How come?'' labels are not merely rhetorical.
+They correspond to genuinely different computational strategies
+and genuinely different questions.
+
+\subsection{Forward Sensitivity Analysis: ``What if?''}
+
+Consider a disease model for an emerging outbreak.
+The transmission probability $\beta$ is estimated from early case data,
+but the estimate carries significant uncertainty. A public health officer
+asks: \emph{if our estimate of $\beta$ is wrong by 10\%, how much
+does our predicted peak infection count change?}
+
+This is a forward question. We are tracing the effect of a change
+in an input \POI (the transmission probability) forward to an
+output \QOI (the peak infection count). Forward sensitivity analysis
+answers this question by computing a sensitivity index: a number that
+tells us, for a small percentage change in a \POI, what percentage
+change to expect in the \QOI.
+
+A sensitivity index of $+0.8$ would mean that a 10\%\ increase in
+$\beta$ produces approximately an $8\%$ increase in the peak infection
+count. A sensitivity index of $-1.0$ for the recovery rate would mean
+that a 10\%\ increase in the recovery rate produces a 10\%\ decrease
+in the peak. The sign tells you the direction; the magnitude tells you
+the amplification. Chapter~2 develops this definition carefully and
+shows how to compute these indices for a wide range of models.
+
+\begin{selfcheck}
+A forward sensitivity analysis gives $S_{\tau}^{R_0} = +1.2$ (the notation is defined formally in Chapter~2),
+where $\tau$ is the mean infectious period (in days) and $R_0$ is
+the basic reproduction number.
+If the mean infectious period increases by $5\%$, approximately
+what happens to $R_0$? Is this good news or bad news for disease control?
+\end{selfcheck}
+\begin{scAnswer}
+$R_0$ increases by approximately $5\% \times 1.2 = 6\%$. This is bad news:
+a larger $R_0$ means more transmission. The positive sign tells us that
+\POI and \QOI move in the same direction, so longer infectious periods
+lead to more disease spread.
+\end{scAnswer}
+
+\subsection{Adjoint Sensitivity Analysis: ``How come?''}
+
+Now consider a different problem. City planners want to site a new
+industrial facility near a residential area. The facility emits
+pollutants, and regulators have set a standard: the average pollutant
+concentration at a specified monitoring station must not exceed a
+given threshold. A transport model predicts whether any candidate
+site meets this standard.
+
+The planner's question is different in character from the previous one.
+Rather than asking ``if this parameter changes, what happens to the
+output?'', they want to know: \emph{for a given allowed change in the
+output (the pollutant concentration), how much variation in the inputs
+(wind speed, emission rate, atmospheric stability) is permissible?}
+
+This is an adjoint question. It runs the sensitivity analysis in
+reverse: from a specified variation in the \QOI back to the
+\POIs that could have caused it. For models with many \POIs
+and only a few \QOIs, adjoint sensitivity analysis is
+dramatically more efficient than computing forward sensitivities
+for every parameter individually. Chapters~5 and 6 explain
+why this is so and how to exploit it.
+
+\begin{selfcheck}
+An environmental regulator measures pollutant concentration at a
+monitoring station and finds it exceeds the legal threshold.
+She wants to determine which weather assumptions in the
+transport model are most likely responsible for the exceedance.
+Is this a forward or adjoint question? Explain in one sentence.
+\end{selfcheck}
+\begin{scAnswer}
+Adjoint. The regulator starts with a specified change in the \QOI
+(exceedance of the threshold) and traces backward to identify which
+input \POIs (weather assumptions) most plausibly caused it.
+A forward analysis would instead ask how changing a specific weather
+assumption would affect the predicted concentration, which runs in the opposite
+direction.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Global Sensitivity: When Local Is Not Enough}
+\label{sec:globalSA}
+%%------------------------------------------------------------
+
+Both forward and adjoint sensitivity analysis are \emph{local}:
+they measure the effect of small perturbations to the \POIs
+near a fixed nominal value. This is powerful, but it assumes
+that the model behaves approximately linearly in the vicinity
+of that nominal value.
+
+Many real models are not linear, and many \POIs carry substantial
+uncertainty that cannot be called ``small.'' In these cases,
+local sensitivity indices can be misleading. A \POI with a
+small local sensitivity index may still have a large effect
+on the \QOI when varied across its full range of plausible values,
+if the model is nonlinear in that parameter.
+
+\begin{example}[Local SI does not capture global behavior]
+\label{ex:local_global}
+Consider $q(p) = p^2$ and suppose the nominal value is $p^* = 0.1$.
+The local sensitivity index is $S_p^q = (p/q)\,(dq/dp) = (p/p^2)(2p) = 2$,
+which looks moderate.
+But if $p$ is uncertain and could range from $0.1$ to $1.0$,
+the QOI ranges from $0.01$ to $1.0$ --- a hundredfold change.
+A local SI computed at $p^* = 0.1$ gives no information about
+this hundredfold range.
+Global SA, introduced in Chapter~9, is designed to capture exactly
+this kind of large-range nonlinear behavior.
+\end{example}
+
+Chapter~9 introduces \textbf{global sensitivity analysis}\index{global sensitivity analysis},
+which asks how the output varies when the \POIs are varied
+across their entire plausible ranges simultaneously.
+The primary tool there, the Sobol index, measures
+how much of the total output variance is attributable to
+each \POI. Global SA does not replace local SA; it
+complements it, answering questions that local SA cannot.
+
+%%------------------------------------------------------------
+\section{Sensitivity Analysis and Uncertainty Quantification}
+\label{sec:sauq}
+%%------------------------------------------------------------
+
+Sensitivity analysis and uncertainty quantification are
+related but distinct enterprises.
+
+Sensitivity analysis, as developed in this book, is
+\emph{deterministic}: we assign nominal values to the \POIs
+and compute how the \QOI changes when those values are
+perturbed. The \POIs are treated as numbers with specific
+values, not as random variables. The sensitivity index
+is a derivative: a precise mathematical object that exists
+when the model is differentiable.
+
+Uncertainty quantification treats the \POIs as random variables
+with associated probability distributions. The goal is to
+determine the distribution of the \QOI given the distributions
+of the \POIs. This is a statistical enterprise, and its primary
+tools (Monte Carlo methods, Bayesian inference, polynomial chaos)
+are the subject of the companion volume by Smith~\cite{smith2014uncertainty}.
+Smith's Chapters~9 and~10 develop local and global sensitivity analysis
+at the graduate level, extending the material in this book with
+functional-analytic and measure-theoretic foundations.
+Smith's Chapter~6 treats parameter selection using the sensitivity
+Jacobian introduced in our Chapter~4, connecting it to the
+surrogate-model literature.
+The SA foundations developed here follow Arriola and Hyman~\cite{arriola2007being,arriola2009sensitivity}.
+For the broader development of SA as a formal discipline, see Saltelli et al.~\cite{saltelli2021sensitivity},
+Razavi et al.~\cite{razavi2021future}, and the annotated historical timeline in
+Tarantola et al.~\cite{tarantola2024annotated}.
+
+The connection between the two fields is real and important.
+Global SA, covered in Chapter~9, bridges the gap: Sobol indices
+are defined in terms of variances, which requires probabilistic
+inputs, but they can be estimated by methods that build directly
+on the ideas in this book. Students who complete this course
+will find that the second semester's UQ material makes more
+sense because of the SA foundation established here.
+
+%%------------------------------------------------------------
+\section{Three Ideas That Run Through the Book}
+\label{sec:threeIdeas}
+%%------------------------------------------------------------
+
+Every chapter of this book revisits one or more of three
+fundamental ideas. We name them here so that students can
+recognize them when they reappear, each time in a new setting.
+
+\medskip
+
+\noindent\textbf{Unifying Idea~1:\index{unifying ideas} The sensitivity index is a
+normalized derivative.}
+
+At its core, SA answers a single question: if this input changes
+by a small percentage, by what percentage does the output change?
+That ratio is the sensitivity index. It is not a mysterious new
+object: it is the derivative, normalized so that its magnitude
+is independent of units and scales.
+
+This idea appears first in Chapter~2, where we define the
+sensitivity index formally. It reappears in Chapter~3 as a
+finite-difference approximation, in Chapters~4--6 as
+an analytic derivative, and in Chapter~9 as the foundation
+for Sobol indices. Whenever a sensitivity quantity appears
+in this book, it is an instance of this one idea.
+Smith~\cite{smith2014uncertainty} develops the same normalized-derivative
+framework in \S9.1--9.2 and connects it to experimental design.
+
+\medskip
+
+\noindent\textbf{Unifying Idea~2: The adjoint is the transpose
+in whatever space you are working in.}
+
+The adjoint sensitivity method, which makes it possible
+to compute the sensitivities of one \QOI with respect to
+hundreds of \POIs at the cost of solving just two problems
+instead of hundreds, rests on a single mathematical operation:
+transposition. For a linear system $A\vec{u} = \vec{b}$,
+the adjoint involves the transposed matrix $A^T$.
+For a computation graph (the structure underlying every
+computer program), the adjoint is the chain rule applied in
+reverse order, which is the backpropagation operation familiar from
+machine learning. For an ordinary differential equation,
+the adjoint is a second ODE running backward in time.
+
+These three forms look different on the surface.
+They are the same idea.
+
+Chapter~5 introduces the adjoint through the matrix transpose,
+which is the simplest and most familiar form. Chapter~6 extends
+it to differential equations. At each transition, the book
+explicitly identifies the connection back to this unifying idea.
+
+\medskip
+
+\noindent\textbf{Unifying Idea~3: Local SA is a linearization.}
+
+Every sensitivity index in Chapters~2--8 is based on a derivative,
+and a derivative is a linear approximation to a generally nonlinear
+function. This approximation is valid when the perturbation is small
+and the model is smooth. It fails near bifurcation points, where
+the model changes qualitative behavior. It fails when the \POI
+uncertainty is large. It fails when the model is strongly nonlinear
+in the \POI of interest.
+
+Chapter~8 (\emph{Caveat Emptor}) documents the conditions
+under which local SA breaks down. Chapter~9 provides
+the global alternative. Both chapters are applications
+of this one principle: local SA is a linearization,
+and linearizations have limits.
+
+%%------------------------------------------------------------
+\section{A Note on Parameterization}
+\label{sec:parameterization}
+%%------------------------------------------------------------
+
+One practical decision that profoundly affects the usefulness
+of SA results deserves mention before Chapter~2.
+
+The sensitivity index depends on how a \POI is defined.
+In a compartmental epidemic model, the recovery process can
+be parameterized either by the \emph{recovery rate} $\gamma$
+(units: per day) or by the \emph{mean infectious period}
+$\tau = 1/\gamma$ (units: days). These two parameterizations
+are mathematically equivalent, each determining the other.
+But their sensitivity indices are not equal: they have
+the same magnitude and opposite signs.
+
+Which one should you use? The answer is: whichever one you can
+discuss in ordinary language without confusion. People who work
+with epidemic models (clinicians, public health officials,
+and policy makers) think naturally in terms of days.
+A clinician understands immediately what it means to say
+``the mean infectious period is 7 days.'' They do not
+think in recovery rates. Reporting $\SI{\gamma}{R_0} = -1.0$
+requires the reader to invert $\gamma$ mentally before the
+result makes intuitive sense. Reporting $\SI{\tau}{R_0} = +1.0$
+is immediately clear: a longer infectious period increases
+transmission.
+
+Throughout this book, we choose \POIs that can be understood
+in everyday terms: durations rather than rates, probabilities
+rather than their complements, counts rather than densities
+when the distinction matters. This is not just a matter of
+aesthetics. Sensitivity indices that require mental inversion
+to interpret are sensitivity indices that will be misread.
+
+Chapter~2 formalizes this principle and shows how to convert
+between parameterizations. Readers who find that their model's
+natural parameters are rates will learn how to restate
+their results in terms of the corresponding durations
+before reporting them.
+
+%%------------------------------------------------------------
+\section{Structure of the Book}
+\label{sec:structure}
+%%------------------------------------------------------------
+
+The book is organized in five parts. Each part builds on
+the previous, and the SIR epidemic model~\cite{kermack1927contribution,wu2013sensitivity} serves as the
+recurring example throughout, so that students can track
+a single application as the mathematical tools become
+progressively more powerful.
+
+\medskip
+
+\textbf{Part~I: The Sensitivity Question} (Chapters~1--2)
+establishes the central problem and introduces the sensitivity
+index as the primary tool. Chapter~2 develops the formal
+definition, the sign interpretation, the tornado plot
+as a display format, and the principle of interpretable
+parameterization. By the end of Part~I, students can compute
+and interpret sensitivity indices for any differentiable
+function of several variables.
+
+\textbf{Part~II: Computing Sensitivity in Practice}
+(Chapter~3) gives students an immediately usable computational
+method for any model, including models that cannot be
+differentiated analytically. Finite-difference approximations,
+step-size selection, the sensitivity Jacobian, and the
+treatment of correlated \POIs are developed here.
+Students who work through Chapter~3 can perform SA on any
+model they can run, including inherited code and black-box
+simulation software.
+
+\textbf{Part~III: Analytic Forward Sensitivity Analysis}
+(Chapter~4) shows how to differentiate model equations directly
+to obtain exact sensitivity information at lower computational
+cost. The forward sensitivity equation is derived for algebraic
+systems, difference equations, and ordinary differential
+equations. The chapter ends by quantifying the computational
+bottleneck that motivates the adjoint approach.
+
+\textbf{Part~IV: The Adjoint Approach} (Chapters~5--7)
+introduces adjoint sensitivity analysis through three
+progressively more abstract settings: linear systems
+in Chapter~5, dynamical systems in Chapter~6, and
+computational tools including algorithmic differentiation
+in Chapter~7. The central theme is Unifying Idea~2:
+the adjoint is the matrix transpose in whatever
+mathematical space the problem inhabits.
+
+\textbf{Part~V: Limitations and Extensions}
+(Chapters~8--9) addresses the boundaries of local SA.
+Chapter~8 documents the conditions under which sensitivity
+indices give misleading results: bifurcation points,
+ill-conditioned systems, and method-question mismatch.
+Chapter~9 introduces global SA through variance decomposition,
+Sobol indices, and partial rank correlation coefficients.
+It closes with an explicit bridge to the second semester,
+where Smith's \emph{Uncertainty Quantification}~\cite{smith2014uncertainty}
+takes over from the point where this book ends.
+
+\medskip
+
+\noindent\textbf{Computing environment.} Every chapter
+includes a structured MATLAB laboratory that implements
+the chapter's core idea on the SIR epidemic model.
+Students who complete these laboratories will leave the
+course with a portable toolkit for performing SA on any
+model they encounter in research or practice.
+The complete MATLAB code library --- production-quality functions,
+automated test suites, and usage examples --- is available at:
+\begin{center}
+  \texttt{https://github.com/mhyman/arriola2026sa}
+\end{center}
+Each function in the repository corresponds directly to a concept
+or algorithm in the text. \texttt{sir\_nominal.m} defines the SIR
+parameters used in every chapter; \texttt{sensitivity\_jacobian.m}
+implements the centered-difference Jacobian from Chapter~3;
+\texttt{sobol\_jansen.m} implements the Jansen estimators from
+Chapter~9. The \texttt{src/} directory is organized to mirror
+the book's structure, so students can find the code for any
+chapter without searching.
+
+\noindent\textbf{Notation.} Throughout the book, the
+sensitivity index of a \QOI~$q$ with respect to a
+\POI~$p$ is written $\SI{p}{q}$.
+\POIs are always chosen to be interpretable in everyday
+terms: durations, probabilities, counts. The relationship
+to the mathematical parameters in the model equations
+is made explicit wherever the two differ.
+
+\noindent\textbf{Scope note: scalar QOIs.}
+Every sensitivity index in this book is computed for a
+\emph{scalar} QOI --- a single number such as the peak infection
+count, the total disease burden, or the value of $R_0$.
+Real applications sometimes require sensitivity of an entire output
+\emph{trajectory}: how does the full time series $I(t)$ change when
+$\beta$ changes?
+Extending SA to functional (trajectory-valued) QOIs requires either
+reducing the trajectory to a scalar (which loses information) or
+computing a time-dependent SI at each time point (as in Chapter~4's
+Figure~\ref{fig:sir_timevarySI}).
+A rigorous treatment of functional sensitivity, using the adjoint ODE
+to compute sensitivity with respect to the entire output path, is
+developed in Smith~\cite{smith2014uncertainty} \S9.4 and is a natural
+next step after mastering the scalar case.
+
+%%------------------------------------------------------------
+\section{Exercises}
+%%------------------------------------------------------------
+
+Each exercise carries a Bloom's Taxonomy tag indicating cognitive level:
+\textit{L2} (understand), \textit{L3} (apply), \textit{L4} (analyze),
+\textit{L5} (evaluate), \textit{L6} (create and synthesize).
+Higher-level exercises require constructing an argument or designing a procedure,
+not just applying a formula.
+
+\begin{exercise}[\bloom{L2}]
+\label{ex:ch1:vocabulary}
+Explain in your own words the difference between a \POI and a \QOI.
+For a model describing the spread of antibiotic-resistant bacteria
+in a hospital, give two examples of each. Then explain, in one sentence,
+what sensitivity analysis would tell you about this model that
+simply running the model would not.
+\end{exercise}
+
+\begin{exercise}[\bloom{L2}]
+\label{ex:ch1:forwardadjoint}
+What is the difference between forward and adjoint sensitivity analysis?
+Describe each in terms of the ``What if?'' and ``How come?'' framing.
+For each of the following questions, classify it as a \emph{forward question}
+or an \emph{adjoint question} based on the type of question being asked
+(not on which algorithm would be most efficient to use computationally ---
+efficiency is the subject of Chapters~5 and~6).
+\begin{enumerate}[label=(\alph*)]
+  \item If the mean latent period increases by $10\%$, how does the peak
+        infection count change?
+  \item The peak infection count is higher than expected. Which parameter
+        uncertainties are most likely to have caused this?
+  \item Among all parameters in the model, which one has the largest
+        effect on the basic reproduction number?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch1:methodchoice}
+For each of the following modeling scenarios, state whether forward SA,
+adjoint SA, or global SA is most appropriate. Justify each choice in
+one or two sentences.
+\begin{enumerate}[label=(\alph*)]
+  \item A climate model has 500 tunable parameters.
+        The investigator wants to know which 10 parameters most
+        affect the mean surface temperature over a 100-year run.
+        Each model run takes 8 hours.
+  \item A pollution transport model has 6 input parameters.
+        The regulator wants to know: if the pollution at a specific
+        monitoring station exceeds the legal threshold,
+        which input assumptions most likely caused this?
+  \item A pharmacokinetic model has 4 parameters, each of which
+        is known only to within a factor of 2. The investigator
+        wants to know the range of predicted drug concentrations
+        consistent with this uncertainty.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L5}]
+\label{ex:ch1:studydesign}
+You are advising a team modeling the transmission of dengue fever.
+The model has 9 parameters.
+The team has funding to measure exactly 3 parameters precisely in
+the field and to implement exactly 2 vector-control interventions.
+Write a one-page plan describing how you would use SA to guide
+these decisions. Your plan should specify:
+what \QOI you would focus on and why;
+how you would determine which 3 parameters to measure;
+what additional information (if any) you would need
+beyond the SA results to recommend interventions;
+and one important limitation of your approach
+that the team should be aware of.
+\end{exercise}
+
+\begin{exercise}[\bloom{L6}]
+\label{ex:ch1:evaluation}
+A published report on a disease model states:
+``Sensitivity analysis was performed on all 22 model parameters
+simultaneously, demonstrating that the model is robust
+to parameter uncertainty.'' The analysis was conducted by
+computing local sensitivity indices at the best-fit parameter values.
+
+Identify at least two substantive problems with this description
+or its conclusions. For each problem you identify, explain
+specifically what the authors should have done differently.
+\end{exercise}
+
+%%------------------------------------------------------------
+%% Bibliography for standalone compilation
+%%------------------------------------------------------------
+

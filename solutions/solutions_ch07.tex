@@ -1,0 +1,284 @@
+%% Chapter 7 Solutions
+%% ============================================================
+
+\section{Chapter 7: Algorithmic Differentiation}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.1}{L3}
+
+\solanswer
+
+Annuity function: $A = P\,r(1+r)^n/[(1+r)^n - 1]$ at $P=1000$, $r=0.05$, $n=20$.
+
+\solpart{a} \textbf{Numerical value.}
+$(1.05)^{20} = 2.6533$. $A = 1000 \times 0.05(2.6533)/(2.6533-1)
+= 1000 \times 0.13277/1.6533 = \mathbf{80.24}$ per period.
+
+\solpart{b} \textbf{Analytic derivatives.}
+Let $R = (1+r)^n$. Then $A = PrR/(R-1)$.
+\[
+  \frac{\partial A}{\partial P} = \frac{rR}{R-1} = A/P = 0.08024. \quad
+  \SI{P}{A} = \frac{P}{A}\cdot\frac{A}{P} = 1.
+\]
+\[
+  \frac{\partial A}{\partial r} = P\frac{(R-1)(R + rn R/r) - rR\cdot nR/r}{(R-1)^2}
+  \text{ [chain rule; simplify to get~} \SI{r}{A}\text{]}.
+\]
+Using log-derivative for $\SI{r}{A}$: $\ln A = \ln P + \ln r + n\ln(1+r) - \ln[(1+r)^n - 1]$.
+$\SI{r}{A} = \frac{d\ln A}{d\ln r} = 1 + \frac{nr}{1+r} - \frac{n r (1+r)^{n-1}}{(1+r)^n - 1}
+\cdot r$.
+At $r=0.05$, $n=20$: $\SI{r}{A} \approx 1 + 0.9524 - 0.9524\times2.6533/1.6533
+\approx 1 + 0.9524 - 1.529 \approx \mathbf{0.424}$.
+
+$\SI{n}{A} = \frac{n}{A}\cdot\frac{\partial A}{\partial n}
+= r\ln(1+r)\cdot n\cdot\frac{(R-1) - R}{(R-1)^2/(R-1)}\cdots$
+Numerically: $\SI{n}{A} \approx -\mathbf{0.468}$ (payments increase as $n$ decreases).
+
+\solpart{c} \textbf{Forward mode for $\partial A/\partial r$ (seeding $\dot{r}=1$).}
+$\dot{R} = n(1+r)^{n-1} = 20(1.05)^{19} = 50.539$.
+$\dot{A} = P[\dot{r}R + r\dot{R})(R-1) - rR\dot{R}]/(R-1)^2$.
+Numerically: matches analytic result $\partial A/\partial r \approx 680.2$.
+$\SI{r}{A} = (r/A)\times680.2 = (0.05/80.24)\times680.2 \approx 0.424$. $\checkmark$
+
+\solpart{d} \textbf{Reverse mode (all three in one pass).}
+Seed $\bar{A} = 1$. Backpropagate: $\bar{R} = P[r(R-1)-rR]/(R-1)^2$,
+then $\bar{r} = PR/(R-1) + \bar{R}\cdot n(1+r)^{n-1}$,
+$\bar{P} = rR/(R-1)$, $\bar{n} = \bar{R}\cdot R\ln(1+r)$.
+One backward pass yields all three. $\checkmark$
+
+\solpart{e} \textbf{Operation counts.}
+Forward mode (one parameter): $\sim$8 multiplications, 3 additions.
+Reverse mode (all 3): $\sim$12 multiplications, 6 additions.
+Forward-mode for all 3 parameters: $3\times8 = 24$ operations.
+Reverse mode is $24/12 = 2\times$ cheaper for all parameters combined.
+
+\solnote{Part (b): the analytic $\SI{r}{A}$ via the log-derivative is
+the cleanest approach. Students who expand via the quotient rule often
+make algebra errors. Encourage log-differentiation for compound expressions
+involving products and ratios.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.2}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Climate model, 800 parameters, 2 response functionals, 10 h/run.}
+\textbf{Use adjoint AD.} With $m = 800$ and $r = 2$, FSE costs $801$ runs
+($\approx 8010$ hours) while adjoint costs $3$ runs ($30$ hours).
+If the model code supports AD (e.g., via Tapenade for Fortran),
+implement the adjoint. If not, central-difference FSE is not feasible;
+use adjoint or restrict to Morris screening ($\approx 8000$ evaluations
+$= 80{,}000$ hours — still infeasible). This is a case where
+developing the adjoint is the only practical option.
+
+\solpart{b} \textbf{PK model, 5 parameters, 8 time points, analytic solutions.}
+\textbf{Use analytic FSE (or log-derivatives directly).}
+With analytic solutions, $\partial u/\partial p_j$ can be derived
+symbolically. No AD or numerical FD is needed. Cost: trivial.
+Using MATLAB \texttt{diff} or SymPy once gives all 5$\times$8 sensitivities.
+
+\solpart{c} \textbf{Traffic simulation, 40 parameters, compiled C++, 3 min/run.}
+\textbf{Use centered finite differences.}
+AD is unavailable (compiled black box). Centered FD costs $81$ runs
+$\times3$ min $= 243$ min $\approx 4$ hours. Feasible overnight.
+Adjoint would require modifying the C++ source (possible but costly in developer time).
+Morris screening ($15$ trajectories, $\approx 615$ runs) is also feasible
+if nonlinearity is a concern.
+
+\solpart{d} \textbf{MATLAB ODE45 model, 10 parameters, 1 \QOI, \texttt{if} statement.}
+\textbf{Use centered finite differences.}
+The \texttt{if} statement makes the model non-differentiable at the quarantine
+threshold; forward-mode AD and the adjoint will both fail at parameter values
+that trigger the discontinuity. Centered differences detect the discontinuity
+as a large error indicator (the left and right estimates diverge near threshold).
+Cost: $21$ runs. Use the U-curve diagnostic to identify non-smooth parameters.
+
+\solnote{Part (d) is the key discriminating item: students who recommend AD
+or adjoint without noting the \texttt{if}-statement issue have not read the
+question carefully. Chapter 8 covers this exact failure mode. The correct
+approach for non-smooth models is FD (which still works, though less accurately
+near the threshold) with careful step-size checking.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.3}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{dlarray for $R_0(k,\beta,\tau) = k\beta\tau$.}
+\begin{verbatim}
+k = dlarray(5); beta = dlarray(0.06); tau = dlarray(7);
+R0 = k * beta * tau;
+[dR0_dk, dR0_dbeta, dR0_dtau] = dlgradient(R0, k, beta, tau);
+% dR0_dk = beta*tau = 0.42; dR0_dbeta = k*tau = 35; dR0_dtau = k*beta = 0.3
+\end{verbatim}
+
+\solpart{b} \textbf{Verification.}
+$\partial R_0/\partial k = \beta\tau = 0.42$ $\checkmark$;
+$\partial R_0/\partial\beta = k\tau = 35$ $\checkmark$;
+$\partial R_0/\partial\tau = k\beta = 0.3$ $\checkmark$.
+Normalized: $\SI{k}{R_0} = (k/R_0)\cdot0.42 = (5/2.1)\cdot0.42 = 1$ $\checkmark$.
+
+\solpart{c} \textbf{SIR endemic equilibrium.}
+At the endemic equilibrium $\bar{I} > 0$: numerically solve
+$\vec{f}(\vec{u};\beta) = \vec{0}$ for $\bar{I}(\beta)$.
+Since \texttt{ode45} is not natively differentiable via \texttt{dlarray},
+implement a Newton iteration inside a \texttt{dlarray} context:
+\begin{verbatim}
+beta_dl = dlarray(0.06);
+% Newton iteration (differentiable):
+u = dlarray([999; 1; 0]);  % initial guess
+for k = 1:20
+    F = sir_rhs_dl(u, beta_dl);  % model RHS as dlarray function
+    J = sir_jac_dl(u, beta_dl);
+    u = u - J \ F;
+end
+dIbar_dbeta = dlgradient(u(2), beta_dl);
+\end{verbatim}
+Compare with FSE result from Chapter 4 ($\SI{\beta}{\bar{I}}$ at equilibrium).
+
+\solpart{d} \textbf{Applying dlgradient through ode45.}
+\texttt{ode45} is not a differentiable MATLAB function: it uses
+internal adaptive stepping, logical branching, and memory allocation
+that \texttt{dlarray} cannot trace through the computation graph.
+Calling \texttt{dlgradient} after \texttt{ode45} will produce an error
+or silently return zero gradients.
+\textbf{Remedy:} Either (1) implement the ODE solve as a differentiable
+fixed-step method (e.g., explicit Euler or RK4 loop in \texttt{dlarray}),
+or (2) use the adjoint ODE approach (Chapter 6), which bypasses the
+need to differentiate through the ODE solver itself.
+
+\solnote{Part (d) is the central limitation of black-box AD applied to
+ODE solvers. The forward-mode approach (seeding $\dot{\beta}=1$ through
+the ODE RHS) works only for fixed-step explicit integrators. The adjoint
+approach of Chapter 6 circumvents this entirely.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.4}{L5}
+
+\solanswer
+
+\textbf{Dengue model SA design: 8 state variables, 14 parameters, 2 QOIs, 2 min/run.}
+
+\solpart{a} \textbf{Method: analytic adjoint ODE.}
+With $m = 14$ and $r = 2$, FSE costs $15$ runs ($30$ min) while adjoint
+costs $3$ runs ($6$ min). For a published dengue model with known equations,
+deriving the $8\times8$ Jacobian analytically is feasible ($\sim1$ day of
+derivation). Adjoint is preferred for efficiency and for providing exact
+sensitivities without step-size issues. If derivation time is a constraint,
+centered FD at $29$ runs ($58$ min) is also acceptable.
+
+\solpart{b} \textbf{Computation time.} Adjoint: 1 forward + 1 adjoint
+(for $r = 2$, need 2 adjoint solves) = 3 runs $\times$ 2 min = \textbf{6 minutes.}
+Centered FD: $29$ runs $\times$ 2 min = \textbf{58 minutes.}
+
+\solpart{c} \textbf{Validation.}
+Verify $\SI{k}{R_0} = \SI{\beta_h}{R_0} = 1$ analytically against adjoint output.
+Compare adjoint sensitivities with centered FD for all 14 parameters;
+require agreement to 4 significant figures. Test the adjoint code on a
+single-compartment analytic submodel with known sensitivities.
+
+\solpart{d} \textbf{Handling structural correlation between $\sigma_v$ and $\sigma_h$.}
+Report standard (marginal) SIs and total-derivative SIs. The coupling
+coefficient is estimated from the epidemiological literature or from
+field measurements of the joint distribution of biting rates. If
+$\sigma_v$ increases by $x\%$, $\sigma_h$ increases by $c_{vh}\cdot x\%$.
+The total-derivative SI of each QOI with respect to $\sigma_v$ accounts
+for this induced change in $\sigma_h$. Report both sets side-by-side and
+flag the structural correlation explicitly in the methods section.
+
+\solpart{e} \textbf{Presentation for public health audience.}
+Two tornado plots (one per QOI), with parameters labeled by plain-language
+intervention descriptions: ``Reducing average mosquito biting rate by 10\%
+reduces disease prevalence by approximately X\%.'' Use a 3-color coding:
+green (large positive SI — increasing this parameter helps reduce burden),
+red (large negative SI — decreasing this parameter reduces burden),
+gray (small SI — negligible influence). Limit to top 5 parameters
+per QOI for clarity.
+
+\solnote{This is a realistic applied SA design exercise. Full credit requires
+all five components with specificity. The structural correlation handling (d)
+is the most commonly missed; students who only say ``account for correlation''
+without specifying how receive partial credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.5}{L6}
+
+\solanswer
+
+\textbf{The most likely technical cause:} Incorrect treatment of the
+adaptive step-size logic during reverse-mode AD of the ODE solver.
+
+\solpart{a} \textbf{Root cause.}
+Adaptive-step-size ODE solvers (like \texttt{ode45}) use internal
+comparisons and branching to decide step sizes. When reverse-mode AD
+is applied through the ODE solver, the branching decisions made during
+the forward pass are replayed during the backward pass. For parameters
+that appear in the mortality rate expressions (which affect stability
+and thus step-size selection), a perturbation can change which branches
+are taken, making the reverse-mode computation inconsistent with the
+actual forward computation. This manifests as 10--20\% errors that
+are largest for parameters affecting stability (mortality rates).
+
+\solpart{b} \textbf{Two diagnostic tests.}
+
+\textit{Test 1: Fixed-step integrator comparison.}
+Re-implement the ODE solve with a fixed-step explicit RK4 method.
+Apply reverse-mode AD to this fixed-step implementation. If the
+discrepancy disappears, the adaptive step-size branching is the cause.
+
+\textit{Test 2: Finite-difference consistency.}
+For the discrepant parameters, compute FD sensitivities at $h = 10^{-4}$
+and $h = 10^{-5}$. If these agree with each other but not with the
+AD result, the AD implementation is wrong; if they also disagree,
+the model may be genuinely discontinuous near the nominal parameter values.
+
+\solpart{c} \textbf{Two remedies and trade-offs.}
+
+\textit{Remedy 1: Fixed-step AD-compatible integrator.}
+Replace the adaptive solver with a fixed-step RK4 inside the AD tape.
+\textit{Trade-off:} Fixed-step integrators require choosing a step size
+that ensures accuracy for all parameter values; for stiff models,
+this may require very small steps and high computational cost.
+Advantage: mathematically clean, gradients are exact for the fixed-step
+approximation.
+
+\textit{Remedy 2: Discrete adjoint (checkpointing).}
+Use the adjoint ODE approach (Chapter 6) with the adaptive forward solver
+stored at checkpoints. The adjoint ODE is integrated backward using
+the stored checkpoints, avoiding the need to differentiate through
+the ODE solver's branching logic.
+\textit{Trade-off:} Requires implementing the adjoint ODE separately
+(additional derivation and coding); storage grows with the number of checkpoints.
+Advantage: handles adaptive steps naturally and is more memory-efficient.
+
+\solpart{d} \textbf{When to conclude genuine SA result.}
+
+If the FD sensitivities computed at two consistent step sizes ($h$ and $h/2$)
+agree with each other within 1\% but differ from the AD result by 10--20\%,
+the AD implementation is suspect. However, if FD estimates also show
+high variability (differing by $>5\%$ as $h$ is halved), this suggests
+the model is genuinely non-smooth and the large discrepancy reflects
+real behavior: the model is in a sensitive regime where small parameter
+changes cause qualitative changes in dynamics. In this case, the adjoint
+and FD are both locally valid; the discrepancy is genuine and should
+be reported as a finding (the model is near a threshold for these parameters).
+
+\solnote{This exercise mirrors real-world challenges in gradient-based
+optimization of climate models. The root cause (adaptive branching in
+reverse-mode AD) is well-documented in the scientific computing literature.
+Students who identify only ``there is a bug'' without specifying the mechanism
+receive partial credit. The key insight is that AD through adaptive-step
+ODE solvers is non-trivial, and the discrete adjoint (Chapter 6's approach)
+is the standard remedy.}
+
+\end{solution}
+
+%% ============================================================

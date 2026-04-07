@@ -1,0 +1,79 @@
+%% ============================================================
+%% Instructor's Solutions Manual
+%% Foundations of Sensitivity Analysis: Theory, Computation, and Applications
+%% Leon M. Arriola and James M. Hyman
+%% SIAM Textbooks and Monographs, 2026
+%% ============================================================
+%%
+%% CONFIDENTIAL: For instructor use only.
+%% Do not distribute to students.
+%%
+%% Compile: pdflatex solutions_manual.tex  (no bibtex needed)
+%%
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black}
+\usepackage{booktabs}
+\usepackage{microtype}
+
+%% Reuse macros from main book
+\newcommand{\SI}[2]{S_{#1}^{#2}}
+\newcommand{\POI}{\textsc{poi}}
+\newcommand{\QOI}{\textsc{qoi}}
+\newcommand{\POIs}{\textsc{poi}s}
+\newcommand{\QOIs}{\textsc{qoi}s}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}[2]{\frac{d #1}{d #2}}
+\DeclareMathOperator{\arcsinh}{arcsinh}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\FSE}{\textsc{fse}}
+
+%% Solution environment
+\newcounter{exercisesol}[section]
+\renewcommand{\theexercisesol}{\thesection.\arabic{exercisesol}}
+
+\newenvironment{solution}[2]{%
+  \refstepcounter{exercisesol}%
+  \medskip\noindent%
+  \textbf{Exercise~#1} \textit{[Bloom~#2]}\enspace%
+}{%
+  \par\medskip%
+  \hrule height 0.3pt%
+  \medskip%
+}
+
+\newcommand{\solanswer}{\smallskip\noindent\textit{Solution.}\enspace}
+\newcommand{\solpart}[1]{\smallskip\noindent\textbf{(#1)}\enspace}
+\newcommand{\solnote}[1]{\smallskip\noindent\textit{Instructor note:}~#1}
+
+\title{\textbf{Instructor's Solutions Manual}\\[6pt]
+       \large Foundations of Sensitivity Analysis: Theory, Computation, and Applications\\[4pt]
+       \normalsize Leon M. Arriola and James M. Hyman}
+\author{SIAM Textbooks and Monographs, 2026}
+\date{\textit{Confidential --- For instructor use only}}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\clearpage
+
+\noindent\textbf{How to use this manual.}
+Solutions are organized by chapter and exercise number, matching the
+labeling in the main text.  For each exercise, the Bloom's Taxonomy
+level is given in brackets.  L2 solutions are concise; L5--L6 solutions
+provide model answers that can be adapted for grading rubrics.
+Where MATLAB verification is natural, it is included.
+
+\medskip
+\noindent For exercises marked \textit{Instructor note}, the note
+provides grading guidance, common student errors, or pedagogical context.
+
+\clearpage

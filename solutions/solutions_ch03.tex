@@ -1,0 +1,459 @@
+%% ============================================================
+%% Chapter 3 Solutions
+%% ============================================================
+
+\section{Chapter 3: Computing Sensitivities Numerically}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.1}{L2}
+
+\solanswer
+
+There are two opposing sources of error in a finite-difference estimate.
+As $h$ decreases, one gets better but the other gets worse.
+
+\textbf{Truncation error} arises because a finite difference approximates
+a derivative by a secant line. For centered differences, this error
+is proportional to $h^2$: smaller $h$ gives a better approximation.
+So truncation error \emph{decreases} as $h$ decreases.
+
+\textbf{Roundoff error} arises because a computer stores numbers with
+finite precision (about 16 significant digits in double precision).
+When $h$ is very small, $q(p+h)$ and $q(p-h)$ are nearly equal,
+and subtracting two nearly equal numbers destroys most of the significant
+digits — a phenomenon called catastrophic cancellation. Roundoff error
+is proportional to $\varepsilon_{\text{mach}}/h$ for centered differences,
+so it \emph{increases} as $h$ decreases.
+
+The total error is the sum of both contributions, forming a U-curve
+(or ``hockey stick'' on log-log axes): the optimal $h$ occurs where
+truncation and roundoff errors are equal, which for centered differences
+is approximately $h^* \approx \varepsilon_{\text{mach}}^{1/3}\,|p^*|
+\approx 6\times 10^{-6}\,|p^*|$ in double precision.
+
+\solnote{Students often describe only one of the two sources.
+Full credit requires both, with correct qualitative behavior
+(one decreasing, one increasing with $h$).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.2}{L3}
+
+\solanswer
+
+\solpart{a} For $n_p = 15$ \POIs, $n_q = 4$ \QOIs:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Method & Formula & Evaluations \\
+\midrule
+Forward difference (all SIs)  & $n_p + 1$   & $16$ \\
+Centered difference (all SIs) & $2n_p + 1$  & $31$ \\
+Forward difference Jacobian   & $n_p + 1$   & $16$ \\
+Centered difference Jacobian  & $2n_p + 1$  & $31$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The count is the same regardless of $n_q$: each method evaluates
+the model at the same set of perturbed parameter vectors, and all
+$n_q$ \QOIs are extracted from each evaluation simultaneously.
+Adding \QOIs costs no additional model evaluations.
+
+\solpart{b} Centered-difference Jacobian: $31$ evaluations at
+$30$ seconds each $= 930$ seconds $= 15.5$ minutes.
+
+\solpart{c} The adjoint approach (Chapter~6) reduces cost to
+the equivalent of $n_q + 1$ evaluations — in this case $5$ — plus
+the cost of the backward solve (typically $\sim$same cost as one
+forward solve). The adjoint is strictly necessary when $n_p$ is
+so large that even the centered-difference cost $2n_p+1$ is
+prohibitive. As a practical threshold: when $2n_p \times t_{\text{eval}}$
+exceeds your computation budget (e.g., more than a few hours on
+a laptop), use the adjoint. For $t_{\text{eval}} = 30$ s, this
+occurs at roughly $n_p > 360$ (when centered FD would take $> 3$ hours).
+
+\solnote{The key insight for part (a): the number of evaluations
+depends only on $n_p$, not $n_q$. Students who write $n_p \times n_q$
+evaluations are confusing the Jacobian dimension with the evaluation
+count. The Jacobian is assembled from the $2n_p+1$ evaluations by
+extracting all $n_q$ outputs from each run.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.3}{L3}
+
+\solanswer
+
+\textbf{Setup.} Let $q(p) = \sin(p^2)$ at $p^* = 1.3$.
+Exact derivative: $q'(p^*) = 2p^*\cos((p^*)^2) = 2(1.3)\cos(1.69) \approx 2.6\times(-0.1288) \approx -0.3348$.
+
+\textbf{MATLAB implementation:}
+\begin{verbatim}
+p_star = 1.3;
+q_exact = @(p) sin(p^2);
+dq_exact = 2*p_star * cos(p_star^2);  % = -0.33484...
+
+h_vals = 10.^(-1:-1:-14);
+err = zeros(size(h_vals));
+for k = 1:length(h_vals)
+    h = h_vals(k);
+    dq_fd = (q_exact(p_star+h) - q_exact(p_star-h)) / (2*h);
+    err(k) = abs(dq_fd - dq_exact);
+end
+
+loglog(h_vals, err, 'b-o', 'LineWidth', 1.5);
+xlabel('h'); ylabel('|error|');
+title('U-curve: centered FD for d/dp sin(p^2) at p=1.3');
+grid on;
+\end{verbatim}
+
+\textbf{Expected results:}
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+$h$ & $|\text{error}|$ (approximate) & Note \\
+\midrule
+$10^{-1}$ & $\sim 10^{-3}$ & Truncation dominates \\
+$10^{-3}$ & $\sim 10^{-7}$ & Truncation dominates \\
+$10^{-6}$ & $\sim 10^{-11}$ & Near optimum \\
+$10^{-8}$ & $\sim 10^{-9}$  & Roundoff increasing \\
+$10^{-12}$ & $\sim 10^{-4}$ & Roundoff dominates \\
+$10^{-14}$ & $\sim 10^{-2}$ & Catastrophic cancellation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Optimal $h$:} The formula gives $h^* \approx \varepsilon_{\text{mach}}^{1/3}|p^*|
+\approx (2.2\times10^{-16})^{1/3}(1.3) \approx 6.1\times10^{-6}\times1.3
+\approx 7.9\times10^{-6}$.
+The empirical minimum of the error plot should occur at $h \approx 10^{-5}$
+to $10^{-6}$, which agrees with the formula to within one decade
+(the precise minimum depends on the third derivative of $q$).
+
+\solnote{Students should observe that the error decreases at slope $-2$
+on log-log axes for $h > h^*$ (truncation error $\propto h^2$) and
+increases at slope $+1$ for $h < h^*$ (roundoff error $\propto 1/h$).
+The optimal $h$ from the formula should agree with the empirical minimum
+to within a factor of 3--10; larger disagreements indicate an algebra error.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.4}{L3}
+
+\solanswer
+
+Let $R_0 = k\beta\tau$.
+
+\solpart{a} \textbf{Pure second derivatives:}
+\[
+  \frac{\partial^2 R_0}{\partial k^2} = 0, \qquad
+  \frac{\partial^2 R_0}{\partial\beta^2} = 0, \qquad
+  \frac{\partial^2 R_0}{\partial\tau^2} = 0.
+\]
+All pure second derivatives are zero. This is because $R_0$ is
+\emph{multilinear} in $(k,\beta,\tau)$ — linear in each variable
+separately. A function linear in $k$ has zero second derivative
+in $k$, regardless of how it depends on the other variables.
+
+\solpart{b} \textbf{Cross derivatives:}
+\[
+  \frac{\partial^2 R_0}{\partial k\,\partial\beta} = \tau, \qquad
+  \frac{\partial^2 R_0}{\partial k\,\partial\tau} = \beta, \qquad
+  \frac{\partial^2 R_0}{\partial\beta\,\partial\tau} = k.
+\]
+All cross derivatives are nonzero. This means that $k$, $\beta$,
+and $\tau$ interact: the effect of changing $k$ depends on the
+current value of $\beta$ (and vice versa). These interactions
+are exactly what Sobol indices capture and local SA misses.
+
+\solpart{c} \textbf{Taylor approximation for simultaneous 10\% perturbations.}
+
+Let $\delta k = 0.1k^*$, $\delta\beta = 0.1\beta^*$, with nominal
+$(k^*, \beta^*, \tau^*) = (5, 0.06, 7)$, $R_0^* = 2.1$.
+
+\textit{First-order approximation:}
+\[
+  \Delta R_0^{(1)} = \frac{\partial R_0}{\partial k}\delta k
+                   + \frac{\partial R_0}{\partial\beta}\delta\beta
+  = \beta^*\tau^*\cdot(0.1k^*) + k^*\tau^*\cdot(0.1\beta^*)
+  = 0.1\beta^*\tau^*k^* + 0.1k^*\tau^*\beta^*
+  = 0.2k^*\beta^*\tau^* = 0.2 R_0^* = 0.42.
+\]
+
+\textit{Second-order correction (cross term only, since pure second
+derivatives are zero):}
+\[
+  \Delta R_0^{(2)} = \frac{\partial^2 R_0}{\partial k\,\partial\beta}
+  \delta k\,\delta\beta
+  = \tau^* \cdot (0.1k^*)(0.1\beta^*)
+  = 0.01\,k^*\beta^*\tau^* = 0.01 R_0^* = 0.021.
+\]
+
+\textit{Exact change:}
+\[
+  \Delta R_0^{\text{exact}} = (1.1k^*)(1.1\beta^*)\tau^* - k^*\beta^*\tau^*
+  = (1.21-1)R_0^* = 0.21\,R_0^* = 0.441.
+\]
+
+The second-order correction $0.021$ is $\approx 5\%$ of the exact
+change $0.441$. The first-order approximation gives $0.42$, an error
+of $0.021$ (the cross-derivative term). For a $10\%$ simultaneous
+perturbation, the cross-term correction is small but measurable;
+for larger perturbations (e.g., $50\%$) it would be dominant.
+
+\solnote{The key observation from part (a): $R_0 = k\beta\tau$ is
+perfectly linear in each variable, so a pure second derivative in
+any single variable is zero. This means local SA (which captures only
+first derivatives) is exact for $R_0$ when varying one parameter at
+a time. But the interaction (cross) term is nonzero — Sobol total
+indices would capture this when both $k$ and $\beta$ vary simultaneously.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.5}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Standard sensitivity indices.}
+For $R_0 = k\beta\tau$, using the log-derivative form:
+\[
+  \SI{k}{R_0} = 1, \qquad \SI{\beta}{R_0} = 1.
+\]
+
+\solpart{b} \textbf{Total-derivative SI accounting for correlation.}
+
+The correlation structure states: a $10\%$ change in $k$ is accompanied
+by a $6\%$ change in $\beta$. In the notation of equation~(3.X) in the text,
+the coupling coefficient is $c_{k\beta} = 0.06/0.10 = 0.6$ (a $1\%$ change
+in $k$ induces a $0.6\%$ correlated change in $\beta$).
+
+The total-derivative SI of $R_0$ with respect to $k$, accounting
+for the induced change in $\beta$, is:
+\begin{align*}
+  \left.\SI{k}{R_0}\right|_{\text{tot}}
+  &= \SI{k}{R_0}\big|_{\text{std}} + \SI{\beta}{R_0}\cdot c_{k\beta} \\
+  &= 1 + 1 \times 0.6 = 1.6.
+\end{align*}
+
+\solpart{c} \textbf{Comparison and policy interpretation.}
+
+The total-derivative SI ($1.6$) is larger than the standard SI ($1.0$).
+This means the true effect of reducing contact rates is amplified
+by the positive correlation with $\beta$: when social distancing
+reduces $k$, it also tends to reduce $\beta$ (fewer and shorter
+contacts tend to reduce both quantity and riskiness of contacts).
+The combined effect on $R_0$ is $60\%$ larger than the standard SI
+would suggest.
+
+For a policy maker: a $10\%$ reduction in $k$ (e.g., through school
+closures) would reduce $R_0$ by approximately $16\%$, not the $10\%$
+predicted by the standard SI. This is a larger benefit. Ignoring the
+correlation would underestimate the effectiveness of contact-rate
+reduction interventions.
+
+\solnote{The coupling coefficient $c_{k\beta} = 0.6$ is read directly
+from the problem statement: ``when $k$ increases by $10\%$, $\beta$
+tends to increase by $6\%$,'' so the ratio is $6/10 = 0.6$. Students
+who use $0.6$ directly as $c_{k\beta}$ (rather than $0.06$) are
+applying the coupling coefficient to normalized changes, which is
+correct here. The distinction matters only when $c_{ij}$ is defined
+as the ratio of absolute changes rather than relative (percentage) changes.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.6}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Computation time for centered-difference Jacobian.}
+
+With $n_p = 6$ \POIs and $n_q = 1$ \QOI (peak infections), the
+centered-difference Jacobian requires $2n_p + 1 = 13$ model evaluations.
+At $0.2$ seconds each: $13 \times 0.2 = 2.6$ seconds. Entirely feasible.
+
+\solpart{b} \textbf{Applying \texttt{sensitivity\_jacobian}.}
+
+The one-line usage:
+\begin{verbatim}
+[S, info] = sensitivity_jacobian(@seir_model, p_nom, 1);
+\end{verbatim}
+Before interpreting results, you need: (1) \textit{parameterization} —
+are the 6 parameters rates or durations? Rate-parameterized models
+give negative SIs for recovery rates, duration-parameterized models
+give positive SIs for the same biological quantities. The interpretation
+of sign and magnitude depends on this. (2) \textit{nominal values} —
+what are $p^*$ and $q^* = \texttt{seir\_model}(p^*)$? The SI is
+evaluated at these values; if they are far from the plausible range,
+the result may not be representative. (3) \textit{units} — what does
+each parameter represent, and in what units, to give the SI a
+meaningful interpretation.
+
+\solpart{c} \textbf{Response to $|\rho_{ij}| = 0.78$.}
+
+A correlation of $0.78$ between two parameters indicates structural
+or empirical correlation. Before reporting standard SIs, you should:
+(1) Check whether the correlation is \emph{structural} (the model
+forces the parameters to co-vary, e.g., $k$ and $\beta$ always appear
+as $k\beta$) or \emph{empirical} (field data shows them correlated).
+(2) Compute total-derivative SIs using equation~(3.X) to account for
+the correlation. (3) Consider whether the two parameters are actually
+identifiable separately from available data. If $|\rho| > 0.7$, a
+single effective parameter (their product) may be more informative
+than two individual SIs. Report both standard and total-derivative SIs,
+with a note on the correlation and its source.
+
+\solnote{Part (b) is designed to elicit ``parameterization'' as the
+critical missing information. Students who simply say ``the sign of
+the SI'' without explaining why parameterization matters should receive
+partial credit. The key point: \texttt{seir\_model(p)} is a black box
+— you need domain knowledge to interpret the direction and magnitude
+of the indices. Part (c) previews the identifiability material from
+the structural identifiability section of Chapter 3.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.7}{L5}
+
+\solanswer
+
+\textbf{Design for dengue SA study: 9 parameters, 3 QOIs, 4 min/evaluation.}
+
+\solpart{a} \textbf{Method: centered differences.}
+
+Centered differences are preferred over forward differences because
+the second-order accuracy ($O(h^2)$ vs $O(h)$) justifies the
+$2\times$ cost. With 9 parameters and 4 minutes per evaluation,
+the centered-difference Jacobian costs $2(9)+1 = 19$ evaluations
+$\times$ 4 min $=$ 76 minutes. This is acceptable. Forward differences
+would save 40 minutes but introduce $O(h)$ truncation error, which
+may matter if any SIs are near zero (impossible to distinguish genuine
+zero from truncation error at single precision).
+
+\solpart{b} \textbf{Total computation time.}
+
+Centered-difference Jacobian: $(2 \times 9 + 1) \times 4 = 76$ minutes
+for all 3 \QOIs simultaneously. The 3 \QOIs add no extra evaluations.
+Total: \textbf{76 minutes.}
+
+\solpart{c} \textbf{Step-size selection.}
+
+For each parameter $p_j$, use $h_j = 6\times10^{-6}\,|p_j^*|$ (equation (3.8)
+from the text). Apply the U-curve check: run the Jacobian at three
+step sizes $h_j/10$, $h_j$, $10h_j$ and verify that the SI values
+agree to 3 significant figures at $h_j$ and $10h_j$ (truncation
+error is small) but differ from $h_j/10$ values (roundoff is not
+yet dominating). If not, adjust.
+
+\solpart{d} \textbf{Pre-reporting checks.}
+
+\begin{enumerate}[nosep]
+\item \textit{Analytic verification}: Compute $\SI{k}{R_0}$ and $\SI{\beta}{R_0}$
+  analytically (both $= 1$ for a standard dengue model). Verify that
+  the code gives the same values within $10^{-5}$.
+\item \textit{Sum check}: For a purely multiplicative model,
+  $\sum_j \SI{p_j}{q} = 1$ (Euler's theorem). Check whether
+  this holds approximately.
+\item \textit{Sign check}: Parameters that appear in numerator of
+  $R_0$ should have positive SI; those in denominator (rates) negative.
+  Verify signs match biological expectations.
+\item \textit{Structural correlation check}: Compute pairwise correlation
+  of parameter estimates from field data. Report any $|\rho_{ij}| > 0.5$.
+\end{enumerate}
+
+\solpart{e} \textbf{Presentation to non-technical audience.}
+
+Use tornado plots for each \QOI, with parameter names in plain language
+(``mean mosquito lifespan'' not ``$1/\mu_v$''). State the practical
+interpretation: ``A 10\% reduction in [parameter] would reduce [QOI]
+by approximately [SI $\times$ 10]\%.'' Highlight the top 2--3 parameters
+for each \QOI. Report the limitation that these results apply near the
+nominal parameter values.
+
+\solpart{f} \textbf{Scenario where standard SA gives misleading results.}
+
+If the model exhibits a threshold ($R_0 = 1$), and the nominal
+parameters place $R_0$ just above 1, the SIs for peak infections
+may be very large (the epidemic is sensitive to any perturbation
+that crosses the threshold). A modeler might conclude that one
+parameter dominates all others, when in reality the result is
+an artifact of the proximity to threshold. In this scenario,
+a global SA or a sensitivity analysis of $R_0$ itself
+(rather than peak infections) would give more stable, interpretable results.
+
+\solnote{Rubric: 1 point each for (a) centered vs.\ forward with
+justification, (b) correct cost calculation, (c) specific step-size
+procedure, (d) at least two specific checks with how-to details,
+(e) tornado plot plus plain-language interpretation, (f) genuine
+threshold scenario. Deduct 0.5 points for missing the 3-\QOI
+simultaneous extraction in part (b).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{3.8}{L6}
+
+\solanswer
+
+\textbf{What is most likely wrong:} The step size $h = 10^{-12}$ is
+far into the catastrophic cancellation regime for centered differences
+in double precision. Double precision has $\varepsilon_{\text{mach}}
+\approx 2.2\times10^{-16}$, and the optimal step size for centered
+differences is $h^* \approx \varepsilon_{\text{mach}}^{1/3}|p^*|
+\approx 6\times10^{-6}|p^*|$.
+
+With $h = 10^{-12}$ and a typical parameter value $|p^*| \sim 1$,
+the roundoff error in the centered difference is approximately:
+\[
+  \text{roundoff error} \approx \frac{2\varepsilon_{\text{mach}}|q^*|}{h}
+  = \frac{2(2.2\times10^{-16})|q^*|}{10^{-12}}
+  = 4.4\times10^{-4}|q^*|.
+\]
+Meanwhile the true derivative (if SI $\approx 1$) is $|q^*/p^*|$,
+so the relative error in the SI is $\sim 4.4\times10^{-4}$.
+But more critically, for parameters with a genuinely small SI
+(say $|\SI{p_j}{q}| \sim 10^{-3}$), the roundoff error completely
+swamps the signal. The computed SI would be dominated by numerical
+noise, and MATLAB's finite-precision arithmetic would return a
+value that is effectively $10^{-4}$ to $10^{-3}$ in magnitude
+— not zero, but not interpretable as the true SI either.
+
+\textbf{The reported zeros are almost certainly numerical artifacts.}
+The most likely scenario: the computed value $q(p+h) - q(p-h)$ for
+a parameter with small but nonzero SI is on the order of
+$10^{-16}$ (below machine epsilon), which rounds to exactly zero
+in double precision subtraction.
+
+\textbf{What the authors should have done:}
+\begin{enumerate}[nosep]
+\item Use $h^* \approx 6\times10^{-6}|p^*|$ for centered differences
+      (the formula in Section 3.2 of the text).
+\item Run a U-curve check for each parameter: vary $h$ over
+      $10^{-1}$ to $10^{-14}$ and plot the resulting SI vs $h$.
+      An SI that is stable across several decades of $h$ near $h^*$
+      is reliable; one that varies wildly is not.
+\end{enumerate}
+
+\textbf{Determining whether zero SIs are genuine:}
+For each parameter that gives SI $= 0$: (1) check analytically
+whether the parameter appears in the \QOI expression at all
+(if absent, SI $= 0$ is exact); (2) repeat at $h = 10^{-5}|p^*|$
+— if the SI is still zero or $< 10^{-6}$, it may be genuine;
+(3) compare with a symbolic calculation of $\partial q/\partial p_j$
+if the model allows it.
+
+\solnote{The quantitative reasoning (computing the roundoff error at
+$h=10^{-12}$) is essential for full credit. Students who only say
+``the step size is too small'' without the calculation should receive
+partial credit. The crux: $h = 10^{-12}$ is 6 orders of magnitude
+below the optimal, making the roundoff error $10^6$ times larger than
+necessary. Reported zero SI values at this step size are meaningless.}
+
+\end{solution}

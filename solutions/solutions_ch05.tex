@@ -1,0 +1,342 @@
+%% ============================================================
+%% Chapter 5 Solutions
+%% ============================================================
+
+\section{Chapter 5: The Adjoint in Linear Algebra}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.1}{L2}
+
+\solanswer
+
+\textbf{The three-step adjoint strategy in plain words:}
+
+\begin{enumerate}
+\item Solve the forward problem to find the state. Store the solution.
+\item Solve one backward (adjoint) problem for each response functional,
+      using the matrix transposed from the forward problem.
+\item For each parameter, compute the sensitivity as a dot product of
+      the adjoint solution with the parameter's contribution vector.
+      No additional solves are needed.
+\end{enumerate}
+
+\textbf{Why the adjoint equation $A^T\vec{v} = \vec{c}$ does not depend on $q_j$:}
+
+The adjoint equation encodes ``which directions in state space affect
+the response $J = \vec{c}^T\vec{u}$?'' This question is entirely
+about $J$ (encoded in $\vec{c}$) and the forward operator (encoded in $A$).
+It does not involve any particular parameter $q_j$, because the adjoint
+does not ask what the state is — only which state directions matter for $J$.
+The parameter-dependence enters only in the dot product step
+($\partial J/\partial q_j = \vec{v}^T \partial\vec{b}/\partial q_j$),
+which costs just one inner product per parameter once $\vec{v}$ is known.
+
+\textbf{Why this makes the adjoint efficient:}
+With $m$ parameters, the forward approach requires $m$ forward solves
+(one FSE per parameter). The adjoint requires only 1 adjoint solve
+(independent of $m$), then $m$ dot products. For large $m$, the
+savings are a factor of $m$.
+
+\solnote{The key conceptual point: the adjoint asks about $J$ and $A$,
+not about specific parameters. Students often confuse the adjoint solve
+with a parameter-dependent computation. Full credit requires explaining
+why $A^T\vec{v} = \vec{c}$ has no $q_j$ on either side.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.2}{L3}
+
+\solanswer
+
+System: $A\vec{u} = \vec{b}$ with $A = \bigl(\begin{smallmatrix}3&1\\1&2\end{smallmatrix}\bigr)$,
+$\vec{b} = (q, 2q)^T$, $J = u_1 + u_2$ ($\vec{c} = (1,1)^T$).
+
+\solpart{a} \textbf{Forward solution at $q = 1$.}
+$A^{-1} = \frac{1}{5}\bigl(\begin{smallmatrix}2&-1\\-1&3\end{smallmatrix}\bigr)$,
+so $\vec{u} = A^{-1}\vec{b} = \frac{1}{5}(2\cdot1 - 1\cdot2, -1\cdot1+3\cdot2)^T
+= \frac{1}{5}(0,5)^T = (0, 1)^T$.
+Hence $u_1 = 0$, $u_2 = 1$.
+
+\solpart{b} \textbf{FSE for $\partial\vec{u}/\partial q$.}
+Differentiate $A\vec{u} = \vec{b}$ with respect to $q$:
+$A\,(\partial\vec{u}/\partial q) = \partial\vec{b}/\partial q = (1,2)^T$.
+Solve: $\partial\vec{u}/\partial q = A^{-1}(1,2)^T
+= \frac{1}{5}(2-2,-1+6)^T = \frac{1}{5}(0,5)^T = (0, 1)^T$.
+
+\solpart{c} \textbf{Adjoint equation.}
+$A^T\vec{v} = \vec{c}$. Since $A$ is symmetric, $A^T = A$, so
+$A\vec{v} = (1,1)^T$:
+$\vec{v} = A^{-1}(1,1)^T = \frac{1}{5}(2-1,-1+3)^T = \frac{1}{5}(1,2)^T$.
+
+\solpart{d} \textbf{Sensitivity via adjoint formula.}
+$\partial J/\partial q = \vec{v}^T\,(\partial\vec{b}/\partial q)
+= \frac{1}{5}(1,2)\cdot(1,2)^T = \frac{1}{5}(1+4) = 1$.
+
+\solpart{e} \textbf{Direct verification.}
+$J(q) = u_1(q) + u_2(q)$. From (b), $\partial J/\partial q
+= \vec{c}^T(\partial\vec{u}/\partial q) = (1,1)\cdot(0,1)^T = 1$. $\checkmark$
+
+\solnote{The system has $\vec{b} = q(1,2)^T$, so $J = u_1+u_2$ is linear in $q$
+and $\partial J/\partial q = 1$ exactly. Students should note that both
+methods (FSE and adjoint) give the same answer — this is Unifying Idea~2
+at work.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.3}{L3}
+
+\solanswer
+
+The decision rule: use FSE when $m < r$; use adjoint when $r < m$.
+FSE requires $m$ forward solves (plus 1 baseline); adjoint requires $r$
+adjoint solves (plus 1 forward).
+
+\solpart{a} $m = 5$ parameters, $r = 20$ functionals.
+FSE: $m + 1 = 6$ solves. Adjoint: $r + 1 = 21$ solves.
+\textbf{Use FSE} ($6 < 21$).
+
+\solpart{b} $m = 100$ parameters, $r = 3$ functionals.
+FSE: $101$ solves. Adjoint: $4$ solves.
+\textbf{Use adjoint} ($4 \ll 101$). Speedup factor: $\approx 25\times$.
+
+\solpart{c} $m = 8$ parameters, $r = 8$ functionals.
+FSE: 9 solves. Adjoint: 9 solves. Both require the same cost.
+\textbf{Either works}; choose based on implementation availability.
+The crossover is at $m = r$.
+
+\solpart{d} $m = 1{,}000$ parameters, $r = 1$ functional, $t = 0.1$ s/solve.
+FSE: $1001 \times 0.1 = 100.1$ s. Adjoint: $2 \times 0.1 = 0.2$ s.
+\textbf{Use adjoint.} Speedup: $100.1/0.2 \approx \mathbf{500\times}$.
+
+\solnote{Part (d) illustrates the regime where the adjoint is not just
+convenient but essential: 1000 parameters with FSE would take the
+same time as with any other parameter-based approach, while the adjoint
+reduces it to 2 solves regardless of $m$. This is the core motivation
+for Chapters 5--6.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.4}{L4}
+
+\solanswer
+
+The symbiotic equilibrium is $\bar{u}_1 = (1-a)/(1-ac) = 0.625$,
+$\bar{u}_2 = (1-c)/(1-ac) = 0.75$ (from Chapter 4, Ex 4.4).
+The equilibrium Jacobian $J_F$ and FSE system are as computed in Ex 4.4.
+
+\solpart{a} \textbf{FSE approach: 3 solves for 6 sensitivities.}
+
+The FSE gives $\partial\vec{u}/\partial p_j$ for each of the 3 parameters
+($a$, $b$, $c$) by solving the same $2\times2$ linear system
+$J_F\,(\partial\vec{u}/\partial p_j) = -\partial\vec{f}/\partial p_j$.
+This is 3 solves, each giving $(\partial\bar{u}_1/\partial p_j,\,\partial\bar{u}_2/\partial p_j)$.
+
+Numerical results at $a=0.5$, $b=2$, $c=0.4$
+(from Ex 4.4 for $p = c$; deriving for $a$ and $b$ similarly):
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+& $\SI{a}{\cdot}$ & $\SI{b}{\cdot}$ & $\SI{c}{\cdot}$ \\
+\midrule
+$\bar{u}_1$ & $-0.250$ & $0$ & $+0.250$ \\
+$\bar{u}_2$ & $+0.208$ & $0$ & $-0.417$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Derivation for $\partial/\partial a$:}
+$-\partial\vec{f}/\partial a = (0, b\bar{u}_1\bar{u}_2/...)$... but $f_1 = \bar{u}_1(1-\bar{u}_1-a\bar{u}_2) = 0$, so $\partial f_1/\partial a = -\bar{u}_1\bar{u}_2 = -0.625(0.75) = -0.46875$.
+$\partial f_2/\partial a = 0$ (only $f_1$ contains $a$).
+Solve: $J_F(\partial\vec{u}/\partial a) = (0.46875, 0)^T$, giving
+$\SI{a}{\bar{u}_1} = (a/\bar{u}_1)\partial\bar{u}_1/\partial a = (0.5/0.625)(-0.3125) = -0.250$.
+
+\textit{For $b$:} Only $f_2 = b\bar{u}_2(1-\bar{u}_2-c\bar{u}_1) = 0$, so $\partial f_2/\partial b = \bar{u}_2(1-\bar{u}_2-c\bar{u}_1) = 0$ (at equilibrium). Thus $\partial\vec{u}/\partial b = \vec{0}$: $\SI{b}{\bar{u}_1} = \SI{b}{\bar{u}_2} = 0$.
+
+\solpart{b} \textbf{Adjoint approach: 2 solves for 6 sensitivities.}
+
+Two response functionals: $J_1 = \bar{u}_1$ ($\vec{c}_1 = (1,0)^T$)
+and $J_2 = \bar{u}_2$ ($\vec{c}_2 = (0,1)^T$). Two adjoint solves:
+$J_F^T\vec{v}_k = \vec{c}_k$ for $k = 1, 2$.
+Then $\partial J_k/\partial p_j = \vec{v}_k^T(-\partial\vec{f}/\partial p_j)$ for each $j$.
+
+\solpart{c} \textbf{Verification:} Both give the table above. $\checkmark$
+
+\solpart{d} \textbf{Comparison.}
+FSE uses 3 solves (one per parameter), adjoint uses 2 solves (one per \QOI).
+Adjoint is better here because $r = 2 < m = 3$.
+FSE would be preferred when $m < r$, e.g., for a model with 2 parameters
+and 5 response functionals.
+
+\solnote{The zero SIs for $b$ are a natural consequence of the equilibrium
+structure: $b$ scales $f_2$ uniformly, so at equilibrium ($f_2 = 0$),
+$\partial f_2/\partial b = 0$. This is a structural zero, not a numerical
+artifact. Students who get nonzero SI for $b$ have an error in computing
+$\partial\vec{f}/\partial b$.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.5}{L4}
+
+\solanswer
+
+$R_0 = k\beta\nu / [(\nu+\mu)(\gamma+\mu)]$.
+
+\solpart{a} \textbf{Computation graph.}
+Intermediate nodes: $n_1 = k\beta$, $n_2 = n_1\nu$, $n_3 = \nu+\mu$,
+$n_4 = \gamma+\mu$, $n_5 = n_3 n_4$, $R_0 = n_2/n_5$.
+
+\solpart{b} \textbf{Forward mode for $\partial R_0/\partial\nu$.}
+Propagate $\dot{\nu} = 1$ (seeding the derivative w.r.t.\ $\nu$):
+$\dot{n}_1 = 0$, $\dot{n}_2 = n_1\cdot1 + \nu\cdot0 = k\beta$,
+$\dot{n}_3 = 1$, $\dot{n}_4 = 0$, $\dot{n}_5 = \dot{n}_3 n_4 + n_3\dot{n}_4
+= (\gamma+\mu)$.
+$\partial R_0/\partial\nu = (\dot{n}_2 n_5 - n_2\dot{n}_5)/n_5^2
+= (k\beta(\nu+\mu)(\gamma+\mu) - k\beta\nu(\gamma+\mu)) / n_5^2
+= k\beta(\gamma+\mu)\mu / [(\nu+\mu)^2(\gamma+\mu)^2]
+= k\beta\mu / [(\nu+\mu)^2(\gamma+\mu)]$.
+Arithmetic operations: approximately 8 multiplications, 4 additions.
+
+\solpart{c} \textbf{Reverse mode for all 5 partial derivatives.}
+Seed $\bar{R}_0 = 1$. Backpropagate:
+$\bar{n}_2 = \bar{R}_0/n_5 = 1/n_5$, $\bar{n}_5 = -\bar{R}_0 n_2/n_5^2 = -R_0/n_5$.
+$\bar{n}_3 = \bar{n}_5 n_4$, $\bar{n}_4 = \bar{n}_5 n_3$.
+$\bar{n}_1 = \bar{n}_2\nu$, $\bar{\nu} = \bar{n}_2 n_1 + \bar{n}_3$.
+$\bar{k} = \bar{n}_1\beta$, $\bar{\beta} = \bar{n}_1 k$.
+$\bar{\gamma} = \bar{n}_4$, $\bar{\mu} = \bar{n}_3 + \bar{n}_4$.
+One backward pass gives all 5 derivatives simultaneously.
+
+\solpart{d} \textbf{Normalized SI tornado plot.}
+Using interpretable parameters $\tau_E = 1/\nu$, $\tau_I = 1/\gamma$, $L = 1/\mu$:
+$\SI{k}{R_0} = 1$, $\SI{\beta}{R_0} = 1$, $\SI{\tau_E}{R_0} = -\tau_E/(\tau_E+L)$,
+$\SI{\tau_I}{R_0} = \tau_I L/(\tau_I+L) \cdot (1/R_0\tau_I) \approx L/(L+\tau_I)$,
+$\SI{L}{R_0} \approx 0$ (for $L \gg \tau_E, \tau_I$).
+The tornado plot shows $k$ and $\beta$ dominant (SI $= 1$), with
+$\tau_E$ and $\tau_I$ small for $L = 10{,}000$ days.
+
+\solnote{The reverse-mode computation (part c) is exactly the adjoint
+method applied to a scalar computation graph. This exercise bridges
+the algebraic adjoint (Chapter 5) with automatic differentiation (Chapter 7).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.6}{L5}
+
+\solanswer
+
+\textbf{Adjoint SA design for river water-quality model: $m = 40$, $r = 2$.}
+
+\solpart{a} \textbf{Form of the adjoint equation.}
+The river-quality model is a system of ODEs or PDEs. For a generic
+ODE model $\dot{\vec{u}} = \vec{F}(\vec{u};\vec{p})$ with response
+$J_k = \int_0^T g_k(\vec{u})\,dt + h_k(\vec{u}(T))$, the adjoint ODE for
+response $k$ is:
+\[
+  -\dot{\vec{\lambda}}^{(k)} = J_F^T(\vec{u}(t))\,\vec{\lambda}^{(k)}
+  - \nabla_{\vec{u}} g_k(\vec{u}(t)), \qquad
+  \vec{\lambda}^{(k)}(T) = \nabla_{\vec{u}} h_k(\vec{u}(T)).
+\]
+Two adjoint equations (one per \QOI), both depending on the stored
+forward solution $\vec{u}(t)$.
+
+\solpart{b} \textbf{Number of adjoint solves: 2.}
+One adjoint solve per response functional. Each solve runs backward
+from $t = T$ to $t = 0$, giving $\vec{\lambda}^{(k)}(t)$.
+Total cost: 1 forward solve (store) + 2 adjoint solves.
+Compare with FSE: 1 + 40 forward solves.
+The adjoint is $\approx 20\times$ cheaper.
+
+\solpart{c} \textbf{Validation.}
+Verify that the adjoint-computed $\partial J_k/\partial p_j$ matches
+centered finite differences for all 40 parameters: use $h = 6\times10^{-6}|p_j^*|$
+and check agreement to 5 significant figures. Also verify the adjoint
+at a simpler test case with analytic sensitivity (e.g., a single-compartment
+degradation model where $J$ and $\partial J/\partial p$ are known analytically).
+
+\solpart{d} \textbf{Advising regulators.}
+Produce two tornado plots (one per \QOI) showing all 40 parameters
+sorted by $|\partial J_k/\partial p_j|$. Annotate each parameter with its
+plain-language interpretation and the regulatory lever available:
+``Reducing phosphorus loading at source $i$ by $10\%$ reduces downstream
+concentration by approximately $2.3\%$.'' Identify the top 5 sources
+for each \QOI and report whether the same parameters appear in both
+tornado plots (co-optimization opportunity) or different ones
+(trade-off between the two monitoring objectives).
+
+\solpart{e} \textbf{Potential misleading results.}
+If the river model has a threshold effect (e.g., dissolved oxygen below
+a critical level triggers biological collapse), the adjoint — which
+linearizes around the current state — may show small SI values for
+parameters that would be critical if the threshold were crossed.
+To detect: run the model at several nominal parameter sets spanning the
+plausible range; if any set pushes the model near the threshold,
+the adjoint at the current operating point is not representative.
+Correction: report sensitivity results at multiple operating points
+and flag which parameters bring the system close to critical thresholds.
+
+\solnote{Full credit requires all five components with operational
+specificity. The validation plan (part c) must include both a
+numerical check (FD agreement) and an analytic check (simple test case).
+Vague statements like ``validate the code'' are insufficient.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{5.7}{L6}
+
+\solanswer
+
+\solpart{a} \textbf{Is the first sentence correct?}
+
+Yes, with an important qualifier. Both FSE and adjoint compute
+$\partial J/\partial p_j$ for all $j$, and the mathematical result
+is identical: $\partial J/\partial p_j = \vec{v}^T\partial\vec{b}/\partial p_j$
+(adjoint) $= \vec{c}^T(\partial\vec{u}/\partial p_j)$ (FSE), and
+these two expressions are equal because $\vec{c}^T A^{-1} = \vec{v}^T$
+(by definition of the adjoint). So the \emph{answer} is identical.
+The adjoint is faster when $m \gg r$; if $m < r$, the FSE is actually
+faster. ``Just faster'' is only correct in the typical regime $m \gg r$.
+
+\solpart{b} \textbf{Is the second sentence correct?}
+
+No, for at least two reasons.
+
+\textit{Situation 1: The number of parameters grows.} If the model
+is extended from $m = 10$ to $m = 200$ parameters (e.g., adding
+spatially distributed source terms), the FSE cost grows as $200$
+solves while the adjoint remains at $r + 1$ solves. At $m = 200$
+and $r = 1$, switching from FSE to adjoint gives a $100\times$ speedup.
+
+\textit{Situation 2: Multiple response functionals for a well-optimized
+adjoint.} If a colleague needs to compute sensitivities for an
+additional 5 \QOIs on the same model, the FSE cost is unchanged
+(still $m + 1$ solves) while the adjoint adds only 5 more backward
+solves. For models where solving the adjoint ODE is cheap compared
+to evaluating $\partial\vec{f}/\partial p_j$ for all $j$, the adjoint
+is the only viable option at large $m$.
+
+\solpart{c} \textbf{When is FSE preferred?}
+
+FSE is preferred when $m < r$: the number of parameters is less than
+the number of response functionals. FSE costs $m + 1$ solves;
+adjoint costs $r + 1$ solves.
+
+\textit{Specific example where FSE is strictly better:}
+$m = 3$ parameters (e.g., a simple SIR model with $k$, $\beta$, $\tau$),
+$r = 50$ response functionals (sensitivity at 50 time points, or for
+50 spatial locations). FSE: $4$ solves. Adjoint: $51$ solves.
+FSE is $51/4 \approx 13\times$ faster.
+
+\solnote{The key insight is that ``adjoint is always better'' is a
+myth. The correct statement is: use the approach whose cost
+($\min(m,r) + 1$ solves) is smaller. This is Table 5.1 in the text.
+Students who say only ``adjoint is better when $m$ is large'' miss
+the symmetric counterexample. Full credit requires a specific numerical
+example in part (c).}
+
+\end{solution}

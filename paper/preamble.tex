@@ -1,0 +1,133 @@
+%% ============================================================
+%% preamble.tex
+%% Shared preamble for
+%%   Foundations of Sensitivity Analysis: Theory, Computation, and Applications
+%%   Arriola & Hyman
+%% ============================================================
+
+%% ----------------------------------------------------------
+%% PACKAGES
+%% ----------------------------------------------------------
+\usepackage[margin=0.75in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{imakeidx}
+\makeindex[columns=2, title=Index, intoc]
+\usepackage{hyperref}
+\usepackage[protrusion=true,expansion=false]{microtype}  %% improved microtypography
+\hypersetup{
+  colorlinks = true,
+  linkcolor  = black,
+  citecolor  = black,
+  urlcolor   = black,
+  pdftitle   = {Foundations of Sensitivity Analysis: Theory, Computation, and Applications},
+  pdfauthor  = {Leon M. Arriola and James M. Hyman},
+  pdfsubject = {Sensitivity Analysis, Uncertainty Quantification, Mathematical Modeling},
+  pdfkeywords= {sensitivity analysis, adjoint methods, Sobol indices,
+                SIR model, forward sensitivity, uncertainty quantification},
+}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, decorations.markings, decorations.pathreplacing, calc, bending}
+\pgfplotsset{compat=1.18}
+
+%% ----------------------------------------------------------
+%% THEOREM-STYLE ENVIRONMENTS
+%% ----------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}{Example}[chapter]
+\newtheorem{remark}{Remark}[chapter]
+
+%% ----------------------------------------------------------
+%% BOOK-WIDE NOTATION
+%% ----------------------------------------------------------
+
+%% Sensitivity index S_p^q
+\newcommand{\SI}[2]{S_{#1}^{#2}}
+
+%% Parameter of Interest / Quantity of Interest
+%% \xspace inserts a space after the acronym when followed by ordinary text,
+%% but suppresses the space before punctuation and closing braces.
+\usepackage{xspace}
+\newcommand{\POI}{\textsc{poi}\xspace}
+\newcommand{\QOI}{\textsc{qoi}\xspace}
+\newcommand{\POIs}{\textsc{poi}s\xspace}
+\newcommand{\QOIs}{\textsc{qoi}s\xspace}
+
+%% Number sets
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+
+%% Probability / expectation
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+
+%% Derivatives
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}[2]{\frac{d #1}{d #2}}
+
+%% FSE shorthand
+\newcommand{\FSE}{\textsc{fse}}
+
+%% Unifying idea callback (inline, unnumbered)
+\newcommand{\unifyingidea}[1]{\noindent\textit{Unifying Idea~#1.}\enspace}
+
+%% Absolute / relative / regularized change
+\newcommand{\Dabs}{\Delta u_{\mathrm{Abs}}}
+\newcommand{\Drel}{\Delta u_{\mathrm{Rel}}}
+\newcommand{\Dreg}{\Delta u_{\mathrm{Reg}}}
+
+%% Math operators
+\DeclareMathOperator{\arcsinh}{arcsinh}
+\DeclareMathOperator{\sgn}{sgn}
+
+%% ----------------------------------------------------------
+%% PEDAGOGICAL ENVIRONMENTS
+%% ----------------------------------------------------------
+
+%% Self-check question with indented answer
+\newenvironment{selfcheck}{%
+  \medskip\noindent\textit{Self-check.}\enspace
+}{\par}
+
+\newenvironment{scAnswer}{%
+  \nopagebreak\smallskip
+  \noindent\hspace*{1.8em}%
+  \begin{minipage}{0.90\textwidth}
+    \footnotesize\textit{Answer:}\enspace
+  }{\end{minipage}\medskip\par}
+
+%% Numbered exercise environment (resets each chapter)
+\newcounter{exercise}[chapter]
+\renewcommand{\theexercise}{\thechapter.\arabic{exercise}}
+
+\newenvironment{exercise}[1][]{%
+  \refstepcounter{exercise}%
+  \medskip\noindent\textbf{Exercise~\theexercise}%
+  \ifx\relax#1\relax\else\ \textit{(#1)}\fi.\enspace
+}{\par\medskip}
+
+%% Bloom level tag (suppress in production by redefining to empty)
+\newcommand{\bloom}[1]{\textnormal{\tiny\rmfamily[Bloom~#1]}}
+
+%% ----------------------------------------------------------
+%% CHAPTER-OPENING STYLE (book class default used;
+%% customize here if needed)
+%% ----------------------------------------------------------
+
+%% Part / chapter appearance tweaks can go here.
+%% For now, book class defaults are used throughout.

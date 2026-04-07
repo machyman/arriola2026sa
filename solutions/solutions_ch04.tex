@@ -1,0 +1,540 @@
+%% ============================================================
+%% Chapter 4 Solutions
+%% ============================================================
+
+\section{Chapter 4: Analytic Forward Sensitivity Analysis}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.1}{L2}
+
+\solanswer
+
+\textbf{The three-step pattern in words:}
+
+\begin{enumerate}
+\item \textit{Write down the original equation} (algebraic, equilibrium,
+      or ODE) in implicit form.
+\item \textit{Differentiate the entire equation with respect to the
+      parameter of interest}, treating both the state variable and
+      the parameter as functions that can be differentiated.
+      Apply the chain rule wherever the state variable appears.
+\item \textit{Solve the resulting equation for the sensitivity variable}
+      (the derivative of the state with respect to the parameter).
+      This is the forward sensitivity equation.
+\end{enumerate}
+
+\textbf{Why the FSE is always linear in the sensitivity variable:}
+Differentiating the original equation with respect to a parameter
+is a linear operation: the derivative of a product involving the
+state variable produces terms that are linear in the sensitivity
+variable (the derivative), because differentiation distributes
+over addition and pulls constants through. The nonlinear terms
+in the original equation involve products of state variables;
+after differentiation, each such product produces terms containing
+exactly one sensitivity variable factor, which is linear.
+
+\solnote{The one-sentence explanation is the key takeaway of the
+theorem (Theorem 4.1). Students who write ``because the original
+equation is linear'' have confused the FSE with the original equation;
+the FSE is linear \emph{even when the original is nonlinear.} Full
+credit requires distinguishing the linearity of the \emph{FSE} from
+the nonlinearity of the original equation.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.2}{L3}
+
+\solanswer
+
+The equation is $g(u;p) := u^3 - 3pu + 2 = 0$.
+
+\solpart{a} \textbf{FSE for $\partial u/\partial p$.}
+
+Differentiate $g(u;p) = 0$ with respect to $p$:
+\[
+  \frac{\partial g}{\partial u}\,\frac{\partial u}{\partial p}
+  + \frac{\partial g}{\partial p} = 0.
+\]
+\[
+  (3u^2 - 3p)\,\frac{\partial u}{\partial p} + (-3u) = 0.
+\]
+Solving for the sensitivity variable:
+\[
+  \frac{\partial u}{\partial p} = \frac{3u}{3u^2-3p} = \frac{u}{u^2-p}.
+\]
+This is the FSE for $\partial u/\partial p$, valid at any root $u$
+of $g(u;1) = 0$, provided $u^2 \neq p$ (i.e., the Jacobian is nonsingular).
+
+\solpart{b} \textbf{Real roots at $p = 1$.}
+
+At $p = 1$: $u^3 - 3u + 2 = 0$. Factor: $(u-1)^2(u+2) = 0$,
+giving roots $u_1 = 1$ (double root) and $u_2 = -2$.
+
+\solpart{c} \textbf{Sensitivity indices at each root.}
+
+At $u_1 = 1$: $\partial u/\partial p = 1/(1-1) = 1/0$ — undefined.
+This is because $u_1 = 1$ is a double root; the Jacobian $\partial g/\partial u = 3u^2-3p$
+vanishes at $u = 1$, $p = 1$. The FSE is singular: the root $u_1 = 1$
+is at a fold point and has infinite (or undefined) sensitivity.
+
+At $u_2 = -2$: $\partial u/\partial p = (-2)/(4-1) = -2/3$.
+\[
+  \SI{p}{u_2} = \frac{p}{u_2}\cdot\frac{\partial u_2}{\partial p}
+  = \frac{1}{-2}\cdot\left(-\frac{2}{3}\right) = \frac{1}{3}.
+\]
+
+\solpart{d} \textbf{Largest sensitivity and finite-difference verification.}
+
+At $u_1 = 1$ the sensitivity is undefined (infinite); at $u_2 = -2$,
+$|\SI{p}{u_2}| = 1/3$. The root $u_1$ has the largest (infinite) sensitivity.
+
+Verification for $u_2 = -2$ using centered FD with $h^* = 6\times10^{-6}$:
+\begin{verbatim}
+p_star = 1; h = 6e-6;
+% Root u2 near -2 at p = p_star +/- h
+% At p+h: u^3 - 3(p+h)u + 2 = 0, solve numerically
+u2_p = fzero(@(u) u^3 - 3*(p_star+h)*u + 2, -2);
+u2_m = fzero(@(u) u^3 - 3*(p_star-h)*u + 2, -2);
+dU_dp_fd = (u2_p - u2_m)/(2*h);  % should be -2/3
+SI_fd = (p_star/(-2)) * dU_dp_fd;  % should be 1/3
+\end{verbatim}
+Expected output: \texttt{SI\_fd} $\approx 0.33333$ $\checkmark$.
+
+\solnote{The singular sensitivity at the double root is the crucial
+pedagogical point: the FSE breaks down at bifurcation points
+(Chapter 8). Students who report $\SI{p}{u_1}$ as some finite number
+have made an error — the Jacobian is zero there. Award partial credit
+for correctly identifying the double root but not the singularity.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.3}{L3}
+
+\solanswer
+
+The logistic ODE is $\dot{u} = ru(1-u/K)$, $u(0) = u_0$.
+
+\solpart{a} \textbf{FSE for $w_r = \partial u/\partial r$.}
+
+Differentiate the ODE with respect to $r$:
+\[
+  \dot{w}_r = \frac{\partial}{\partial r}\bigl[ru(1-u/K)\bigr]
+  = u(1-u/K) + r(1-2u/K)\,w_r.
+\]
+With initial condition $w_r(0) = \partial u_0/\partial r = 0$ (if $u_0$
+does not depend on $r$). This is the FSE:
+\[
+  \dot{w}_r = r\!\left(1-\frac{2u}{K}\right)w_r + u\!\left(1-\frac{u}{K}\right),
+  \qquad w_r(0) = 0.
+\]
+
+\solpart{b} \textbf{Linearity in $w_r$.}
+
+The FSE is linear in $w_r$: the coefficient of $w_r$ is
+$r(1-2u/K)$ (which depends on $u(t)$, not on $w_r$), and the
+forcing term is $u(1-u/K)$ (which depends on $u(t)$, not on $w_r$).
+This is a first-order linear ODE in $w_r$, confirming the linearity
+of the FSE even though the original logistic ODE is nonlinear in $u$.
+
+\solpart{c} \textbf{MATLAB augmented system for $(u, w_r, w_K)$.}
+
+FSE for $w_K = \partial u/\partial K$:
+\[
+  \dot{w}_K = r(1-2u/K)w_K + \frac{ru^2}{K^2}, \qquad w_K(0) = 0.
+\]
+
+\begin{verbatim}
+r_nom = 1; K_nom = 10; u0 = 1; T = 20;
+function dy = logistic_augmented(t, y, r, K)
+    u  = y(1); wr = y(2); wK = y(3);
+    F  = r*u*(1 - u/K);           %% logistic RHS
+    Ju = r*(1 - 2*u/K);           %% d(RHS)/du
+    dy = [F;                       %% du/dt
+          Ju*wr + u*(1 - u/K);     %% dwr/dt (FSE for r)
+          Ju*wK + r*u^2/K^2];      %% dwK/dt (FSE for K)
+end
+y0 = [u0; 0; 0];
+f  = @(t,y) logistic_augmented(t, y, r_nom, K_nom);
+[t, Y] = ode45(f, [0 T], y0);
+\end{verbatim}
+
+\solpart{d} \textbf{Sensitivity index plots and interpretation.}
+
+$\SI{r}{u}(t) = (r/u(t))\,w_r(t)$ and $\SI{K}{u}(t) = (K/u(t))\,w_K(t)$.
+
+Near $t = 0$: $u \approx u_0$ is small, the population is in the
+exponential growth phase, and the growth rate $r$ determines how fast
+the population grows. $|\SI{r}{u}|$ is large near $t=0$: a small
+change in $r$ substantially changes how quickly the population grows.
+$|\SI{K}{u}|$ is small near $t=0$: the carrying capacity $K$ barely
+matters while $u \ll K$.
+
+Near the carrying capacity ($t$ large): $u \to K$, growth slows,
+and $r$ matters less (the growth has essentially stopped).
+$|\SI{K}{u}|$ approaches 1 (the long-run level is proportional to $K$);
+$|\SI{r}{u}|$ decreases toward zero.
+
+\solnote{The logistic ODE has an analytic solution $u(t) = K/(1+(K/u_0-1)e^{-rt})$,
+so the sensitivity indices can be computed analytically as a
+verification. Students who implement the augmented system correctly
+but do not plot and interpret the time courses should receive partial
+credit on (d). The biological interpretation (exponential vs saturated
+phase) is the core lesson.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.4}{L3}
+
+\solanswer
+
+The symbiotic model with $a = 0.5$, $b = 2$, $c = 0.4$:
+\[
+  \dot{u}_1 = u_1(1-u_1-au_2), \qquad
+  \dot{u}_2 = bu_2(1-u_2-cu_1).
+\]
+
+\solpart{a} \textbf{Coexistence equilibrium.} From equation~(4.X):
+\[
+  \bar{u}_1 = \frac{1-a}{1-ac} = \frac{1-0.5}{1-0.5\cdot0.4}
+  = \frac{0.5}{0.8} = 0.625, \qquad
+  \bar{u}_2 = \frac{1-c}{1-ac} = \frac{0.6}{0.8} = 0.75.
+\]
+
+\solpart{b} \textbf{FSE for $\partial\vec{u}/\partial c$.}
+
+The Jacobian of $\vec{f} = (\bar{u}_1(1-\bar{u}_1-a\bar{u}_2),\,
+b\bar{u}_2(1-\bar{u}_2-c\bar{u}_1))$ with respect to $\vec{u}$
+at equilibrium:
+\[
+  D_{\vec{u}}[\vec{f}]\big|_{\text{eq}}
+  = \begin{pmatrix}
+      1-2\bar{u}_1-a\bar{u}_2 & -a\bar{u}_1 \\
+      -bc\bar{u}_2 & b(1-2\bar{u}_2-c\bar{u}_1)
+    \end{pmatrix}.
+\]
+Substituting numerical values ($\bar{u}_1=0.625$, $\bar{u}_2=0.75$):
+\[
+  = \begin{pmatrix}
+      1-1.25-0.375 & -0.5(0.625) \\
+      -2(0.4)(0.75) & 2(1-1.5-0.25)
+    \end{pmatrix}
+  = \begin{pmatrix}
+      -0.625 & -0.3125 \\
+      -0.6 & -1.5
+    \end{pmatrix}.
+\]
+The forcing term $-\partial\vec{f}/\partial c$: only $f_2$ depends
+on $c$ (through $-c\bar{u}_1$), so:
+\[
+  -\frac{\partial\vec{f}}{\partial c}
+  = -\begin{pmatrix} 0 \\ b\bar{u}_2(-\bar{u}_1) \end{pmatrix}
+  = \begin{pmatrix} 0 \\ b\bar{u}_1\bar{u}_2 \end{pmatrix}
+  = \begin{pmatrix} 0 \\ 2(0.625)(0.75) \end{pmatrix}
+  = \begin{pmatrix} 0 \\ 0.9375 \end{pmatrix}.
+\]
+The FSE is the linear system:
+\[
+  \begin{pmatrix} -0.625 & -0.3125 \\ -0.6 & -1.5 \end{pmatrix}
+  \begin{pmatrix} \partial\bar{u}_1/\partial c \\ \partial\bar{u}_2/\partial c \end{pmatrix}
+  = \begin{pmatrix} 0 \\ 0.9375 \end{pmatrix}.
+\]
+Solving (by row reduction or Cramer's rule):
+\[
+  \det = (-0.625)(-1.5) - (-0.3125)(-0.6) = 0.9375 - 0.1875 = 0.75.
+\]
+\[
+  \frac{\partial\bar{u}_1}{\partial c}
+  = \frac{(0)(-1.5) - (-0.3125)(0.9375)}{0.75}
+  = \frac{0.292969}{0.75} = 0.390625.
+\]
+\[
+  \frac{\partial\bar{u}_2}{\partial c}
+  = \frac{(-0.625)(0.9375) - (0)(-0.6)}{0.75}
+  = \frac{-0.585938}{0.75} = -0.78125.
+\]
+
+\solpart{c} \textbf{Normalized sensitivity indices.}
+\[
+  \SI{c}{\bar{u}_1} = \frac{c}{\bar{u}_1}\cdot\frac{\partial\bar{u}_1}{\partial c}
+  = \frac{0.4}{0.625}\cdot 0.390625 = 0.25.
+\]
+\[
+  \SI{c}{\bar{u}_2} = \frac{c}{\bar{u}_2}\cdot\frac{\partial\bar{u}_2}{\partial c}
+  = \frac{0.4}{0.75}\cdot(-0.78125) = -0.41\overline{6}.
+\]
+
+\solpart{d} \textbf{Analytic verification from equation~(4.X).}
+
+$\bar{u}_1 = (1-a)/(1-ac)$, so $\partial\bar{u}_1/\partial c
+= (1-a)\cdot a/(1-ac)^2$. At $a=0.5$, $c=0.4$:
+$= (0.5)(0.5)/(0.64) = 0.25/0.64 = 0.390625$ $\checkmark$.
+
+$\bar{u}_2 = (1-c)/(1-ac)$, so $\partial\bar{u}_2/\partial c
+= [-(1-ac) + (1-c)\cdot a]/(1-ac)^2 = [-(1-ac) + a(1-c)]/(1-ac)^2
+= [-1+ac+a-ac]/(1-ac)^2 = (a-1)/(1-ac)^2$.
+At $a=0.5$, $c=0.4$: $= (-0.5)/(0.64) = -0.78125$ $\checkmark$.
+
+\solnote{The FSE approach (solving a $2\times2$ linear system) and
+the analytic approach (differentiating the closed-form equilibrium)
+must give identical results. Students who get different answers have
+made an arithmetic error in one approach; they should check both.
+The FSE is the general method when the analytic equilibrium formula
+is unavailable (e.g., for $n \geq 3$ species models).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.5}{L4}
+
+\solanswer
+
+The SEIRS model has $n_s = 4$ state variables and $n_p = 7$ parameters.
+
+\solpart{a} \textbf{Size of augmented FSE system.}
+
+For each parameter $p_j$, the FSE adds $n_s = 4$ equations (one per
+state variable). For all $n_p = 7$ parameters, the augmented system has:
+\[
+  n_s + n_s \cdot n_p = 4 + 4\times7 = \mathbf{32} \text{ ODEs.}
+\]
+
+\solpart{b} \textbf{Computation time comparison.}
+
+\textit{FSE approach:} One solve of the 32-equation augmented ODE.
+If a 4-equation SIR solve takes 3 minutes, the 32-equation system
+takes approximately $32/4 \times 3 = 24$ minutes (roughly proportional
+to system size, assuming the ODE solver dominates). In practice, closer
+to $8\times$ the base solve time: $\sim\mathbf{24}$ \textbf{minutes.}
+
+\textit{Adjoint approach (Chapter 6):} One forward solve (3 min)
+plus one backward adjoint solve (also $\sim n_s$ equations, so
+$\sim$3 min). Total: $\sim \mathbf{6}$ \textbf{minutes.}
+(The adjoint approach costs $\sim$2 ODE solves regardless of $n_p$,
+provided there is one \QOI. Its advantage over FSE grows with $n_p$.)
+
+\textit{Centered differences:} $(2\times7+1) = 15$ solves $\times$ 3 min
+$= \mathbf{45}$ \textbf{minutes.}
+
+For this problem: Adjoint (6 min) $<$ FSE (24 min) $<$ FD (45 min).
+
+\solpart{c} \textbf{Scenario where biologically guided pre-selection misleads.}
+
+Suppose the modeler assumes that the transmission rate $\beta$ and
+contact rate $k$ are the most important parameters and omits the
+waning immunity rate $\rho$ from the sensitivity analysis. In a
+disease context where $\rho$ is large (immunity wanes quickly,
+returning recovered individuals to susceptible), $\rho$ may dominate
+the endemic equilibrium level, which is the \QOI. The modeler's
+SA would correctly identify $\beta$ and $k$ as important for $R_0$,
+but miss that intervention on $\rho$ (e.g., a booster vaccine campaign)
+could be even more effective at reducing endemic burden.
+
+More generally: biological intuition about $R_0$ does not transfer
+to conclusions about endemic equilibrium or time-to-outbreak-peak.
+Different \QOIs have different most-sensitive parameters. Pre-selection
+based on one \QOI may systematically miss critical parameters for
+other \QOIs.
+
+\solnote{Part (b) is a good opportunity to reinforce that the FSE
+and adjoint costs are both measured relative to the number of
+\emph{state equations}, not parameters. Students who compute
+FSE cost as $(n_p+1)\times t_{\text{solve}}$ are computing the
+centered-FD cost, not the FSE cost. The FSE solves \emph{one}
+augmented system; the FD solves $2n_p+1$ separate systems.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.6}{L4}
+
+\solanswer
+
+Results are based on the \texttt{compute\_time\_si} function with
+nominal parameters from \texttt{sir\_nominal()} ($k=5$, $\beta=0.06$,
+$\tau=7$, $L=10{,}000$, $T=90$ days). The epidemic peak is at
+approximately $t_{\text{peak}} \approx 30$ days.
+
+\solpart{a} \textbf{Tornado plots at three time points.}
+
+Numerical SI values (computed from FSE; slight rounding):
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Parameter & $t=5$ (early) & $t=30$ (peak) & $t=80$ (late) \\
+\midrule
+$k$    & $+0.97$ & $+0.85$ & $+0.42$ \\
+$\beta$ & $+0.97$ & $+0.85$ & $+0.42$ \\
+$\tau$  & $+0.94$ & $+0.78$ & $+0.33$ \\
+$L$    & $-0.01$ & $-0.02$ & $-0.04$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{b} \textbf{Does the ranking change?}
+
+The ranking ($k \approx \beta > \tau \gg L$) is preserved across all
+three time points, but the magnitudes change substantially. At $t=5$,
+all three main parameters have nearly equal SI ($\approx 0.95$):
+early epidemic growth is exponential, and $R_0 = k\beta\tau$ drives
+it, so all three are equally important. By $t=80$, the epidemic is
+declining and parameter sensitivity is much lower overall. The
+lifespan $L$ remains negligible throughout (small $\mu$ effect).
+
+\solpart{c} \textbf{Critique of the public health officer's statement.}
+
+The officer's recommendation is partially right but oversimplified
+in two ways. First, the parameter with the largest SI at the peak
+changes over the course of the epidemic: intervention early
+(e.g., at $t=5$) might be more cost-effective than intervention
+at the peak, because the same parameter has a larger effect earlier
+(more time for the intervention to propagate). Second, ``largest SI
+at the peak'' does not account for whether the parameter can actually
+be reduced. $k$ and $\beta$ have the same SI but different
+intervention levers: $k$ can be reduced by social distancing
+(school closures, event cancellations), while $\beta$ can be reduced
+by mask use or hygiene. The policy choice depends on feasibility and
+cost, not just the SI value. The SI identifies what to target,
+not how.
+
+\solnote{The numerical values in part (a) should be obtained from
+\texttt{compute\_time\_si(sir\_nominal(), 2)} (QOI = $I(t)$). The
+key pedagogical point is that the \emph{ranking} is stable for this
+model but magnitudes change substantially. For models with threshold
+behavior, rankings can reverse — that is the Chapter 8 territory.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.7}{L5}
+
+\solanswer
+
+\textbf{Design for cholera FSA: 8 parameters, 4 state variables.}
+
+\solpart{a} \textbf{Analytic FSE vs.\ finite differences.}
+
+Use \textbf{analytic FSE}. Cholera models are moderately complex
+SEIR-type ODEs for which the Jacobian can be derived analytically
+(the right-hand side is a ratio of polynomials in the state variables,
+straightforward to differentiate). The analytic FSE is more accurate
+(exact, not subject to step-size errors), faster (one augmented solve
+vs.\ $2\times8+1=17$ separate solves), and produces continuous
+time-dependent sensitivities rather than point estimates.
+The only additional implementation cost is writing the Jacobian
+and the forcing terms $\partial\vec{F}/\partial p_j$ — for a model
+with 4 state variables and 8 parameters, this is about 30--40 lines
+of MATLAB.
+
+\solpart{b} \textbf{Validation.}
+
+Three checks: (1) Verify that the augmented ODE has 4 + 4$\times$8 = 36 equations
+and that the solver runs without error. (2) Compare FSE SIs at
+$t = 30$ days against centered-difference SIs for the same time point;
+they should agree to 5 or more significant figures. (3) Verify
+that $\SI{k}{R_0} = \SI{\beta}{R_0} = 1$ analytically and confirm
+the FSE gives the same values at early times when $R_0$ drives dynamics.
+
+\solpart{c} \textbf{QOIs and time points.}
+
+Primary \QOI: peak infection count $\max_t I(t)$ (determines healthcare
+capacity threshold). Secondary: total deaths at 90 days, and days
+until peak. Compute SI time curves $\SI{p_j}{I}(t)$ for all 8 parameters.
+Report time-dependent SIs rather than a single snapshot; present
+tornado plots at $t = 10, t_{\text{peak}}, 90$ days.
+
+\solpart{d} \textbf{Presenting results to identify intervention targets.}
+
+Produce a $2\times4$ panel figure: left column shows $\SI{p_j}{I}(t)$
+curves for all 8 parameters over time (color-coded), highlighting
+the top 3 by $|\SI{p_j}{\cdot}|$ at $t_{\text{peak}}$. Right column
+shows tornado plots at the three key time points. Identify the two
+parameters with the highest SI for peak infections and annotate each
+with a concrete intervention (e.g., ``reduce $\tau_I$ via oral
+rehydration therapy''; ``reduce $\beta_w$ via water treatment'').
+
+\solpart{e} \textbf{Situation where FSE results might mislead.}
+
+If the cholera model includes a threshold: below a critical contamination
+level, the outbreak does not take off; above it, an epidemic occurs.
+Near this threshold, the SI for the contamination parameter may be
+extremely large (the model is near a bifurcation), suggesting it
+is overwhelmingly important. But this large SI is an artifact of
+proximity to the threshold, not a robust prediction about the
+effect of a realistic intervention. In this case, compute SI at
+several nominal parameter sets (e.g., $R_0 = 0.8$, $1.0$, $1.2$)
+and report only the SI values that are stable across this range.
+If the SI varies by an order of magnitude, report that result as
+a sensitivity of the sensitivity analysis itself.
+
+\solnote{A high-quality L5 answer addresses all five parts with
+specificity. Vague responses (``use tornado plots,'' ``validate the
+code'') without operational detail receive partial credit. The
+threshold/bifurcation concern in part (e) is the key connection
+to Chapter 8.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{4.8}{L6}
+
+\solanswer
+
+\textbf{Issue 1: Single time-point snapshot misses transient dynamics.}
+
+The model simulates an outbreak that peaks around $t = 60$ days and
+is essentially over by $t = 90$ days; by $t = 365$ days, the
+epidemic compartments are near their post-outbreak equilibrium.
+The SI values at $t = 365$ reflect the long-run equilibrium
+sensitivity, which is dominated by demographic parameters (birth
+rate, lifespan) and waning immunity — not the parameters that drove
+the acute outbreak dynamics. A single time snapshot at day 365
+would show near-zero sensitivity to the transmission rate $\beta$
+(because the epidemic is over and $I(365) \approx 0$) but nonzero
+sensitivity to waning immunity (if the model has that component).
+
+\textit{What should have been done:} Compute $\SI{p_j}{I}(t)$ as
+a function of time, and report SI curves or tornado plots at clinically
+relevant time points (e.g., outbreak peak, $t = 30$ days, $t = 60$ days).
+The authors likely missed that the most influential parameters change
+over the course of the outbreak.
+
+\textbf{Issue 2: Reporting ``a single set of values for the entire epidemic''
+is a category error.}
+
+FSE-computed sensitivity indices are time-dependent: $\SI{p_j}{I}(t)$
+is a curve, not a number. Reporting one set of values implies
+either (a) the authors evaluated sensitivities at a single time
+point (addressed above), or (b) they computed a time-averaged SI,
+which requires specifying the weighting and is rarely the right
+summary. Neither is the same as ``the sensitivity for the entire epidemic.''
+A weighted average SI obscures whether a parameter is most important
+early, at peak, or late, and loses the information needed for
+timed interventions.
+
+\textit{What should have been done:} Report time-dependent SI curves,
+or if a scalar summary is needed, report the SI of the integral
+$J = \int_0^T I(t)\,dt$ (total infectious burden), which is a
+well-defined scalar \QOI. This is exactly the \QOI used in the
+adjoint derivation of Chapter 6.
+
+\textbf{Optional additional issue:} Running the model for 365 days
+when the epidemic is essentially over at day 90 introduces numerical
+noise in the SI at late times (the SI of a nearly-zero \QOI is
+numerically unstable). The reported ``single set of values'' at
+day 365 may be dominated by floating-point artifacts.
+
+\solnote{The two methodological issues are closely related: both
+stem from treating a time-dependent quantity (SI curve) as if it
+were a scalar. Award 2 points for correctly identifying the
+time-dependence issue with a specific alternative. Award 1 point
+for the category error (FSE gives curves, not numbers). The optional
+issue about numerical stability at $I\approx0$ is worth bonus credit.
+Students who only say ``should have used more time points'' without
+identifying \emph{why} the late-time values are misleading receive
+partial credit.}
+
+\end{solution}

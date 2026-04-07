@@ -1,0 +1,883 @@
+\chapter{Global Sensitivity Analysis and Sobol Indices}
+
+\begin{flushright}
+\textit{The point is not to remove uncertainty.\\
+The point is to find out which uncertainty is worth worrying about.}
+\end{flushright}
+
+\bigskip
+
+Consider two epidemiological models. Both give $\SI{\beta}{R_0} = +1$
+at the same nominal parameter values. In Model~A, $R_0$ is nearly linear
+in $\beta$ across the full biologically plausible range $[0.01, 0.15]$.
+In Model~B, $R_0$ is highly nonlinear: it is steep near the lower end
+of the range and flat at the upper end.
+
+For Model~A, the local SI correctly identifies $\beta$ as an important
+parameter. For Model~B, local SA gives the same SI value of $+1$;
+but it is now describing only the slope at the nominal point.
+A $20\%$ increase in $\beta$ from the nominal produces very different
+effects in the two models, and no derivative computed at the nominal
+value can see this.
+
+Chapter~8 showed when local SA fails. This chapter provides the tools
+to replace it.
+
+%%------------------------------------------------------------
+\section{Why Local SA Is Not Enough: The Sigma-Normalized Bridge}
+\label{sec:sigmanorm}
+%%------------------------------------------------------------
+
+\begin{flushright}
+\textit{\small Local SA studies the neighborhood. Global SA studies the country.}
+\end{flushright}
+
+The two can give very different answers about which parameters matter most,
+as the following example shows.
+
+\subsection{The Portfolio Example}
+
+Consider a model $Y = s_1 Q_1 + s_2 Q_2$ where $s_1 = 2$, $s_2 = 1$
+and the parameters have standard deviations $\sigma_1 = 1$, $\sigma_2 = 3$.
+
+Local SA gives $\SI{Q_1}{Y} = 2 > \SI{Q_2}{Y} = 1$:
+parameter~1 appears more important. But the parameters have very different
+uncertainty ranges, and $Q_2$ varies three times as much as $Q_1$.
+
+The output variance is:
+\[
+  \Var(Y) = s_1^2\sigma_1^2 + s_2^2\sigma_2^2 = 4 + 9 = 13
+  \quad\implies\quad \sigma_Y = \sqrt{13}.
+\]
+The \textbf{sigma-normalized sensitivity index}\index{sigma-normalized index}
+\begin{equation}
+  S_i^\sigma = \frac{\sigma_i}{\sigma_Y}\,\pd{Y}{Q_i}
+  \label{eq:sigmanorm}
+\end{equation}
+accounts for both the derivative and the parameter uncertainty:
+\[
+  S_1^\sigma = \frac{1}{\sqrt{13}}\cdot 2 \approx 0.55, \qquad
+  S_2^\sigma = \frac{3}{\sqrt{13}}\cdot 1 \approx 0.83.
+\]
+Parameter~2 dominates, opposite to the local SA ranking.
+The local ranking was misleading because it ignored the factor-of-3
+difference in parameter uncertainty.
+
+\unifyingidea{1} The sigma-normalized index is still the sensitivity
+index from Chapter~2, multiplied by the relative parameter uncertainty.
+Global SA builds on local SA; it does not replace it. The local SI
+from Chapter~2 appears inside every global SA formula in this chapter.
+
+\subsection{Two SIR Models}
+
+For the SIR model, suppose two outbreak settings give the same
+$\SI{\beta}{R_0} = 1$. In Setting~A, $\beta$ is tightly constrained
+from contact-tracing data ($\sigma_\beta = 0.005$), while in Setting~B,
+$\beta$ must be estimated from seroprevalence data ($\sigma_\beta = 0.03$).
+Local SA says $\beta$ is equally important in both settings.
+The sigma-normalized index says $\beta$ in Setting~B is six times more
+important, in terms of its contribution to uncertainty in $R_0$.
+The second semester will show how to propagate these uncertainties
+through the full model.
+
+\begin{selfcheck}
+For the SIR model with local SIs $\SI{k}{R_0} = \SI{\beta}{R_0} = \SI{\tau}{R_0} = 1$
+and parameter standard deviations $\sigma_k = 0.5$, $\sigma_\beta = 0.01$,
+$\sigma_\tau = 2$, with $\sigma_{R_0} = \sqrt{\sigma_k^2 + \sigma_\beta^2 + \sigma_\tau^2}/R_0^*$:
+
+For a SIR model with $k^* = 5$, $\beta^* = 0.06$, $\tau^* = 7$
+($R_0^* = 2.1$), first compute $\sigma_{R_0}$ from the delta method, then
+rank the three parameters by their sigma-normalized index $S_i^\sigma$.
+\end{selfcheck}
+\begin{scAnswer}
+Delta method: $\Var(R_0) \approx \sum_i (\partial R_0/\partial p_i)^2\sigma_i^2$.
+$\partial R_0/\partial k = \beta\tau = 0.42$; $\partial R_0/\partial\beta = k\tau = 35$;
+$\partial R_0/\partial\tau = k\beta = 0.3$.
+$\Var(R_0) \approx 0.42^2(0.25) + 35^2(0.0001) + 0.3^2(4)
+= 0.0441 + 0.1225 + 0.36 = 0.527$.
+$\sigma_{R_0} \approx 0.726$.
+
+$S_k^\sigma = (0.5/0.726)(0.42/2.1)(k/k)\cdot$... Easier via the formula directly:
+$S_i^\sigma = (\partial R_0/\partial p_i)\sigma_i/\sigma_{R_0}$.
+$S_k^\sigma = 0.42 \times 0.5/0.726 \approx 0.29$.
+$S_\beta^\sigma = 35 \times 0.01/0.726 \approx 0.48$.
+$S_\tau^\sigma = 0.3 \times 2/0.726 \approx 0.83$.
+
+Ranking: $\tau > \beta > k$. The mean infectious period drives the most
+uncertainty in $R_0$, despite all three having equal local SIs.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Sampling Methods}
+\label{sec:sampling}
+%%------------------------------------------------------------
+
+All global SA methods require evaluating the model at many parameter
+combinations. Choosing those combinations efficiently is the first
+computational task.
+
+\subsection{Random Sampling}
+
+The simplest approach: draw $N$~independent samples from the joint
+parameter distribution (often assumed uniform or independent log-normal
+over plausible ranges). For $N$ large, random sampling provides good
+coverage on average, but can leave regions of parameter space unsampled
+by chance.
+
+\subsection{Latin Hypercube Sampling}
+
+Latin Hypercube Sampling (LHS) divides each parameter's range into
+$N$ equal strata and ensures that exactly one sample falls in each
+stratum for every parameter~\cite{mckay1979comparison}. This eliminates the clustering that
+random sampling can produce and improves coverage with smaller $N$.
+
+\begin{definition}[LHS Sample]\index{Latin hypercube sampling (LHS)}
+An LHS of size $N$ for $m$ parameters with ranges $[l_j, u_j]$,
+$j = 1,\ldots,m$, is an $N\times m$ matrix $X$ such that each column
+contains exactly one value from each of the $N$ equal-width strata
+$[l_j + (k-1)(u_j-l_j)/N,\ l_j + k(u_j-l_j)/N]$ for $k = 1,\ldots,N$.
+\end{definition}
+
+The MATLAB implementation generates LHS by permuting the strata
+independently for each parameter and adding uniform jitter within each stratum:
+
+\begin{verbatim}
+%% From: src/globalsa/lhs_sample.m (see GitHub repository)
+rng(42);                                   %% set seed before sampling
+X = lhs_sample(N, m, lb, ub);             %% N-by-m sample matrix
+%% Uses lhsdesign (Statistics Toolbox) with maximin criterion
+\end{verbatim}
+
+For the same $N$, LHS provides substantially better coverage than
+random sampling, particularly for estimating marginal effects of
+individual parameters; see Helton and Davis~\cite{helton2003latin}
+for convergence analysis and uncertainty propagation results.
+For Sobol index estimation (Section~\ref{sec:sobol}),
+LHS is not used directly; instead, the Saltelli quasi-random construction
+is preferred.
+
+\begin{selfcheck}
+For $N = 4$ samples and $m = 1$ parameter on $[0, 1]$:
+(a) Draw a random sample of size 4. Is it possible that all 4 points
+    fall in $[0, 0.5]$? Is this possible with LHS?
+(b) Write out explicitly what an LHS of size 4 looks like for one parameter.
+\end{selfcheck}
+\begin{scAnswer}
+(a) Yes, random sampling can place all 4 points in $[0, 0.5]$ (probability $(1/2)^4 = 1/16$).
+With LHS, this is impossible: each quarter-interval $[0,0.25)$, $[0.25,0.5)$,
+$[0.5,0.75)$, $[0.75,1]$ must contain exactly one sample.
+
+(b) One possible LHS: one point in each of $[0,0.25)$, $[0.25,0.5)$,
+$[0.5,0.75)$, $[0.75,1]$, with uniform jitter within each. Example:
+$X = \{0.18, 0.43, 0.62, 0.91\}$, one value per stratum,
+randomly positioned within each.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Regression-Based SA: LHS/PRCC}
+\label{sec:prcc}
+%%------------------------------------------------------------
+
+The Partial Rank Correlation Coefficient (PRCC)\index{PRCC (partial rank correlation coefficient)} is the dominant
+global SA method in mathematical epidemiology.
+It is computationally cheap, handles monotone (but not necessarily linear)
+relationships, and the Marino et al.~\cite{marino2008methodology} MATLAB implementation
+is widely used and freely available; it builds on the rank-correlation
+approach of Iman and Conover~\cite{iman1982distribution} and the
+epidemiological SA tradition of Blower and Dowlatabadi~\cite{blower1994sensitivity}.
+
+\subsection{The PRCC Calculation}
+
+Given $N$ LHS samples of the $m$ \POIs and the corresponding $N$
+model outputs:
+
+\textbf{Step 1.} Rank-transform all inputs and the output separately.
+Replace each value with its rank among the $N$ observations.
+
+\textbf{Step 2.} Fit a linear regression of the rank-transformed output
+on all rank-transformed inputs.
+
+\textbf{Step 3.} For each parameter $p_j$, compute the partial correlation
+coefficient between the rank-transformed $p_j$ and the rank-transformed output,
+controlling for all other parameters. This is the PRCC for $p_j$.
+
+\textbf{Step 4.} Compute a $t$-test $p$-value for each PRCC to assess
+statistical significance.
+
+The PRCC ranges from $-1$ to $+1$. Its sign has the same interpretation
+as the SI sign rule from Chapter~2: positive means POI and QOI increase
+together; negative means they move in opposite directions.
+
+\subsection{When PRCC is Appropriate}
+
+PRCC requires monotone relationships: the QOI must consistently increase
+(or consistently decrease) as each POI increases, across the full
+range of parameter values. It does not require linearity.
+For most compartmental epidemic models, the relationships are approximately
+monotone, which is why PRCC dominates the field.
+
+Before applying PRCC, verify the monotonicity assumption by producing a
+scatter matrix: plot the model output against each \POI for the full
+LHS sample using MATLAB's \texttt{plotmatrix} function.
+A roughly monotone cloud (upward or downward sloping, without reversals)
+supports the use of PRCC. A hump-shaped or U-shaped cloud signals
+non-monotonicity, and Sobol indices should be used instead.
+
+PRCC and Sobol indices are not equivalent. PRCC assumes monotone
+relationships; Sobol indices make no such assumption. When a relationship
+is nonmonotone (a QOI first increases then decreases as a parameter
+increases), PRCC may give a near-zero coefficient even for a highly
+important parameter, while the Sobol total index will correctly identify
+it as important. For the models in this course, both methods typically
+agree, but verifying agreement is a useful consistency check.
+
+%%------------------------------------------------------------
+\section{Sobol Decomposition and Variance-Based SA}
+\label{sec:sobol}
+%%------------------------------------------------------------
+
+Variance-based SA is the most rigorous framework for global SA:
+it quantifies exactly how much of the total output variance is
+attributable to each \POI or group of \POIs~\cite{sobol2001global}.
+
+\subsection{The Intuition: Conditional Expectation}
+
+Suppose parameter $Q_1$ is fixed at $q_1$ while all other parameters
+vary across their ranges. The expected output $\E[Y\,|\,Q_1 = q_1]$
+is some function of $q_1$. If $Q_1$ is important, this conditional
+expectation varies substantially as $q_1$ changes.
+The variance of this conditional expectation,
+$\Var_{Q_1}[\E_{Q_{-1}}(Y\,|\,Q_1)]$, measures how much of $Y$'s
+variability is explained by $Q_1$ alone. Normalizing by the total
+variance gives the first-order Sobol index.
+
+\subsection{The ANOVA Decomposition}\index{ANOVA decomposition}
+
+\textbf{Why does a unique decomposition exist?}
+Because statistical independence allows us to cleanly separate
+what each parameter contributes alone from what it contributes jointly.
+When the $Q_i$ are independent, projecting $f$ onto the subspace
+of functions of $Q_i$ alone gives a well-defined component $f_i(Q_i)$,
+and these projections do not interfere with each other.
+The orthogonality $\int_0^1 f_i(Q_i)\,dQ_i = 0$ is the mathematical
+expression of this separation: each component has zero mean after
+integrating out $Q_i$, so distinct components contribute zero covariance.
+When parameters are correlated, this orthogonality breaks down,
+and the decomposition loses its uniqueness
+(Section~\ref{sec:correlatedsobol} returns to this point).
+With independence, the decomposition is both unique and additive in variance.
+
+For independent \POIs $\vec{Q} = (Q_1,\ldots,Q_m)$ uniformly
+distributed on $[0,1]^m$, any square-integrable model $Y = f(\vec{Q})$
+admits the unique \textbf{ANOVA decomposition}:
+\begin{equation}
+  f(\vec{Q}) = f_0 + \sum_i f_i(Q_i)
+             + \sum_{i<j} f_{ij}(Q_i, Q_j) + \cdots + f_{12\cdots m}(\vec{Q}),
+  \label{eq:ANOVA}
+\end{equation}
+where $f_0 = \E[Y]$, $f_i(Q_i) = \E[Y\,|\,Q_i] - f_0$, and the
+higher-order terms capture interactions. Uniqueness follows from the
+orthogonality conditions $\int_0^1 f_{u}(\vec{Q}_u)\,dQ_i = 0$
+for each $i \in u$; see Sobol~\cite{sobol2001global} Theorem~1
+and Saltelli et al.~\cite{saltelli2008global} Appendix~A for a proof.
+The terms are orthogonal, so their variances add:
+\begin{equation}
+  D = \Var(Y) = \sum_i D_i + \sum_{i<j} D_{ij} + \cdots + D_{12\cdots m},
+  \label{eq:variancedec}
+\end{equation}
+where $D_i = \Var[\E(Y\,|\,Q_i)]$ and $D_{ij} = \Var[\E(Y\,|\,Q_i,Q_j)] - D_i - D_j$.
+
+\medskip\noindent
+\textbf{Worked example: a model with an interaction term.}
+Consider $f(Q_1, Q_2) = Q_1 + Q_2 + Q_1 Q_2$ with $Q_1, Q_2 \sim \mathcal{U}(0,1)$
+independent. Compute the ANOVA components directly from the definitions:
+\begin{align*}
+  f_0 &= \E[Y] = \tfrac{1}{2} + \tfrac{1}{2} + \tfrac{1}{4} = \tfrac{5}{4},\\
+  f_1(Q_1) &= \E[Y\,|\,Q_1] - f_0
+    = \bigl(Q_1 + \tfrac{1}{2} + \tfrac{Q_1}{2}\bigr) - \tfrac{5}{4}
+    = \tfrac{3Q_1}{2} - \tfrac{3}{4} = \tfrac{3}{2}\bigl(Q_1 - \tfrac{1}{2}\bigr),\\
+  f_2(Q_2) &= \E[Y\,|\,Q_2] - f_0
+    = \tfrac{3}{2}\bigl(Q_2 - \tfrac{1}{2}\bigr) \quad\text{(by symmetry)},\\
+  f_{12}(Q_1,Q_2) &= f - f_0 - f_1 - f_2
+    = Q_1 Q_2 - \tfrac{Q_1}{2} - \tfrac{Q_2}{2} + \tfrac{1}{4}
+    = \bigl(Q_1 - \tfrac{1}{2}\bigr)\bigl(Q_2 - \tfrac{1}{2}\bigr).
+\end{align*}
+Verify orthogonality: $\int_0^1 f_{12}\,dQ_1 = \bigl(\int_0^1(Q_1-\tfrac{1}{2})\,dQ_1\bigr)(Q_2-\tfrac{1}{2}) = 0$. \checkmark
+
+The variances are $D_1 = D_2 = \tfrac{3}{4} \cdot \Var(Q_1) = \tfrac{3}{4}\cdot\tfrac{1}{12} = \tfrac{1}{16}$
+and $D_{12} = \Var(f_{12}) = \Var(Q_1-\tfrac{1}{2})\Var(Q_2-\tfrac{1}{2}) = \tfrac{1}{144}$.
+Total variance $D = \tfrac{1}{16} + \tfrac{1}{16} + \tfrac{1}{144} = \tfrac{19}{144}$.
+The first-order indices $S_1 = S_2 = \tfrac{1/16}{19/144} = \tfrac{9}{19} \approx 0.47$,
+and the interaction index $S_{12} = \tfrac{1/144}{19/144} = \tfrac{1}{19} \approx 0.053$.
+Note $S_1 + S_2 + S_{12} = 1$. For the additive model $f = Q_1 + Q_2$
+(no interaction), $S_1 = S_2 = \tfrac{1}{2}$ and $S_{12} = 0$: the indices
+sum to 1 with nothing left over for interactions.
+This is why $\sum S_i < 1$ signals the presence of interactions.
+
+\subsection{Sobol Indices}
+
+\begin{definition}[Sobol Indices]\index{Sobol indices}
+The \textbf{first-order Sobol index}\index{Sobol indices!first-order} for parameter $i$ is:
+\begin{equation}
+  S_i = \frac{D_i}{D} = \frac{\Var[\E(Y\,|\,Q_i)]}{\Var(Y)}.
+  \label{eq:S1}
+\end{equation}
+The \textbf{total Sobol index}\index{Sobol indices!total} for parameter $i$~\cite{homma1996importance} is:
+\begin{equation}
+  S_{T_i} = 1 - \frac{\Var[\E(Y\,|\,\vec{Q}_{-i})]}{\Var(Y)}
+           = \frac{\E[\Var(Y\,|\,\vec{Q}_{-i})]}{\Var(Y)},
+  \label{eq:ST}
+\end{equation}
+where $\vec{Q}_{-i}$ denotes all parameters except $Q_i$.
+\end{definition}
+
+The first-order index measures the \emph{direct} effect of $Q_i$;
+the total index measures the direct effect plus all interactions with
+other parameters. When $S_{T_i} = S_i$ for all $i$, the model is
+additively separable (no interactions). When $S_{T_i} > S_i$,
+parameter $i$ interacts with other parameters.
+
+\unifyingidea{1} The first-order Sobol index $S_i = D_i/D$ uses the
+same ratio structure as the sensitivity index from Chapter~2;
+it measures one variance as a fraction of another. The connection
+is explicit: for a linear model $Y = \sum_i a_i Q_i$ with independent
+$Q_i \sim \mathcal{U}[l_i, u_i]$, the first-order Sobol index equals
+the square of the sigma-normalized index: $S_i = (S_i^\sigma)^2$.
+Global SA generalizes local SA; for linear models, they agree exactly.
+
+\unifyingidea{3} The Sobol decomposition resolves the tension that
+Unifying Idea~3 created in Chapter~8. Local SA is a linearization,
+valid near the nominal values. Sobol indices make no linearity
+assumption: they measure the actual variance contribution across
+the full parameter range. When the linearization is poor (Model~B
+from the chapter opening), local and global SA give different answers,
+and Sobol indices give the correct answer.
+
+For readers with a functional analysis background (Appendix~\ref{app:innerproduct}), the ANOVA decomposition~\eqref{eq:ANOVA}
+is the orthogonal decomposition of $f$ in the Hilbert space
+$L^2([0,1]^m)$ with respect to the inner product
+$\langle f, g\rangle = \int_{[0,1]^m} f(\vec{q})\,g(\vec{q})\,d\vec{q}$.
+The orthogonality explains both why the variances add
+in~\eqref{eq:variancedec} and why the method requires independent \POIs:
+independence is needed for the inner product to factorize and the
+projections to be orthogonal.
+
+\begin{selfcheck}
+For $Y = c_1 Q_1 + c_2 Q_2$ with $Q_i \sim \mathcal{U}(0,1)$ independent:
+(a) Compute $\E[Y\,|\,Q_1]$ and $\Var[\E(Y\,|\,Q_1)]$.
+(b) Compute $\Var(Y)$ using the independence of $Q_1$ and $Q_2$.
+(c) Show that $S_1 = c_1^2/(c_1^2 + c_2^2)$ and $S_2 = c_2^2/(c_1^2 + c_2^2)$.
+(d) Verify $S_1 + S_2 = 1$ (no interaction for additive models).
+\end{selfcheck}
+\begin{scAnswer}
+(a) $\E[Y\,|\,Q_1] = c_1 Q_1 + c_2/2$.
+$\Var[\E(Y\,|\,Q_1)] = c_1^2 \Var(Q_1) = c_1^2/12$.
+
+(b) $\Var(Y) = c_1^2\Var(Q_1) + c_2^2\Var(Q_2) = (c_1^2 + c_2^2)/12$.
+
+(c) $S_1 = D_1/D = (c_1^2/12)/((c_1^2+c_2^2)/12) = c_1^2/(c_1^2+c_2^2)$. Similarly $S_2$.
+
+(d) $S_1 + S_2 = (c_1^2 + c_2^2)/(c_1^2+c_2^2) = 1$. For linear additive models,
+there are no interaction terms and first-order indices sum to 1.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Computing Sobol Indices: The Saltelli Algorithm}
+\label{sec:saltellialg}
+%%------------------------------------------------------------
+
+A naive Monte Carlo estimate of $S_i$ requires choosing $Q_i = q_i$
+for many values and averaging the model over all other parameters
+for each, this costs $O(N^2)$ evaluations. The insight of Saltelli~\cite{saltelli2002making}
+is that all first-order and total Sobol indices can be estimated with
+$N(m+2)$ evaluations using two carefully constructed sample matrices.
+The design and estimators for the total sensitivity index are developed
+in Saltelli et al.~\cite{saltelli2010variance}.
+
+\subsection{The Saltelli Construction}
+
+Generate two independent LHS matrices $A$ and $B$, each $N\times m$.
+Define the $m$ matrices $A_B^{(i)}$: matrix $A$ with its $i$-th column
+replaced by the $i$-th column of $B$. The model is evaluated at all
+rows of $A$, $B$, and all $m$ matrices $A_B^{(i)}$: a total of
+$N(m+2)$ evaluations.
+
+\subsection{The Jansen Estimators}\index{Jansen estimators}
+
+For the first-order index, use the Jansen~\cite{jansen1999analysis} estimator:
+\begin{equation}
+  \hat{S}_i = 1 - \frac{\frac{1}{2N}\sum_{j=1}^N [f(B_j) - f(A_{B,j}^{(i)})]^2}{\hat{D}},
+  \label{eq:Jansen_S1}
+\end{equation}
+where $\hat{D} = \frac{1}{N}\sum_j f(A_j)^2 - \left(\frac{1}{N}\sum_j f(A_j)\right)^2$.
+
+For the total index:
+\begin{equation}
+  \hat{S}_{T_i} = \frac{\frac{1}{2N}\sum_{j=1}^N [f(A_j) - f(A_{B,j}^{(i)})]^2}{\hat{D}}.
+  \label{eq:Jansen_ST}
+\end{equation}
+Use these Jansen estimators, not the original Saltelli (2002) formulas,
+which have higher variance. The Jansen estimator is consistent
+(converges to the true $S_i$ as $N\to\infty$) and nearly unbiased;
+see Jansen~\cite{jansen1999analysis} Theorem~1.
+The key step is that
+\[
+  \E\!\left[\frac{1}{2N}\sum_{j=1}^N (f(B_j) - f(A_{B,j}^{(i)}))^2\right]
+  = D - D_i = \Var(Y) - \Var[\E(Y\,|\,Q_i)],
+\]
+which follows because $B_j$ and $A_{B,j}^{(i)}$ share all parameter
+values except column $i$ (from $A$), so their difference isolates
+the $Q_i$-dependent variation. Dividing by $\hat{D}$ and rearranging
+gives $1 - \hat{S}_i \approx (D - D_i)/D = 1 - S_i$.
+The estimator is nearly unbiased at finite $N$ because the bias
+is $O(1/N)$~\cite{jansen1999analysis}, negligible for $N \geq 1000$.
+
+\subsection{Convergence}
+
+The estimators converge as $O(1/\sqrt{N})$, the standard Monte Carlo rate.
+In practice, $N \geq 1000$ is needed for reliable estimates.
+For $m = 4$ parameters (SIR model): $N(m+2) = 6000$ evaluations at $N = 1000$.
+If each evaluation takes 0.1~seconds: 10~minutes.
+
+Plotting $\hat{S}_i$ and $\hat{S}_{T_i}$ vs.\ $N$ reveals the convergence:
+estimates are noisy for $N < 500$ and stable for $N \geq 2000$.
+This convergence plot is the diagnostic that answers
+the misconception ``more samples always help'': below a threshold
+$N$, additional samples do not produce reliable estimates because
+the variance of the estimator exceeds the signal being measured.
+
+\textbf{Confidence intervals via bootstrap.}
+A point estimate $\hat{S}_i$ is useful but incomplete: it gives no
+information about sampling uncertainty.
+The standard approach is the \textbf{bootstrap}: resample the
+$N(m+2)$ model evaluations with replacement, recompute $\hat{S}_i$
+for each resample, and take the 2.5th and 97.5th percentiles of
+the resulting distribution as a 95\% confidence interval.
+In MATLAB:
+\begin{verbatim}
+B = 500;          %% number of bootstrap replicates
+S1_boot = zeros(B, m);
+idx_all = 1:N;
+for b = 1:B
+    idx = idx_all(randi(N, N, 1));     %% resample rows
+    A_b = A(idx,:);  B_b = Bmat(idx,:);
+    [S1_boot(b,:), ~] = sobol_jansen(@(x) model_eval(x), A_b, B_b);
+end
+S1_CI = prctile(S1_boot, [2.5 97.5]);   %% 95% CI for each index
+\end{verbatim}
+A confidence interval that straddles zero indicates that the parameter's
+effect cannot be distinguished from noise at the current sample size.
+A confidence interval that excludes zero confirms the parameter is
+genuinely influential. As a practical rule: if the confidence interval
+width exceeds the index value, double $N$ before drawing conclusions.
+When $m$ is large, however, even a single Sobol run at $N = 2000$
+may be prohibitively expensive; Morris screening addresses exactly this case.
+
+%%------------------------------------------------------------
+\section{Morris Screening}\index{Morris screening}
+\label{sec:morris}
+%%------------------------------------------------------------
+
+When $m$ is large (30 or more parameters), running Sobol at $N = 2000$
+costs $N(m+2) = 64{,}000$ model evaluations, potentially prohibitive.
+Morris screening~\cite{morris1991factorial} provides a cheap first step:
+$N(m+1)$ evaluations (typically $N = 10$ trajectories) to identify
+which parameters are truly unimportant. An improved radial design
+that gives more uniform coverage with fewer trajectories is
+described by Campolongo et al.~\cite{campolongo2007effective}.
+
+For each trajectory, one parameter is changed at a time by a fixed
+fraction $\Delta$ of its range. The \textbf{elementary effect}\index{elementary effect} of
+parameter $i$ at point $\vec{q}$ is:
+\begin{equation}
+  EE_i(\vec{q}) = \frac{f(\vec{q} + \Delta\vec{e}_i) - f(\vec{q})}{\Delta}.
+  \label{eq:EE}
+\end{equation}
+After $r$ trajectories, the mean $\mu_i^* = (1/r)\sum|EE_i|$
+and standard deviation $\sigma_i$ of the elementary effects are computed.
+Parameters with small $\mu_i^*$ are unimportant. Parameters with large
+$\sigma_i$ have interactions or nonlinear effects.
+
+The Morris diagnostic plot ($\sigma_i$ vs.\ $\mu_i^*$) separates
+parameters into three groups: unimportant (small $\mu_i^*$, small $\sigma_i$);
+important and linear (large $\mu_i^*$, small $\sigma_i$); important
+and nonlinear or interacting (large $\mu_i^*$, large $\sigma_i$).
+
+\textbf{Workflow}: run Morris screening first; fix unimportant parameters
+at their nominal values; run Sobol only on the important subset.
+This can reduce the Sobol cost by a factor of 5--10.
+
+\medskip
+
+\noindent\textbf{When even reduced Sobol is too expensive: surrogate models.}
+If the model is computationally expensive and Morris screening reduces
+the parameter set to, say, five influential \POIs, running Sobol at
+$N = 2000$ still requires $N(m+2) = 14{,}000$ model evaluations.
+For a climate model where each run takes hours, this remains prohibitive.
+
+The practical solution is a \textbf{surrogate model}\index{surrogate model}
+(also called an emulator or meta-model): a cheap statistical
+approximation to the expensive model, trained on a moderate number of
+carefully chosen model runs.
+Concretely, a Gaussian process surrogate fits a probability distribution
+over functions to the training runs, predicting the model output at any
+new input along with a confidence interval; a polynomial chaos expansion
+instead represents the output as a truncated series in orthogonal polynomials
+of the uncertain inputs, with coefficients estimated from the training set.
+Gaussian process emulators and polynomial chaos expansions are the
+most widely used surrogates. Once trained on roughly $50$--$200$
+model evaluations, a surrogate can be evaluated millions of times
+in seconds, making full Sobol estimation feasible even for
+computationally expensive simulations.
+
+Surrogate-based global SA does not replace the methods in this chapter;
+it wraps them. The LHS sampling, the Saltelli construction, and the
+Jansen estimators all apply to the surrogate exactly as they apply
+to the original model. The surrogate simply makes the evaluations
+fast enough to converge.
+Smith~\cite{smith2014uncertainty} develops Gaussian process and
+polynomial chaos surrogates in Chapters~12--13, building directly
+on the LHS samples and Sobol indices from this chapter.
+Students proceeding to the second semester will construct surrogates
+using exactly the training sets generated in this chapter's laboratories.
+
+%%------------------------------------------------------------
+\section{Sobol Indices for Correlated POIs}\index{Sobol indices!correlated POIs}
+\label{sec:correlatedsobol}
+%%------------------------------------------------------------
+
+Standard Sobol decomposition assumes independent \POIs. When parameters
+are correlated, three problems arise: first-order indices can exceed 1 or
+be negative (a diagnostic flag that correlation is present); total indices
+may not sum to 1; and the ANOVA decomposition~\eqref{eq:ANOVA} is no longer
+unique, because correlation destroys the orthogonality that guarantees uniqueness.
+
+Three approaches address correlated \POIs in global SA:
+
+\textbf{Grouped indices}: treat a cluster of correlated parameters as
+a single group. Compute the group Sobol index (the fraction of variance
+explained by the entire group jointly). This avoids allocating variance
+between correlated parameters, which is not well-defined.
+
+\textbf{Modified estimators}: Kucherenko et al.~\cite{kucherenko2012estimation}
+extend the Saltelli algorithm to correlated inputs using copula-based
+sampling. This requires knowledge of the joint distribution of the
+correlated parameters.
+
+\textbf{PRCC}: handles correlation naturally through the ``partial''
+in partial rank correlation. When parameters are correlated, PRCC
+is the most robust and accessible global SA method.
+
+\textbf{Practical recommendation}: for models with correlated \POIs,
+use PRCC as the primary global SA tool and grouped Sobol indices as
+a secondary check. Report the correlation structure explicitly alongside
+the SA results.
+
+%%------------------------------------------------------------
+\section{Comparison of All SA Methods}
+\label{sec:methodcomparison}
+%%------------------------------------------------------------
+
+Table~\ref{tab:allSA} consolidates all SA methods from the book.
+It supersedes the partial decision tables in earlier chapters.
+For a broader treatment of global SA methods, see Saltelli et al.~\cite{saltelli2008global,saltelli2000sensitivity}
+and the recent epidemiological applications in Lu and Borgonovo~\cite{lu2023global}.
+
+\begin{table}[htb]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{2.4cm}p{1.3cm}p{3.5cm}p{2.2cm}p{2.3cm}}
+\toprule
+Method & Chapter & When to use & Assumption & Cost \\
+\midrule
+Local SI (analytic) & 2, 4 & Differentiable model; small uncertainty & Linearization valid & Cheap \\
+Local SI (FD) & 3 & Black-box; small uncertainty & Linearization valid & $2mn_q$ evals \\
+Adjoint & 5--6 & Differentiable; many \POIs; few \QOIs & Linearization valid & 2 solves \\
+AD (reverse) & 7 & Differentiable code; $m \gg r$ & Linearization valid & 2 passes \\
+PRCC & 9 & Monotone model; moderate uncertainty; corr.\ \POIs OK & Monotone & $N$ evals \\
+Morris & 9 & Screening; $m \geq 30$ & None & $N(m+1)$ evals \\
+Sobol & 9 & Nonlinear; large uncertainty; independent \POIs & Independent & $N(m+2)$ evals \\
+Grouped Sobol & 9 & Correlated \POIs; known groups & Known groups & $N(m+2)$ evals \\
+\bottomrule
+\end{tabular}
+\caption{Complete SA method comparison across all chapters.
+         The choice of method depends primarily on whether the model
+         is differentiable, whether uncertainty is small or large,
+         and whether \POIs are independent. No single method is universally best.}
+\label{tab:allSA}
+\end{table}
+
+\unifyingidea{2} The adjoint row in Table~\ref{tab:allSA} is the
+payoff for Chapters~5 and 6. The adjoint is the transpose in whatever
+space you are working in: matrix transpose for linear systems
+(Chapter~5), reversed ODE for dynamical systems (Chapter~6), and
+reversed chain rule for computation graphs (Chapter~7). Every
+``2 solves'' entry in the adjoint row is the same unifying idea,
+applied in a different mathematical space.
+
+%%------------------------------------------------------------
+\section{Bridge to Semester 2}
+\label{sec:bridgesemester2}
+%%------------------------------------------------------------
+
+This book quantifies how model output uncertainty arises from
+parameter uncertainty, assuming the model structure is correct.
+The second semester, covering Smith's \emph{Uncertainty Quantification}
+\cite{smith2014uncertainty}, asks harder questions: what if the model is wrong?
+How do we fit models to data? How do we construct efficient surrogate
+models to replace expensive simulations?
+Smith's Chapters~7--8 develop Bayesian parameter estimation and Markov chain
+Monte Carlo methods for fitting models to data, the natural sequel to the
+identifiability analysis introduced in Chapter~3 of this book.
+
+The connections between the two semesters are direct:
+
+Smith Ch.~14 develops local SA at the graduate level, extending
+Chapters~2--7 of this book with functional-analytic rigor.
+
+Smith Ch.~15 develops global SA and Sobol indices at the graduate level,
+extending Chapter~9 of this book with measure-theoretic foundations.
+
+Smith Ch.~6 treats parameter selection using the sensitivity matrix;
+the core tool introduced in Chapter~4 of this book.
+
+Smith Chs.~12--13 develop model discrepancy and Gaussian process
+surrogates, methods that reduce the cost of global SA by replacing
+the expensive model with a cheap approximation. Surrogates are
+built from the same LHS samples used to estimate Sobol indices
+in this chapter.
+
+Students who have completed this book have the foundational vocabulary,
+the computational intuition, and the mathematical framework to engage
+productively with the full UQ literature. The path from the sensitivity
+index in Chapter~2 to the full Bayesian UQ framework in Smith is
+a single, continuous intellectual development. As an example of
+these methods applied to a realistic multi-parameter epidemic model,
+see Qu, Xue, and Hyman~\cite{qu2018modeling}, which uses SA to
+guide Wolbachia-based mosquito-borne disease control.
+
+The student who has reached this point knows how to ask which parameters
+matter, how to compute that answer efficiently and honestly, and, just
+as importantly, when not to trust the answer.
+Every mathematical model is an argument; sensitivity analysis is the
+discipline that reveals which assumptions the argument depends on.
+
+\medskip\noindent
+\textit{Good sensitivity analysis does not end the discussion.
+It tells you where to begin it.}
+
+%%------------------------------------------------------------
+\section{MATLAB Laboratory: Complete Global SA Pipeline for SIR}
+\label{sec:ch9matlab}
+%%------------------------------------------------------------
+
+This laboratory implements the full global SA pipeline for the SIR model
+and compares all four methods: sigma-normalized, PRCC, Sobol, and Morris.
+
+\textbf{Setup.}
+SIR model with four \POIs $(k, \beta, \tau, L)$ and response $J = I_{\max}$
+(peak infectious count). Use the literature-based uncertainty ranges
+from Chitnis et al.~\cite{chitnis2008determining}:
+$k \in [2, 8]$, $\beta \in [0.02, 0.12]$, $\tau \in [4, 14]$ days,
+$L \in [1000, 100000]$ days.
+
+\textbf{Part 1: LHS and sigma-normalized indices.}
+Draw $N = 500$ LHS samples using the \texttt{lhs\_sample} function.
+Compute $\sigma_{J}$ from the samples. Compute the sigma-normalized index
+for each \POI using the local SI from Chapter~2 and the sample
+standard deviations. Report the ranking.
+
+\textbf{Part 2: PRCC.}
+Run the SIR model at all 500 LHS samples. Rank-transform all inputs
+and the output. Compute PRCC using the \texttt{partialcorr} function
+in MATLAB's Statistics and Machine Learning Toolbox
+(or download Marino et al.'s implementation from the supplementary
+material of \cite{marino2008methodology}).
+Produce a PRCC tornado plot and report $p$-values.
+
+\textbf{Part 3: Sobol estimation.}
+Draw $N = 2000$ samples using the quasi-random Halton or Sobol sequence
+(MATLAB: \texttt{haltonset} or \texttt{sobolset}).
+Build the $A$, $B$, and $m$ matrices $A_B^{(i)}$: $2000\times6 = 12{,}000$
+total evaluations.
+Compute $\hat{S}_i$ and $\hat{S}_{T_i}$ using the Jansen estimators.
+
+\begin{verbatim}
+%% From: src/globalsa/sobol_jansen.m (see GitHub repository)
+rng(42);   %% reproducibility
+[A, B]      = saltelli_sample(N, m, lb, ub);
+[S1, ST, CI_S1] = sobol_jansen(@model_eval, A, B, 500, 0.05);
+%% CI_S1(:,j) = [lower; upper] 95% confidence interval for S1(j)
+\end{verbatim}
+
+\textbf{Part 4: Morris screening.}
+Implement $r = 10$ Morris trajectories with $\Delta = 0.4$.
+Compute $\mu_i^*$ and $\sigma_i$ for each parameter.
+Produce the Morris diagnostic plot ($\sigma_i$ vs.\ $\mu_i^*$).
+Which parameter(s) could be fixed without significant loss of accuracy?
+
+\textbf{Part 5: Convergence check.}
+Plot $\hat{S}_\beta$ and $\hat{S}_{T_\beta}$ vs.\ $N$ for
+$N \in \{100, 200, 500, 1000, 2000, 5000\}$.
+At what $N$ do the estimates stabilize to within $\pm0.05$?
+
+\textbf{Part 6: Full comparison table.}
+Fill in the following table from your results:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Parameter & Local SI & $S_i^\sigma$ & PRCC & $S_i$ (Sobol) \\
+\midrule
+$k$ & & & & \\
+$\beta$ & & & & \\
+$\tau$ & & & & \\
+$L$ & & & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Where do the four methods agree? Where do they disagree? What accounts
+for the differences?
+
+%%------------------------------------------------------------
+\section{Exercises}
+%%------------------------------------------------------------
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch9:sigmanorm}
+For the SEIR model with local SIs $\SI{\tau_E}{R_0} = 0.6$,
+$\SI{\tau_I}{R_0} = 1.2$, $\SI{\beta}{R_0} = 1.0$, $\SI{k}{R_0} = 1.0$
+and uncertainty ranges $\sigma_{\tau_E} = 2$~days, $\sigma_{\tau_I} = 3$~days,
+$\sigma_\beta = 0.01$, $\sigma_k = 0.8$:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute the output standard deviation $\sigma_{R_0}$ using the
+        delta method, at nominal $R_0^* = 2.0$.
+  \item Compute all four sigma-normalized indices.
+  \item Produce a tornado plot of the sigma-normalized indices.
+  \item Compare the ranking with the local SI ranking. Which parameter
+        changed rank most dramatically? Why?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch9:LHS}
+\begin{enumerate}[label=(\alph*)]
+  \item Implement the \texttt{lhs\_sample} function. For $N = 100$,
+        $m = 3$, $[0,1]^3$, generate an LHS and a random sample of the
+        same size.
+  \item Produce scatter plots of all three pairs of parameters for
+        both samples (6 plots total).
+  \item Compute the mean and standard deviation of the sample along each
+        dimension. Which method is closer to the true uniform
+        mean and standard deviation?
+  \item For one parameter, plot the histogram of LHS vs.\ random
+        sampling. Which covers the range more evenly?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch9:PRCC}
+For the SIR model with parameter ranges from the laboratory setup:
+\begin{enumerate}[label=(\alph*)]
+  \item Generate $N = 200$ LHS samples and run the SIR model at each.
+  \item Compute PRCC for all four parameters with respect to $I_{\max}$.
+  \item Produce a PRCC bar chart sorted by $|$PRCC$|$.
+  \item Which parameter has the strongest negative PRCC? What does this
+        mean in plain language?
+  \item Compare the PRCC ranking with the local SI tornado plot from
+        Chapter~2. Do they agree?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch9:sobolanalytic}
+For $Y = 2Q_1^2 + Q_2$ with $Q_1, Q_2 \sim \mathcal{U}(0,1)$, independent:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $\E[Y]$, $\Var(Y)$, $D_1 = \Var[\E(Y\,|\,Q_1)]$,
+        $D_2 = \Var[\E(Y\,|\,Q_2)]$.
+  \item Compute $S_1$, $S_2$. Do they sum to 1? Explain.
+  \item Compute the total indices $S_{T_1}$, $S_{T_2}$.
+  \item Now add $Q_1$ and $Q_2$ to get $Y' = 2Q_1^2 + Q_2 + Q_1 Q_2$
+        (an interaction term). Without computing: does adding the interaction
+        term change $S_1$, $S_2$, or both? In which direction?
+        Then verify by computing the Sobol indices for $Y'$ analytically.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch9:sobolSIR}
+Using the Jansen estimator implementation from the laboratory:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $\hat{S}_i$ and $\hat{S}_{T_i}$ for all four SIR parameters
+        at $N = 2000$.
+  \item For which parameters is $S_{T_i} \gg S_i$? What does this indicate
+        about their role in the model?
+  \item Compute $\sum_i S_i$ and $\sum_i S_{T_i}$. What do you expect
+        these to sum to for an additive model? Are your results consistent
+        with this expectation?
+  \item If you could measure exactly one parameter very precisely
+        (reducing its uncertainty to zero), which parameter would reduce
+        $\Var(I_{\max})$ the most? Justify using the Sobol indices.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch9:morris}
+For the SIR model, implement $r = 15$ Morris trajectories with $\Delta = 1/3$:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $\mu_i^*$ and $\sigma_i$ for each parameter.
+  \item Produce the Morris diagnostic plot.
+  \item Based on the Morris results, which parameter appears most influential?
+        Which appears least influential?
+  \item Run a reduced Sobol analysis using only the three most important
+        parameters identified by Morris (fixing $L$ at its nominal value).
+        Compare the cost and results with the full four-parameter Sobol.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L5}]
+\label{ex:ch9:globaldesign}
+Choose a published epidemic model from the literature with at least
+8 parameters. Design a complete global SA study:
+\begin{enumerate}[label=(\alph*)]
+  \item State the model, its parameters, and a justification for the
+        uncertainty ranges you will use (with citations).
+  \item State the \QOI or \QOIs and explain why they are the most
+        relevant for the model's purpose.
+  \item Choose between PRCC and Sobol as the primary global SA method.
+        Justify your choice based on the model's properties.
+  \item Specify the sample size $N$ and justify it based on convergence.
+  \item Describe how you would present the results to a non-technical
+        audience (e.g., a public health committee or funding agency).
+  \item Identify one situation where your global SA results could still
+        be misleading, and describe what additional analysis you would
+        recommend.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L6}]
+\label{ex:ch9:evaluation}
+A published SA study reports Sobol first-order and total indices for
+a 15-parameter water-quality model. The authors note in the data section
+that three parameters, phosphorus loading rate, nitrogen loading rate,
+and water residence time, are positively correlated across the sampled
+watersheds. The SA section reports standard Sobol indices computed using
+independent sampling for all 15 parameters, without addressing the
+correlation.
+\begin{enumerate}[label=(\alph*)]
+  \item Identify the specific mathematical problem that correlation
+        creates for standard Sobol indices.
+  \item For each of the three correlated parameters, state whether the
+        reported first-order index is likely over-estimated, under-estimated,
+        or unchanged, and explain why.
+  \item Propose the minimal methodological correction that would make
+        the analysis valid.
+  \item The authors justify their approach by noting that their Sobol
+        indices sum to approximately 1.0. Explain why this is not
+        a valid check for independence.
+\end{enumerate}
+\end{exercise}
+
+%%------------------------------------------------------------
+

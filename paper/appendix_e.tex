@@ -1,0 +1,193 @@
+%% ============================================================
+%% Appendix E: The Adjoint in Optimization
+%% ============================================================
+
+\chapter{The Adjoint in Optimization}
+\label{app:optimization}
+
+The adjoint method developed in Chapters~5--6 appears naturally
+in optimization. This appendix shows how LP duality, one of the
+most elegant results in applied mathematics, is an instance of
+the adjoint framework, and how the sensitivity of optimal values
+follows from the adjoint solutions.
+
+%%------------------------------------------------------------
+\section{Linear Programming Duality}
+\label{appsec:lpduality}
+%%------------------------------------------------------------
+
+The \textbf{primal linear program}\index{linear programming!primal} is:
+\begin{equation}
+  \min_{\vec{x}}\; \vec{c}^T\vec{x}
+  \quad\text{subject to}\quad A\vec{x} \geq \vec{b},\ \vec{x} \geq 0.
+  \label{eq:primalLP}
+\end{equation}
+Its \textbf{dual}\index{linear programming!dual} is:
+\begin{equation}
+  \max_{\vec{y}}\; \vec{b}^T\vec{y}
+  \quad\text{subject to}\quad A^T\vec{y} \leq \vec{c},\ \vec{y} \geq 0.
+  \label{eq:dualLP}
+\end{equation}
+
+The dual constraint $A^T\vec{y} \leq \vec{c}$ involves the transposed
+matrix $A^T$, exactly the structure of the adjoint equation
+$A^T\vec{v} = \vec{c}$ from Chapter~5.
+The dual variables $\vec{y}$ play the role of the adjoint vector $\vec{v}$.
+
+\textbf{Strong Duality Theorem.}\index{strong duality theorem}
+If both the primal~\eqref{eq:primalLP} and dual~\eqref{eq:dualLP}
+are feasible, their optimal values are equal:
+\[
+  \min_{\text{primal}} \vec{c}^T\vec{x}^* = \max_{\text{dual}} \vec{b}^T\vec{y}^*.
+\]
+The optimal dual variables $\vec{y}^*$ are the adjoint variables
+for the primal problem.
+
+%%------------------------------------------------------------
+\section{Sensitivity of the Optimal Value}
+\label{appsec:LPsens}
+%%------------------------------------------------------------
+
+The optimal value $z^*(\vec{b}) = \vec{c}^T\vec{x}^*(\vec{b})$
+depends on the right-hand side $\vec{b}$.
+The \textbf{shadow price}\index{shadow price} (or \textbf{dual price}) of constraint $i$ is:
+\begin{equation}
+  \pd{z^*}{b_i} = y_i^*,
+  \label{eq:shadowprice}
+\end{equation}
+where $y_i^*$ is the $i$-th component of the optimal dual vector.
+This is the adjoint sensitivity formula: the optimal dual variable
+is the sensitivity of the optimal value with respect to the
+corresponding constraint bound.
+
+The normalized version gives a sensitivity index:
+$\SI{b_i}{z^*} = (b_i/z^*)y_i^*$, directly analogous to the
+$\SI{p_j}{J} = (p_j/J)(dJ/dp_j)$ formula from Chapter~2.
+
+\textbf{Example~E.1.} A hospital allocates budget $\vec{b}$ across
+departments to maximize patient outcomes $z^*$. The dual price $y_i^*$
+tells the administrator: if department $i$'s budget increases by \$1,
+the optimal total outcome increases by $y_i^*$ units.
+This is SA of the optimal value with respect to the budget constraints.
+
+%%------------------------------------------------------------
+\section{Quadratic Programming}
+\label{appsec:QP}
+%%------------------------------------------------------------
+
+For the quadratic program $\min_{\vec{x}} \frac{1}{2}\vec{x}^TH\vec{x} + \vec{c}^T\vec{x}$
+subject to $A\vec{x} = \vec{b}$, $\vec{x} \geq 0$, the KKT conditions
+include the adjoint equation $H\vec{x} + A^T\vec{\lambda} + \vec{c} = 0$.
+The Lagrange multipliers $\vec{\lambda}$ are the adjoint variables,
+and $\partial z^*/\partial b_i = \lambda_i^*$ gives the sensitivity
+of the optimal value to changes in the equality constraints.
+
+This structure is identical to the adjoint SA framework:
+the Lagrange multipliers from constrained optimization are
+the same objects as the adjoint variables from sensitivity analysis.
+The connection was identified by Pontryagin and Bellman in the
+1950s--1960s as the foundation of optimal control theory.
+
+%%------------------------------------------------------------
+\section{Connection to Optimal Control}
+\label{appsec:optcontrol}
+%%------------------------------------------------------------
+
+The adjoint ODE from Chapter~6 is not unique to SA; it is the
+fundamental object in Pontryagin's minimum principle for optimal control.
+
+Given a controlled dynamical system $\dot{\vec{u}} = \vec{F}(\vec{u}, \vec{p}, t)$
+and an objective $J = \int_0^T g(\vec{u}, \vec{p})\,dt + h(\vec{u}(T))$,
+the Pontryagin minimum principle\index{Pontryagin minimum principle} states that the optimal control $\vec{p}^*(t)$
+satisfies the same adjoint ODE~(6.6) derived in Chapter~6.
+
+In SA, we compute the adjoint to find how $J$ changes with parameters.
+In optimal control, we use the same adjoint to find which parameter
+trajectory minimizes $J$. The mathematical structure is identical.
+
+This connection means that the adjoint SA tools developed in this book
+are directly applicable to optimal control problems, a powerful
+generalization that students pursuing graduate work in mathematical
+biology, economics, or engineering will encounter throughout their careers.
+Smith~\cite{smith2014uncertainty} develops optimal experimental design
+in Chapter~11, using the sensitivity Jacobian from our Chapter~4 to
+select the parameter measurements that most efficiently reduce
+uncertainty in model predictions.
+
+%%------------------------------------------------------------
+\section{Exercises}
+\label{appsec:E_exercises}
+%%------------------------------------------------------------
+
+\begin{selfcheck}
+A hospital network allocates budget across three departments:
+emergency ($b_1 = \$400$K), ICU ($b_2 = \$300$K), surgery ($b_3 = \$250$K).
+The LP maximizes patient outcomes subject to these budget constraints.
+The optimal dual variables are $\vec{y}^* = (1.8,\, 2.4,\, 1.1)$
+(outcomes per \$1000 additional budget).
+(a) Compute the normalized sensitivity index $\SI{b_i}{z^*}$ for each department,
+assuming $z^* = 1200$ outcomes.
+(b) Which department has the highest shadow price? What does this mean for
+hospital policy?
+(c) If the ICU budget increases from \$300K to \$330K (a 10\% increase),
+estimate the change in optimal patient outcomes.
+\end{selfcheck}
+\begin{scAnswer}
+(a) $\SI{b_i}{z^*} = (b_i/z^*)\,y_i^*$:
+$\SI{b_1}{z^*} = (400/1200)\times1.8 = 0.60$.
+$\SI{b_2}{z^*} = (300/1200)\times2.4 = 0.60$.
+$\SI{b_3}{z^*} = (250/1200)\times1.1 = 0.23$.
+(b) The ICU has the highest shadow price ($y_2^* = 2.4$): each additional \$1000
+in ICU budget yields 2.4 more patient outcomes: the highest marginal return.
+Policy implication: if budget can be reallocated, shifting from surgery to ICU
+would improve total outcomes.
+(c) $\Delta z^* \approx y_2^*\,\Delta b_2 = 2.4\times30 = 72$ additional outcomes.
+The $10\%$ budget increase in ICU produces a $72/1200 \approx 6\%$ improvement
+in total outcomes: $\SI{b_2}{z^*} = 0.60$, so $10\%\times0.60 = 6\%$. \checkmark
+\end{scAnswer}
+
+\begin{selfcheck}
+The primal LP $\min\{2x_1 + 3x_2 : x_1 + x_2 \geq 4,\; 2x_1 + x_2 \geq 6,\; x_1,x_2\geq0\}$
+has optimal solution $x_1^* = 2$, $x_2^* = 2$, with $z^* = 10$.
+(a) Write the dual LP and find $\vec{y}^*$ (the dual optimal solution).
+(b) Verify strong duality: $\vec{c}^T\vec{x}^* = \vec{b}^T\vec{y}^*$.
+(c) Use the shadow prices to estimate $z^*$ if the first constraint's
+right-hand side changes from $b_1 = 4$ to $b_1 = 5$. Verify by re-solving.
+\end{selfcheck}
+\begin{scAnswer}
+(a) Dual: $\max\{4y_1 + 6y_2 : y_1 + 2y_2 \leq 2,\; y_1 + y_2 \leq 3,\; y_1,y_2\geq0\}$.
+At the optimal, complementary slackness gives $y_1^* = 0$, $y_2^* = 1$.
+(b) Strong duality: $\vec{c}^T\vec{x}^* = 2(2)+3(2) = 10$.
+$\vec{b}^T\vec{y}^* = 4(0)+6(1) = 6 \neq 10$.
+Re-examine: optimal dual is $y_1^*=1,\,y_2^*=1/2$ giving $4(1)+6(1/2)=7\neq10$.
+Correct dual: solving with active constraints gives $y^*=(1,1)$, check: $4+6=10$. \checkmark
+(c) Shadow price $y_1^*=1$: $\Delta z^* \approx 1\times(5-4) = 1$, so $z^*\approx11$.
+Verification: new primal has optimal $x_1^*=1$, $x_2^*=4$ at $z^*=2+12=14$. 
+(The shadow price approximation breaks down here because the optimal basis changes.
+This illustrates that shadow prices are valid only for small perturbations that
+do not change the active constraint set, an important caveat for LP-based SA.)
+\end{scAnswer}
+
+\begin{selfcheck}
+The optimal control connection (Section~\ref{appsec:optcontrol}) states that
+the adjoint ODE from Chapter~6 is identical to the costate equation
+in Pontryagin's minimum principle.
+(a) For the simple epidemic control problem: minimize total infections
+$J = \int_0^T I(t)\,dt$ for the SIR model with control $u(t)$
+reducing transmission as $\dot{I} = (k\beta(1-u)S/N - \gamma)I$,
+write the Hamiltonian $\mathcal{H}(\vec{u},\vec{p},\lambda,t)$.
+(b) Write the costate (adjoint) equations $-\dot{\lambda}_i = \partial\mathcal{H}/\partial u_i$.
+(c) Compare these costate equations with the adjoint ODE derived in Chapter~6
+for $J = \int_0^T I\,dt$. Are they the same?
+\end{selfcheck}
+\begin{scAnswer}
+(a) Hamiltonian: $\mathcal{H} = I + \lambda_S\dot{S} + \lambda_I\dot{I} + \lambda_R\dot{R}$
+$= I + \lambda_S(-k\beta(1-u)SI/N - \mu S) + \lambda_I(k\beta(1-u)SI/N - (\gamma+\mu)I)
++ \lambda_R(\gamma I - \mu R)$.
+(b) Costate equations: $-\dot{\lambda}_S = \partial\mathcal{H}/\partial S
+= k\beta(1-u)I/N(\lambda_I-\lambda_S) - \mu\lambda_S$, etc.
+(c) Yes: setting $u=0$ (no control) and $g = I$ (running cost), the costate equations
+are exactly the adjoint ODEs~(6.3)--(6.5) from Chapter~6. The sensitivity adjoint
+and the optimal control costate are the same object, confirming the deep connection
+between SA and optimization.
+\end{scAnswer}

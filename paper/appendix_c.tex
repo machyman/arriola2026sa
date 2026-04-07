@@ -1,0 +1,199 @@
+%% ============================================================
+%% Appendix C: Eigenvalue Sensitivity and SVD
+%% ============================================================
+
+\chapter{Eigenvalue Sensitivity and Singular Value Decomposition}
+\label{app:eigenvalue}
+
+This appendix covers two topics moved from Chapter~5 to keep the
+main text focused: sensitivity of eigenvalues and eigenvectors
+(important for stability analysis), and the singular value
+decomposition (important for understanding ill-conditioning).
+
+%%------------------------------------------------------------
+\section{Sensitivity of Eigenvalues}\index{eigenvalue sensitivity}
+\label{appsec:eigensens}
+%%------------------------------------------------------------
+
+Let $A(\varepsilon) = A_0 + \varepsilon B$ be a matrix depending
+on a scalar parameter $\varepsilon$. The eigenvalue $\lambda_k(\varepsilon)$
+and eigenvector $\vec{x}_k(\varepsilon)$ satisfy
+$A(\varepsilon)\vec{x}_k = \lambda_k\vec{x}_k$.
+
+\subsection{Symmetric Matrices}
+
+For symmetric $A_0$ with distinct eigenvalues, differentiating
+$A\vec{x}_k = \lambda_k\vec{x}_k$ at $\varepsilon = 0$:
+\begin{equation}
+  \dd{\lambda_k}{\varepsilon}\bigg|_{\varepsilon=0}
+  = \vec{x}_k^T B\vec{x}_k.
+  \label{eq:eigsens_sym}
+\end{equation}
+The eigenvalue sensitivity is a quadratic form in the perturbation
+matrix and the normalized eigenvector.
+
+\subsection{Non-Symmetric Matrices}
+
+For non-symmetric $A_0$, both left eigenvectors $\vec{y}_k$
+(satisfying $\vec{y}_k^T A = \lambda_k\vec{y}_k^T$) and right
+eigenvectors $\vec{x}_k$ are needed:
+\begin{equation}
+  \dd{\lambda_k}{\varepsilon}\bigg|_{\varepsilon=0}
+  = \frac{\vec{y}_k^T B \vec{x}_k}{\vec{y}_k^T \vec{x}_k}.
+  \label{eq:eigsens_nonsym}
+\end{equation}
+The formula is well-defined when $\lambda_k$ is a simple (distinct)
+eigenvalue, because in that case $\vec{y}_k^T\vec{x}_k \neq 0$.
+
+\begin{proposition}
+\label{prop:biorthogonality}
+If $A_0$ has distinct eigenvalues $\lambda_k \neq \lambda_j$, then
+the corresponding left and right eigenvectors satisfy
+$\vec{y}_k^T\vec{x}_j = 0$ for $k \neq j$
+(\emph{biorthogonality}) and $\vec{y}_k^T\vec{x}_k \neq 0$.
+\end{proposition}
+
+\begin{proof}
+Let $A\vec{x}_j = \lambda_j\vec{x}_j$ and $\vec{y}_k^T A = \lambda_k\vec{y}_k^T$.
+Multiply the first equation on the left by $\vec{y}_k^T$ and the
+second on the right by $\vec{x}_j$:
+\[
+  \vec{y}_k^T A \vec{x}_j = \lambda_j(\vec{y}_k^T\vec{x}_j)
+  \qquad\text{and}\qquad
+  \vec{y}_k^T A \vec{x}_j = \lambda_k(\vec{y}_k^T\vec{x}_j).
+\]
+Subtracting: $(\lambda_k - \lambda_j)(\vec{y}_k^T\vec{x}_j) = 0$.
+Since $\lambda_k \neq \lambda_j$, we conclude $\vec{y}_k^T\vec{x}_j = 0$.
+
+To see that $\vec{y}_k^T\vec{x}_k \neq 0$: if it were zero, then
+$\vec{x}_k$ would be orthogonal to every $\vec{y}_j$ (via biorthogonality
+for $j \neq k$ and the assumed zero for $j = k$). But the left
+eigenvectors $\{\vec{y}_j\}$ span $\mathbb{R}^n$ when eigenvalues are
+distinct~\cite[Theorem~1.4.5]{horn2012matrix}, so no nonzero vector
+can be orthogonal to all of them. This contradiction shows
+$\vec{y}_k^T\vec{x}_k \neq 0$.
+\end{proof}
+
+When $\lambda_k$ is \emph{not} distinct (a repeated eigenvalue),
+$\vec{y}_k^T\vec{x}_k$ can be zero, and the formula~\eqref{eq:eigsens_nonsym}
+breaks down — this is the mathematical signature of a defective matrix
+and, in applications, a bifurcation point.
+
+When $\vec{y}_k^T\vec{x}_k$ is small but nonzero, the eigenvalue is highly
+sensitive to perturbations. This occurs near a bifurcation where
+two eigenvalues nearly coincide.
+
+For the SIR Jacobian at the endemic equilibrium near $R_0 = 1$,
+the left and right eigenvectors corresponding to the near-zero
+eigenvalue become nearly orthogonal as $R_0 \to 1$, explaining
+the condition-number spike observed in Chapter~8.
+
+%%------------------------------------------------------------
+\section{Singular Value Decomposition}
+\label{appsec:SVD}
+%%------------------------------------------------------------
+
+Every matrix $A \in \R^{m\times n}$ has the \textbf{singular value
+decomposition} (SVD):
+\begin{equation}
+  A = U\Sigma V^T,
+  \label{eq:SVD}
+\end{equation}
+where $U \in \R^{m\times m}$ and $V \in \R^{n\times n}$ are orthogonal
+and $\Sigma \in \R^{m\times n}$ is diagonal with non-negative entries
+$\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0 = \sigma_{r+1} = \cdots$
+(the singular values).
+
+\subsection{SVD and the Condition Number}\index{condition number!SVD definition}
+
+The condition number from Chapter~8 is
+$\kappa_2(A) = \sigma_1/\sigma_r$.
+The SVD makes clear why: the smallest singular value $\sigma_r$
+measures how close $A$ is to being rank-deficient. When $\sigma_r \approx 0$,
+$A$ is nearly singular and tiny perturbations to the right-hand side
+$\vec{b}$ can produce large changes in the solution $\vec{u} = A^{-1}\vec{b}$.
+
+\subsection{SVD and SA}
+
+The sensitivity Jacobian $\mathbf{S}$ from Chapter~3 can be analyzed
+using its SVD. The singular vectors of $\mathbf{S}$ identify the
+combinations of parameters that most strongly affect the model output
+(left singular vectors) and the combinations of outputs most strongly
+affected (right singular vectors).
+
+This connects to Principal Component Analysis (PCA):
+the right singular vectors of the design matrix $X$ in a regression
+are the principal components. If the SA study uses LHS sampling
+(Chapter~9), PCA of the sample matrix reveals parameter combinations
+that drive most of the variation in model output, providing global
+SA insights that are complementary to Sobol indices.
+
+\subsection{SVD and the Pseudoinverse}\index{pseudoinverse}
+
+When $A$ is not square or is rank-deficient, the Moore-Penrose
+pseudoinverse $A^+ = V\Sigma^+ U^T$ provides the minimum-norm
+least-squares solution: $\vec{u} = A^+\vec{b}$.
+The pseudoinverse appears in parameter estimation from
+sensitivity data and in regularized inversion methods.
+
+%%------------------------------------------------------------
+\section{Exercises}
+\label{appsec:C_exercises}
+%%------------------------------------------------------------
+
+\begin{selfcheck}
+The sensitivity Jacobian $\mathbf{S}$ for the SIR model at $T = 60$~days
+(from the Chapter~3 MATLAB laboratory) is a $3\times4$ matrix.
+(a) Explain what the SVD of $\mathbf{S}$ reveals about the SA problem
+that the individual sensitivity indices do not.
+(b) If the largest singular value of $\mathbf{S}$ is $\sigma_1 = 2.3$
+and the smallest is $\sigma_4 = 0.02$, what is the condition number
+$\kappa_2(\mathbf{S})$? Interpret this number in plain language for
+the SA context.
+(c) The right singular vector $\vec{v}_1$ corresponding to $\sigma_1$
+identifies the most ``influential'' linear combination of \POIs.
+If $\vec{v}_1 \approx (0.7, 0.7, 0.1, 0.0)^T$ for \POIs
+$(k, \beta, \tau, \mu)$, what does this tell you about the
+SA of the SIR model?
+\end{selfcheck}
+\begin{scAnswer}
+(a) The SVD reveals which \emph{combinations} of parameters drive the
+largest output changes. Individual SIs only measure one-at-a-time effects;
+the SVD captures the directions in parameter space that most amplify
+perturbations to the model output.
+(b) $\kappa_2 = 2.3/0.02 = 115$. This means that a perturbation in
+the direction $\vec{v}_4$ (least influential parameter combination)
+has only $1/115$ the output effect of a perturbation in direction $\vec{v}_1$.
+The SA result is dominated by a small subspace of parameter space.
+(c) The most influential combination weights $k$ and $\beta$ almost equally
+($0.7\approx0.7$) with little contribution from $\tau$ and essentially none
+from $\mu$. This confirms the structural correlation identified in Chapter~3:
+$k$ and $\beta$ appear only as the product $k\beta$ in the SIR model,
+so they always have equal influence on any output.
+\end{scAnswer}
+
+\begin{selfcheck}
+For a symmetric $2\times2$ matrix $A = \begin{pmatrix}a&b\\b&d\end{pmatrix}$
+with $a>d>0$ and $b$ small, the eigenvalue sensitivity formula~\eqref{eq:eigsens_sym}
+gives $d\lambda_1/d\varepsilon = \vec{x}_1^T B \vec{x}_1$
+where $B$ is the perturbation matrix.
+(a) Find the eigenvectors of $A$ for $b=0$.
+(b) For the perturbation $B = \begin{pmatrix}0&1\\1&0\end{pmatrix}$
+(an off-diagonal perturbation), compute $d\lambda_1/d\varepsilon$ at $b=0$.
+(c) Near a transcritical bifurcation in the SIR model, two eigenvalues
+of the Jacobian approach each other. Why does formula~\eqref{eq:eigsens_nonsym}
+become unreliable in this case?
+\end{selfcheck}
+\begin{scAnswer}
+(a) For $b=0$: eigenvectors are $\vec{e}_1 = (1,0)^T$ ($\lambda_1 = a$)
+and $\vec{e}_2 = (0,1)^T$ ($\lambda_2 = d$).
+(b) $d\lambda_1/d\varepsilon = \vec{x}_1^T B \vec{x}_1 = (1,0)\begin{pmatrix}0&1\\1&0\end{pmatrix}(1,0)^T = 0$.
+The leading eigenvalue has zero first-order sensitivity to this off-diagonal perturbation
+(by symmetry; it appears at second order).
+(c) When two eigenvalues nearly coincide ($\lambda_k \approx \lambda_j$),
+the eigenvectors $\vec{x}_k$ and $\vec{x}_j$ become nearly parallel,
+making $\vec{y}_k^T\vec{x}_k \approx 0$ in the denominator of~\eqref{eq:eigsens_nonsym}.
+The sensitivity diverges, signaling that eigenvalue perturbation theory breaks down,
+the same mathematical mechanism that causes SA indices to diverge near a bifurcation
+(Chapter~8).
+\end{scAnswer}

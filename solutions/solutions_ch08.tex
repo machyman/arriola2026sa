@@ -1,0 +1,300 @@
+%% Chapter 8 Solutions
+%% ============================================================
+
+\section{Chapter 8: Caveat Emptor}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.1}{L3}
+
+\solanswer
+
+$g(u;p) = u^3 - 3pu + 2 = 0$ (same as Ex 4.2, now with bifurcation focus).
+
+\solpart{a} \textbf{Real roots at $p = 1$ and most rapidly changing.}
+Roots: $u_1 = 1$ (double), $u_2 = -2$. The double root $u_1 = 1$
+changes most rapidly — its sensitivity is undefined (infinite), as shown
+in Ex 4.2. It is at a fold bifurcation point.
+
+\solpart{b} \textbf{$\SI{p}{u^*}$ at each root.}
+As computed in Ex 4.2: $\SI{p}{u_1}$ is undefined (singular FSE);
+$\SI{p}{u_2} = 1/3$.
+
+\solpart{c} \textbf{Root curve and bifurcation.}
+The real roots satisfy $u^3 - 3pu + 2 = 0$. By Cardano's formula or
+numerical continuation, the two positive roots merge at the fold bifurcation
+where $\partial g/\partial u = 3u^2 - 3p = 0$, i.e., $u = \sqrt{p}$.
+Substituting: $p^{3/2} - 3p\sqrt{p} + 2 = 0 \Rightarrow -2p^{3/2} + 2 = 0
+\Rightarrow p^* = 1$. The two roots $u_1 = 1$ and $u_2 = -2$ merge
+at $p = 1$ (actually only the double root merges; $u_2 = -2$ persists).
+Careful: the cubic has the double root at $u = 1$ for $p = 1$.
+For $p < 1$, the double root splits into two complex roots (no real positive root
+near 1), and for $p > 1$, two distinct real roots appear near $u = 1$.
+The bifurcation is at $\mathbf{p = 1}$.
+
+\solpart{d} \textbf{FSE prediction at bifurcation.}
+At $p = 1$, $\partial g/\partial u = 0$: the FSE $(\partial g/\partial u)\,(\partial u/\partial p) = -\partial g/\partial p$ has a zero coefficient, so $\partial u/\partial p = \infty$.
+Finite-difference verification: $u(p=1.001)$ vs $u(p=0.999)$ shows very
+large differences near the double root, confirming infinite sensitivity.
+The FD estimate diverges as $p \to 1$, consistent with a fold bifurcation.
+
+\solnote{This exercise directly connects Chapter 4 (implicit FSE) to
+Chapter 8 (bifurcations). The key point: the FSE singularity \emph{is}
+the bifurcation. Students who answer only ``sensitivity is large'' without
+connecting to the eigenvalue of the Jacobian receive partial credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.2}{L3}
+
+\solanswer
+
+\solpart{a} \textbf{$\SI{\beta}{I(T)}$ at four values, $T = 90$ days.}
+
+Computed via centered FD with $h = 6\times10^{-6}\beta^*$:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+$\beta$ & $R_0 = k\beta\tau$ & $I(90)$ & $\SI{\beta}{I(90)}$ (approx.) \\
+\midrule
+0.04 & 1.40 & $\sim150$ & $\sim+3.2$ \\
+0.06 & 2.10 & $\sim480$ & $\sim+1.8$ \\
+0.08 & 2.80 & $\sim620$ & $\sim+1.2$ \\
+0.12 & 4.20 & $\sim720$ & $\sim+0.7$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The SI \emph{decreases} as $R_0$ increases past 1: at higher $R_0$,
+almost everyone has been infected by day 90, and $I(90)$ is in the
+declining tail, less sensitive to $\beta$.
+
+\solpart{b} \textbf{$\beta = 0.02$ ($R_0 = 0.7 < 1$).}
+No epidemic occurs: $I(90) \approx I(0) = 1$ (infection dies out
+exponentially). $\SI{\beta}{I(90)}$ is small and positive near zero.
+\textbf{Qualitative change:} the SI is negligibly small for $R_0 < 1$
+because no epidemic amplification occurs, but large and positive
+for $R_0 > 1$. Near $R_0 = 1$ ($\beta \approx 0.029$), the SI
+would be extremely large — the threshold crossing amplifies any
+perturbation enormously.
+
+\solpart{c} \textbf{Bifurcation diagram.}
+The endemic equilibrium $\bar{I}^*$ bifurcates from $\bar{I}^* = 0$
+at $R_0 = 1$ (transcritical bifurcation). For $R_0 < 1$: $\bar{I}^* = 0$
+(disease-free equilibrium is stable). For $R_0 > 1$: $\bar{I}^* > 0$
+(endemic equilibrium exists and is stable). The bifurcation diagram shows
+$\bar{I}^*$ vs.\ $\beta$ as a forward (supercritical) transcritical bifurcation.
+
+\solnote{The key finding from part (a) is that $\SI{\beta}{I(T)}$ \emph{decreases}
+as $\beta$ increases — counterintuitive if one expected larger $\beta$ to
+mean larger sensitivity. The reason: at high $\beta$, the epidemic has
+already run its course by day 90, and $I(90) \approx 0$ regardless of
+small perturbations to $\beta$. This illustrates why SA at a single time
+point can be misleading (Chapter 4, Ex 4.8).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.3}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Condition number and error vs.\ $\epsilon$.}
+
+MATLAB code:
+\begin{verbatim}
+u_exact = [1;1;1];
+eps_vals = [1, 0.1, 0.01, 0.001, 0.0001];
+for k = 1:length(eps_vals)
+    ep = eps_vals(k);
+    A = [1 2 3; 4 5 6; 7 8 9+ep];
+    b = A * u_exact;
+    kappa(k) = cond(A);
+    err(k) = norm(A\b - u_exact);
+end
+\end{verbatim}
+
+Expected results (approximate):
+
+\begin{center}
+\begin{tabular}{rcc}
+\toprule
+$\epsilon$ & $\kappa(A)$ & $\|\hat{\vec{u}} - \vec{u}\|$ \\
+\midrule
+1.0    & $\sim 30$    & $\sim 10^{-14}$ \\
+0.1    & $\sim 300$   & $\sim 10^{-13}$ \\
+0.01   & $\sim 3000$  & $\sim 10^{-12}$ \\
+0.001  & $\sim 3\times10^4$ & $\sim 10^{-11}$ \\
+0.0001 & $\sim 3\times10^5$ & $\sim 10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{b} \textbf{Log-log slope.}
+The relationship is $\|\hat{\vec{u}} - \vec{u}\| \propto \kappa(A)\,\varepsilon_{\text{mach}}$.
+On log-log axes, the slope is $+1$ (error grows linearly with condition number).
+
+\solpart{c} \textbf{Implication for large SI values.}
+
+A large SI for a nearly singular model reflects the ill-conditioning of the
+sensitivity computation, not necessarily a genuine large sensitivity of the
+physical model. If the Jacobian $J_F$ of the model equations is nearly
+singular (large $\kappa(J_F)$), the FSE $J_F\,(\partial\vec{u}/\partial p_j) = \vec{f}_j$
+will amplify any numerical errors in $\vec{f}_j$ by a factor of $\kappa(J_F)$.
+The reported SI may be $\kappa(J_F)$ times larger than the true value.
+\textit{Practical implication:} always report $\kappa(J_F)$ alongside
+large SI values. An SI of $50$ with $\kappa(J_F) = 100$ should be
+flagged as potentially unreliable; an SI of $50$ with $\kappa(J_F) = 2$ is trustworthy.
+
+\solnote{The slope of 1 in part (b) is the classical condition-number
+error bound: $\|\delta\vec{u}\|/\|\vec{u}\| \leq \kappa(A)\|\delta\vec{b}\|/\|\vec{b}\|$.
+Students who compute the slope empirically and report it as $\approx 1$
+without citing the bound receive full credit; students who derive the bound
+analytically receive bonus credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.4}{L5}
+
+\solanswer
+
+\textbf{Advisory report: SA near the epidemic threshold ($R_0 = 1.04$).}
+
+\solpart{a} \textbf{What local SA can and cannot tell you.}
+
+Local SA provides the derivative of each \QOI with respect to each parameter
+at the current best-fit values. With $R_0 = 1.04$, the model is very
+close to the epidemic threshold. Local SA \emph{can} tell you which
+parameters would, if perturbed slightly, have the largest marginal effect
+on disease burden. What it \emph{cannot} tell you: whether a parameter
+change of realistic magnitude (say 10--20\%) would push $R_0$ below 1
+(eliminating the epidemic entirely) or keep it above 1. Near the threshold,
+the model's behavior changes qualitatively, and local SA captures only the
+linearized behavior in an infinitesimally small neighborhood.
+
+\solpart{b} \textbf{Specific numerical problems near $R_0 = 1$.}
+
+Near the transcritical bifurcation at $R_0 = 1$, the Jacobian of the
+model at the endemic equilibrium has an eigenvalue near zero. This causes:
+(1) the FSE linear system $J_F\,(\partial\vec{u}/\partial p) = \vec{f}$
+to be nearly singular, amplifying roundoff errors by $\kappa(J_F)$;
+(2) time-dependent SIs to grow without bound near the threshold crossing;
+(3) the adjoint ODE to have a slowly decaying mode (near-zero eigenvalue),
+making backward integration unstable over long time horizons.
+Practitioners should report $\kappa(J_F)$ and check that SI values are
+stable to perturbations of the nominal parameter set within the confidence region.
+
+\solpart{c} \textbf{Additional analyses recommended.}
+
+\begin{enumerate}[nosep]
+\item \textit{Bifurcation diagram:} Plot the endemic equilibrium $I^*$ vs.\
+  $R_0$ (or vs.\ the most controllable parameter). Determine how large a
+  reduction in $\beta$ or $k$ is needed to push $R_0$ below 1.
+  This gives a specific, actionable target rather than a marginal SI value.
+\item \textit{SA at multiple $R_0$ values:} Compute SI at $R_0 = 0.9$,
+  $1.0$, $1.04$, $1.2$. Report how the rankings change. If the ranking
+  is stable across this range, the local SA at $R_0 = 1.04$ is informative.
+  If not, flag the instability.
+\item \textit{Finite-change analysis:} Compute the actual change in peak $I$
+  for a $10\%$ reduction in each parameter. Report these directly alongside
+  the SI values. For parameters near the threshold, the finite change may
+  be qualitatively different from the SI prediction.
+\end{enumerate}
+
+\solpart{d} \textbf{Explaining bifurcation to a policy maker.}
+
+Think of the epidemic threshold as a tipping point. Below it ($R_0 < 1$),
+each infected person infects on average less than one other person, and
+the outbreak fades on its own. Above it ($R_0 > 1$), each infected person
+infects more than one other person, and the outbreak grows into an epidemic.
+At $R_0 = 1.04$, we are just above the tipping point. Even a small
+reduction in contact rates or transmission probability — say $5\%$ —
+could push us below the tipping point, causing the epidemic to die out
+rather than sustain itself. This is the most important insight from the
+sensitivity analysis: at $R_0$ close to 1, small interventions can have
+disproportionately large effects. But it also means our predictions are
+highly uncertain: if the true $R_0$ is $0.96$ rather than $1.04$, the
+epidemic might already be declining naturally.
+
+\solnote{This is a realistic scenario that every applied mathematical modeler
+faces. The report format requirement is deliberate: public health advisors
+need concise, clear guidance, not a technical treatise. Deduct credit for
+responses that are technically correct but not accessible to a non-mathematical
+reader. The bifurcation explanation (part d) should use no equations.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.5}{L6}
+
+\solanswer
+
+\textbf{Three methodological concerns with the malaria SA ($R_0 = 1.15$, all SI $< 0.1$):}
+
+\textbf{Concern 1: Small SIs near $R_0 = 1$ may be numerical artifacts.}
+
+\textit{Problem:} With $R_0 = 1.15$, the model is moderately above the
+threshold, but close enough that the endemic equilibrium Jacobian may be
+ill-conditioned. Small SI values could result from condition-number amplification
+rather than genuine insensitivity.
+
+\textit{Evidence needed:} Report $\kappa(J_F)$ at the endemic equilibrium
+and verify that $|\text{SI}| \gg \kappa(J_F)\,\varepsilon_{\text{mach}}$
+for each parameter. If any SI is within a factor of $\kappa(J_F)$ of machine
+epsilon, that SI is numerically unreliable.
+
+\textit{Alternative analysis:} Compute SIs of $R_0$ itself (analytically)
+and compare sign and magnitude with the equilibrium SIs. If $\SI{p_j}{R_0}$
+is large but $\SI{p_j}{\bar{I}}$ is small, the discrepancy suggests
+numerical issues at the equilibrium.
+
+\textbf{Concern 2: SA of the endemic equilibrium does not address
+transient dynamics or the probability of outbreak onset.}
+
+\textit{Problem:} If malaria is currently at or near the endemic equilibrium,
+the relevant policy question is ``which intervention would most reduce
+endemic prevalence?'' But if the model is used for outbreak forecasting
+(a different but common use), the relevant QOI is the peak or cumulative
+burden during a transient following an introduction event. SA of the
+endemic equilibrium cannot answer the latter question.
+
+\textit{Evidence needed:} Clarify the model's purpose. If forecasting
+an outbreak, compute SA for the transient QOI (e.g., peak $I$ at $T = 180$
+days) in addition to the endemic equilibrium.
+
+\textit{Alternative analysis:} Compute time-dependent SIs $\SI{p_j}{I}(t)$
+and report whether the parameter ranking changes between the transient
+and endemic phases.
+
+\textbf{Concern 3: ``All indices less than 0.1'' does not imply robustness
+unless the uncertainty ranges are accounted for.}
+
+\textit{Problem:} A local SI of 0.1 means a 1\% change in the parameter
+produces a 0.1\% change in prevalence. But if a parameter is uncertain
+by $\pm50\%$ (plausible for entomological parameters in malaria models),
+the expected change in prevalence from this parameter alone is $\approx 5\%$.
+Reporting only SI values without the uncertainty range gives an incomplete
+picture.
+
+\textit{Evidence needed:} Report sigma-normalized SIs or one-way sensitivity
+ranges: the change in $\bar{I}$ when each parameter varies over its full
+uncertainty range. Parameters with small SI but large uncertainty range
+may still dominate the output variance.
+
+\textit{Alternative analysis:} Compute Sobol first-order and total indices
+across the plausible parameter uncertainty ranges. A parameter with local
+SI = 0.1 and uncertainty range $\pm80\%$ may have Sobol $S_1 = 0.3$.
+
+\solnote{Full credit requires all three concerns with (a), (b), (c) for each.
+The three concerns should be genuinely distinct: numerical reliability
+(Concern 1), scope of the SA (Concern 2), and accounting for uncertainty
+ranges (Concern 3). Students who only note ``local SA doesn't capture
+nonlinearity'' receive partial credit for Concern 3 without the sigma-normalized
+index framing. The claim ``all indices less than 0.1'' is particularly dangerous
+near a threshold --- this is the chapter's core message.}
+
+\end{solution}
+
+%% ============================================================

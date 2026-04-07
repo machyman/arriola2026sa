@@ -1,0 +1,426 @@
+%% ============================================================
+%% Chapter 6 Solutions
+%% ============================================================
+
+\section{Chapter 6: The Adjoint ODE}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.1}{L3}
+
+\solanswer
+
+Logistic ODE: $\dot{u} = ru(1-u/K)$, $J = \int_0^T u\,dt$.
+Here $F(u;r,K) = ru(1-u/K)$, $g(u) = u$, $h = 0$.
+
+\solpart{a} \textbf{Adjoint ODE and terminal condition.}
+
+The running cost gradient: $\partial g/\partial u = 1$.
+The state Jacobian: $F_u = r(1 - 2u/K)$.
+Adjoint ODE (backward):
+\[
+  -\dot{\lambda} = F_u\,\lambda - \frac{\partial g}{\partial u}
+  = r\!\left(1 - \frac{2u(t)}{K}\right)\lambda - 1,
+  \quad \lambda(T) = 0.
+\]
+Equivalently (standard sign for integration backward with \texttt{ode45}):
+\[
+  \dot{\lambda} = 1 - r\!\left(1 - \frac{2u(t)}{K}\right)\lambda.
+\]
+
+\solpart{b} \textbf{Linearity in $\lambda$.}
+
+The adjoint ODE is linear in $\lambda$: $\dot{\lambda} = 1 - r(1-2u(t)/K)\lambda$.
+The coefficient of $\lambda$ is $-r(1-2u(t)/K)$, which depends on $u(t)$
+but not on $\lambda$ itself. The forcing term is $+1$. This is a
+first-order linear ODE in $\lambda$, even though the forward logistic
+ODE is nonlinear in $u$. This linearity is guaranteed by the Lagrange
+multiplier derivation (Theorem 6.1): the adjoint is always the adjoint
+of the \emph{linearized} forward equation.
+
+\solpart{c} \textbf{Why the adjoint depends on $u(t)$.}
+
+The adjoint ODE measures how sensitive $J$ is to perturbations of the
+state at time $t$. This sensitivity depends on how the forward dynamics
+amplify or dampen perturbations between time $t$ and $T$, which in turn
+depends on $u(t)$ through the coefficient $F_u = r(1-2u/K)$. Near the
+carrying capacity ($u \approx K$), $F_u \approx -r < 0$: perturbations
+decay. Near $u = 0$, $F_u \approx r > 0$: perturbations grow.
+The adjoint must account for this varying amplification.
+
+\solpart{d} \textbf{MATLAB implementation.}
+
+\begin{verbatim}
+r=0.5; K=100; u0=10; T=20;
+ode_opts = odeset('RelTol',1e-8,'AbsTol',1e-10,'MaxStep',0.1);
+
+% Forward solve
+f_fwd = @(t,u) r*u*(1-u/K);
+[t_fwd, U] = ode45(f_fwd, [0,T], u0, ode_opts);
+u_fn = griddedInterpolant(t_fwd, U, 'pchip');
+
+% Backward adjoint solve (tspan=[T,0])
+f_adj = @(t,lam) 1 - r*(1-2*u_fn(t)/K)*lam;
+[t_adj, LAM] = ode45(f_adj, [T,0], 0, ode_opts);
+
+% Sensitivity integrals
+SI_r = (r/trapz(t_fwd,U)) * trapz(t_fwd, LAM_interp.*U.*(1-U/K));
+\end{verbatim}
+
+At nominal values, $\lambda(t)$ is large near $t = 0$ (early population
+growth is more influential for the integral $J = \int u\,dt$) and
+decreases toward $t = T$ as the population saturates at $K$.
+
+\solnote{Students often get the sign of the adjoint ODE wrong.
+The forward-time form is $\dot{\lambda} = 1 - r(1-2u/K)\lambda$;
+calling \texttt{ode45} with \texttt{tspan = [T, 0]} automatically
+handles backward integration. Students who negate the RHS AND
+use backward tspan are double-counting the sign. The key test: at $T$,
+$\lambda(T) = 0$; at $t=0$, $\lambda(0)$ should be large and positive.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.2}{L3}
+
+\solanswer
+
+\textbf{What integration by parts accomplishes:}
+
+Step 3 transfers the time derivative $d/dt$ from the sensitivity variable
+$w(t)$ (which we want to eliminate) onto the adjoint variable $\lambda(t)$
+(which we can freely define). This is precisely what the matrix transpose
+accomplishes algebraically: if $A\vec{w} = \vec{f}$ is the FSE, then
+integrating $\vec{\lambda}^T(A\vec{w})$ by parts shifts the differential
+operator from $\vec{w}$ to $\vec{\lambda}$, resulting in $(-\dot{\vec{\lambda}}
+- A^T\vec{\lambda})$ multiplying $\vec{w}$. Setting this coefficient to zero
+defines the adjoint ODE, making the $\vec{w}$-integral vanish.
+
+\textbf{Analogy with transposition:}
+
+In the algebraic setting (Chapter 5), the FSE is $A\vec{w} = \vec{f}$
+and the adjoint is $A^T\vec{v} = \vec{c}$. The sensitivity formula comes from:
+$\vec{c}^T\vec{w} = (A^T\vec{v})^T\vec{w} = \vec{v}^T(A\vec{w}) = \vec{v}^T\vec{f}$.
+The transpose moves the operator from $\vec{w}$ to $\vec{v}$.
+Integration by parts does the same for the differential operator:
+$\int\lambda\,\dot{w}\,dt = [\lambda w]_0^T - \int\dot{\lambda}\,w\,dt$
+moves the time derivative from $w$ to $\lambda$.
+The ODE adjoint is the continuous analog of the matrix transpose.
+
+\textbf{Direct verification of equation (6.X):}
+
+Let $p(t) = \lambda(t)w(t)$. Differentiate by product rule:
+$\dot{p} = \dot{\lambda}w + \lambda\dot{w}$.
+Integrate over $[0,T]$:
+\[
+  \int_0^T (\dot{\lambda}w + \lambda\dot{w})\,dt = [p(t)]_0^T = \lambda(T)w(T) - \lambda(0)w(0).
+\]
+Rearranging:
+\[
+  \int_0^T \lambda\dot{w}\,dt = \lambda(T)w(T) - \lambda(0)w(0) - \int_0^T \dot{\lambda}w\,dt. \checkmark
+\]
+This is equation~(6.X) (the integration-by-parts identity for ODE adjoints).
+
+\solnote{The key pedagogical connection is: transpose (Chapter 5) and
+integration by parts (Chapter 6) are both instances of Unifying Idea~2
+— the adjoint is the transpose in whatever space we are working in.
+In finite dimensions, transpose reverses the pairing; in function space,
+integration by parts reverses the temporal derivative.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.3}{L4}
+
+\solanswer
+
+Using \texttt{run\_sir\_adjoint(sir\_nominal())} from the repository,
+with $J = \int_0^{90} I\,dt$.
+
+\solpart{a} \textbf{Adjoint-computed SI values (nominal parameters).}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Parameter & $\partial J/\partial p_j$ (raw) & $\SI{p_j}{J}$ \\
+\midrule
+$k$    & $\sim +120$ & $\approx +0.57$ \\
+$\beta$ & $\sim +2000$ & $\approx +0.57$ \\
+$\tau$  & $\sim +17$  & $\approx +0.38$ \\
+$L$    & $\sim -0.4$  & $\approx -0.03$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+(Exact values depend on ODE solver tolerances; ratios are robust.)
+
+\solpart{b} \textbf{Why $\SI{k}{J} = \SI{\beta}{J}$.}
+
+In the SIR model, $k$ and $\beta$ appear only in the product $k\beta$.
+Any perturbation to $k$ has the identical structural effect on the ODE
+right-hand side as a proportional perturbation to $\beta$. Since the
+model is invariant to the labeling $k \leftrightarrow \beta$ (they are
+not separately identifiable from outbreak data alone), their normalized
+SIs must be identical. Mathematically: $\partial F/\partial k = \beta S I/N$
+and $\partial F/\partial\beta = k S I/N = (k/\beta)(\partial F/\partial k)$,
+so after normalization the sensitivities cancel out and become equal.
+
+\solpart{c} \textbf{Optimal intervention.}
+
+The tornado plot shows $k$ and $\beta$ tied for largest SI, followed by
+$\tau$. If one intervention reduces a single parameter by 20\%, the reduction
+in $J$ (total infectious burden) is approximately $20\% \times |\SI{p_j}{J}|$
+for each:
+$k$ or $\beta$: $\approx 11.4\%$; $\tau$: $\approx 7.6\%$; $L$: negligible.
+\textbf{Target $k$ or $\beta$} (whichever is more controllable).
+In practice, $k$ (contact rate) is reduced by social distancing;
+$\beta$ (transmission probability per contact) by mask-wearing or hygiene.
+Both are equally effective at reducing total disease burden.
+
+\solpart{d} \textbf{Cost comparison with FSE.}
+
+FSE for the time-dependent SI $\SI{p_j}{I}(t)$: one augmented ODE solve
+($4 + 4\times4 = 20$ equations). Adjoint: one forward solve + one adjoint
+solve (each with $\sim 4$ equations). For this small model they are
+comparable; the adjoint becomes much faster for models with $m \gg r$.
+
+\solnote{The equality $\SI{k}{J} = \SI{\beta}{J}$ is a structural property
+of the SIR model that students should identify and explain, not just report.
+This connects to the identifiability material from Chapter 3: $k$ and
+$\beta$ are not separately identifiable from $I(t)$ data.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.4}{L4}
+
+\solanswer
+
+FSE cost: $m + 1$ ODE solves. Adjoint cost: $r + 1 = 2$ ODE solves
+(1 forward + 1 adjoint for $r = 1$ \QOI). Each solve: 30 seconds.
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+$m$ & FSE cost (solves) & Adjoint cost (solves) & Speedup \\
+\midrule
+4   & 5  & 2 & $2.5\times$ \\
+10  & 11 & 2 & $5.5\times$ \\
+50  & 51 & 2 & $25.5\times$ \\
+500 & 501 & 2 & $250.5\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{At what $m$ is adjoint $>10\times$ faster?}
+
+Adjoint time: $2 \times 30 = 60$ s. FSE time: $(m+1) \times 30$ s.
+Speedup $> 10\times$ when $(m+1)/2 > 10$, i.e., $m > 19$.
+At $m = 20$: FSE = 630 s, adjoint = 60 s, speedup = $10.5\times$.
+The adjoint becomes $>10\times$ faster at $\mathbf{m \geq 20}$ \textbf{parameters.}
+
+\solnote{Many students write ``the adjoint becomes better at $m \geq 2$''
+(technically true since adjoint costs 2 and FSE costs 3 at $m=2$) but
+miss the practical threshold. The question asks for $>10\times$; students
+should set up and solve the inequality. Note that for $r = 1$ (one \QOI),
+the adjoint is always better than FSE for $m > 1$ — the interesting
+threshold for practioners is when the speedup is large enough to justify
+reimplementation.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.5}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Why integrate backward from $T$?}
+
+The adjoint variable $\lambda(t)$ answers the question: ``If the state
+at time $t$ were perturbed, how much would $J$ change?'' This question
+is inherently backward in time — the effect of a perturbation at time
+$t$ propagates forward to $T$, and we need to know what happened between
+$t$ and $T$ to answer it. At $T$ itself, the effect on $J$ of a
+perturbation to $u(T)$ is determined directly by how $J$ depends on
+the final state. Working backward from this known terminal value, we
+accumulate the influence of perturbations at each earlier time.
+Forward integration from $t = 0$ would require knowing the effect
+of future perturbations before we have computed them.
+
+\solpart{b} \textbf{Why $\lambda_I(t)$ is larger near $t = 0$?}
+
+$\lambda_I(t)$ measures how sensitive $J = \int I\,dt$ is to a
+perturbation of $I$ at time $t$. A perturbation at $t = 5$ days
+has 85 days to propagate through the epidemic dynamics and affect
+the total infectious burden. A perturbation at $t = 85$ days has
+only 5 days left; most of the integral $J$ has already been accumulated.
+So early perturbations matter more, and $\lambda_I(5) > \lambda_I(85)$.
+
+\solpart{c} \textbf{Early intervention recommendation.}
+
+From the adjoint solution at nominal parameters, $\lambda_I(5) \approx L_{\max}$
+while $\lambda_I(80) \approx 0.1\,L_{\max}$. A 10\% reduction in
+the contact rate $k$ applied only during days 0--10 reduces $J$ by
+approximately $10\% \times |\SI{k}{J}| \times (\text{effective weight at } t=5)$,
+which is proportionally larger than the same reduction applied during days 80--90.
+The practical recommendation: interventions (school closures, event cancellations)
+are most effective when implemented in the first two weeks of an outbreak.
+
+\solpart{d} \textbf{Terminal condition vs.\ reverse-time forward.}
+
+Running the forward ODE backward from $\vec{u}(T)$ with initial condition $\vec{0}$
+would give a solution to $\dot{\vec{z}} = -\vec{F}(\vec{z})$, which is
+the time-reversal of the epidemic — unphysical and unrelated to the adjoint.
+The adjoint terminal condition $\vec{\lambda}(T) = \nabla_{\vec{u}} h(\vec{u}(T))$
+encodes the sensitivity of $J$ to the final state, which is determined by
+the structure of the response functional, not by the forward dynamics.
+For $J = \int I\,dt$ with no terminal cost, $\vec{\lambda}(T) = \vec{0}$
+because $J$ does not directly depend on the final state; the adjoint ODE
+then builds up the historical influence backward through the epidemic.
+
+\solnote{Parts (a) and (d) are the most conceptually challenging in the chapter.
+Common error for (d): students say both approaches ``start from zero'' and
+cannot distinguish them. The key is that the adjoint ODE coefficients
+depend on the \emph{forward} solution $u(t)$, which must be stored and
+accessed backward. Simply integrating the forward ODE backward yields a
+physically different trajectory.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.6}{L5}
+
+\solanswer
+
+SEIR model with $\vec{p} = (k, \beta, \tau_E, \tau_I, L)$,
+$J = \int_0^T I(t)\,dt$.
+
+\solpart{a} \textbf{4$\times$4 Jacobian $J_F$.}
+
+Let $\gamma = 1/\tau_I$, $\nu = 1/\tau_E$, $\mu = 1/L$.
+\[
+J_F = \frac{\partial(F_S, F_E, F_I, F_R)}{\partial(S, E, I, R)} =
+\begin{pmatrix}
+  -\lambda-\mu & 0 & -k\beta S/N & 0 \\
+  \lambda      & -(\nu+\mu) & k\beta S/N - k\beta I/N & 0 \\
+  0            & \nu & -(\gamma+\mu) & 0 \\
+  0            & 0   & \gamma & -\mu
+\end{pmatrix}
+\]
+where $\lambda = k\beta I/N$ (force of infection). Off-diagonal terms
+in column 3 arise because $I$ appears in $\lambda$.
+
+\solpart{b} \textbf{Four adjoint ODEs and terminal conditions.}
+
+For $J = \int I\,dt$: $\partial g/\partial\vec{u} = (0,0,1,0)^T$, $h = 0$.
+Terminal conditions: $\vec{\lambda}(T) = \vec{0}$.
+Adjoint ODEs:
+\begin{align*}
+  -\dot{\lambda}_S &= (-\lambda-\mu)\lambda_S + \lambda\,\lambda_E \\
+  -\dot{\lambda}_E &= -(\nu+\mu)\lambda_E + \nu\lambda_I \\
+  -\dot{\lambda}_I &= -\frac{k\beta S}{N}\lambda_S + \frac{k\beta S}{N}\lambda_E
+                       - (\gamma+\mu)\lambda_I + \gamma\lambda_R - 1 \\
+  -\dot{\lambda}_R &= -\mu\lambda_R
+\end{align*}
+
+\solpart{c} \textbf{Sensitivity formulas.}
+
+$dJ/dp_j = -\int_0^T \vec{\lambda}^T(\partial\vec{F}/\partial p_j)\,dt$.
+Computing $\partial\vec{F}/\partial p_j$:
+
+$dJ/dk = -\int_0^T (-\lambda_S + \lambda_E)(p.beta\cdot SI/N)\,dt$.
+$dJ/d\beta$: identical form with $k$ and $\beta$ exchanged.
+$dJ/d\tau_E = -\int_0^T \lambda_I(E/\tau_E^2)\,dt$ (from $\partial\nu/\partial\tau_E = -1/\tau_E^2$, $\partial F_E/\partial\tau_E = -E/\tau_E^2$, $\partial F_I/\partial\tau_E = E/\tau_E^2$).
+$dJ/d\tau_I = -\int_0^T \lambda_I(I/\tau_I^2) - \lambda_R(-I/\tau_I^2)\,dt$.
+$dJ/dL$: similar via $\partial\mu/\partial L = -1/L^2$.
+
+\solpart{d} \textbf{MATLAB implementation strategy.}
+Forward solve: 4-equation SEIR ODE, save dense output. Build interpolants
+for all 4 state variables. Backward solve: 4-equation adjoint ODE,
+using stored interpolants for $S(t),E(t),I(t),R(t)$. Compute integrals
+via \texttt{trapz} on forward time grid.
+
+\solpart{e} \textbf{Additional cost vs.\ SIR adjoint.}
+The SEIR adjoint requires 4 equations vs.\ 3 for SIR (one additional
+adjoint variable $\lambda_E$). Storage doubles from $\sim3\times N_t$
+to $\sim4\times N_t$ values. The computational cost is essentially
+identical: one additional ODE component adds negligible time to the
+adjoint solve. The main additional cost is writing and verifying the
+$4\times4$ Jacobian and 5 forcing terms.
+
+\solnote{Students who write $J_F^T$ and then compute the adjoint ODE
+by substituting into the formula $-\dot{\vec{\lambda}} = J_F^T\vec{\lambda}
+- \nabla_{\vec{u}}g$ should get exactly the four equations in part (b).
+Common error: forgetting that $J_F$ is evaluated along the forward solution
+$\vec{u}(t)$, not at a fixed point.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{6.7}{L6}
+
+\solanswer
+
+\textbf{Three causes of a 15\% discrepancy between adjoint and FD,
+without a coding error:}
+
+\textbf{Cause 1: Inconsistent step sizes in the forward/backward solvers.}
+
+The adjoint ODE depends on the stored forward solution $\vec{u}(t)$
+through interpolation. If the forward ODE is solved with a loose
+tolerance (e.g., \texttt{RelTol = 1e-3}) but the adjoint is solved
+tightly, the interpolated $\vec{u}(t)$ values contain errors proportional
+to the forward tolerance, which propagate into the adjoint sensitivity.
+
+\textit{Diagnostic:} Tighten the forward solver tolerance by $10^2$
+and recompute. If the adjoint sensitivities change by more than 1\%,
+forward solver error is the cause.
+
+\textit{Correction:} Use tight tolerances ($\leq 10^{-8}$) for both
+forward and adjoint solves. Consider a fixed-step integrator if
+adaptive stepping causes inconsistency.
+
+\textbf{Cause 2: Poor interpolation of the forward solution.}
+
+The adjoint ODE is integrated backward and must evaluate $\vec{u}(t)$
+at times not necessarily on the forward solver's output grid.
+Linear interpolation (the default in some implementations) introduces
+$O(h^2)$ errors in the adjoint coefficients; for stiff models with
+rapidly varying states, this can cause $>10\%$ errors in sensitivities.
+
+\textit{Diagnostic:} Compare adjoint sensitivities using linear,
+cubic (PCHIP), and quintic interpolation of the stored forward solution.
+If results change by more than 1\%, interpolation order is the cause.
+
+\textit{Correction:} Use a high-order dense output method (\texttt{pchip}
+or \texttt{griddedInterpolant} with 'spline') and store the forward
+solution at a fine time grid.
+
+\textbf{Cause 3: The model is nonlinear enough that the linearization
+underlying the adjoint is inaccurate.}
+
+The adjoint computes the \emph{derivative} of $J$ with respect to $p_j$
+at the nominal parameter point. If the model is highly nonlinear,
+the finite-difference estimate $[J(p_j+h) - J(p_j-h)]/(2h)$ includes
+higher-order terms that the adjoint (which is exact for the linearized
+model) ignores.
+
+\textit{Diagnostic:} Compare FD estimates at several step sizes $h$ and
+verify they converge as $h \to 0$ (ruling out truncation error in FD).
+If FD values are consistent across step sizes but differ from the adjoint,
+nonlinearity is the cause.
+
+\textit{Correction:} For parameters where the adjoint and FD disagree
+by $>5\%$, report both and note that the adjoint provides the exact
+infinitesimal sensitivity while FD captures the finite-perturbation effect.
+Consider reporting the FD estimate for policy, since it reflects the
+actual change from a realistic intervention.
+
+\solnote{A 15\% discrepancy between adjoint and FD is large enough to
+be concerning but not obviously a coding error. The three causes above
+cover the most common scenarios. Students who only identify ``step-size
+error'' as a single cause receive partial credit; the distinction between
+forward solver tolerance (Cause 1), interpolation accuracy (Cause 2),
+and model nonlinearity (Cause 3) is essential for correct diagnosis.
+Note that all three causes can coexist; the diagnostic tests are designed
+to isolate each one.}
+
+\end{solution}

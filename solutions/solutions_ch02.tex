@@ -1,0 +1,510 @@
+%% ============================================================
+%% Chapter 2 Solutions
+%% ============================================================
+
+\section{Chapter 2: The Sensitivity Index}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.1}{L2}
+
+\solanswer
+
+The sign of a sensitivity index tells you the \emph{direction} of the
+relationship: a positive SI means the \QOI increases when the \POI
+increases; a negative SI means the \QOI decreases when the \POI increases.
+The sign is the sign of the underlying derivative $\partial q/\partial p$,
+scaled by $p/q$ (both positive under the interpretable-parameterization
+convention).
+
+\solpart{a} \emph{Lung capacity vs.\ cigarettes per day.}
+Lung capacity decreases as cigarette consumption increases (medical
+consensus). Therefore $\partial q/\partial p < 0$, so the SI is
+\textbf{negative}.
+
+\solpart{b} \emph{Crop yield vs.\ annual rainfall (near the optimum).}
+Crop yields typically increase with rainfall up to an optimum and
+then decrease (waterlogging). The sign depends on which side of the
+optimum we are evaluating. Near the dry end of the feasible range,
+yield increases with rainfall: \textbf{positive} SI. Near the wet
+end (waterlogging), yield decreases: \textbf{negative} SI. The question
+specifies ``near a region of the parameter space''; the sign must be
+specified relative to that region, and the answer should note the
+non-monotonicity.
+
+\solpart{c} \emph{$R_0$ vs.\ $\gamma$ (recovery rate) for SIR.}
+$R_0 = k\beta/\gamma$, so $\partial R_0/\partial\gamma < 0$: faster
+recovery reduces $R_0$. The SI is \textbf{negative}: $\SI{\gamma}{R_0} = -1$.
+
+\solnote{Part (b) is deliberately ambiguous to prompt students to
+identify the dependence on the evaluation point. Accept either sign
+if the student correctly identifies the nonmonotonicity and states
+which side of the optimum they are considering. This previews Chapter 8
+(when SA breaks down near parameter thresholds).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.2}{L2}
+
+\solanswer
+
+Let $q = \sqrt{p}$, so $q = p^{1/2}$.
+
+\textbf{Form 1 (limit definition):}
+\[
+  \SI{p}{q} = \lim_{\delta p \to 0} \frac{\delta q/q}{\delta p/p}
+  = \lim_{\delta p \to 0}
+    \frac{\bigl(\sqrt{p+\delta p}-\sqrt{p}\bigr)/\sqrt{p}}
+         {\delta p/p}
+  = \frac{p}{\sqrt{p}} \lim_{\delta p\to 0}
+    \frac{\sqrt{p+\delta p}-\sqrt{p}}{\delta p}
+  = \sqrt{p}\cdot\frac{1}{2\sqrt{p}} = \frac{1}{2}.
+\]
+
+\textbf{Form 2 (derivative form):}
+\[
+  \SI{p}{q} = \frac{p}{q}\,\frac{\partial q}{\partial p}
+  = \frac{p}{\sqrt{p}}\cdot\frac{1}{2\sqrt{p}}
+  = \frac{\sqrt{p}}{2\sqrt{p}} = \frac{1}{2}.
+\]
+
+\textbf{Form 3 (logarithmic form):}
+\[
+  \SI{p}{q} = \frac{d\ln q}{d\ln p}
+  = \frac{d}{d\ln p}\bigl(\tfrac{1}{2}\ln p\bigr)
+  = \frac{1}{2}.
+\]
+
+All three give $\SI{p}{q} = \tfrac{1}{2}$.
+
+\textbf{Interpretation:} A $1\%$ increase in $p$ produces approximately
+a $0.5\%$ increase in $q = \sqrt{p}$. More precisely: if $p$ doubles
+(increases by $100\%$), $q$ increases by approximately $50\%$ (the exact
+value is $\sqrt{2}-1 \approx 41.4\%$; the SI gives a linear approximation).
+
+\solnote{Emphasize the logarithmic form (Form 3) as the most computationally
+efficient: $d\ln q/d\ln p$ can often be read off immediately from the
+algebraic form of $q(p)$. For a power law $q = cp^n$, all three forms
+give $\SI{p}{q} = n$, which can be seen immediately from the log form.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.3}{L3}
+
+\solanswer
+
+Let $\mu = \lambda b$. The arc-length functional is
+\[
+  J = \int_0^b \sqrt{1+\lambda^2 t^2}\,dt.
+\]
+
+\textbf{Evaluating $J$.} Substitute $u = \lambda t$, $du = \lambda\,dt$:
+\[
+  J = \frac{1}{\lambda}\int_0^{\lambda b}\sqrt{1+u^2}\,du
+    = \frac{1}{\lambda}\Bigl[\tfrac{u}{2}\sqrt{1+u^2}
+      + \tfrac{1}{2}\arcsinh u\Bigr]_0^{\mu}
+    = \frac{\mu\sqrt{1+\mu^2} + \arcsinh\mu}{2\lambda}.
+\]
+
+\textbf{Computing $\SI{b}{J}$.} Using the derivative form with $\mu = \lambda b$:
+\[
+  \frac{\partial J}{\partial b} = \sqrt{1+\lambda^2 b^2} = \sqrt{1+\mu^2}.
+\]
+So
+\[
+  \SI{b}{J} = \frac{b}{J}\cdot\sqrt{1+\mu^2}
+  = \frac{\lambda b\cdot\sqrt{1+\mu^2}}{\tfrac{1}{2}(\mu\sqrt{1+\mu^2}+\arcsinh\mu)}
+  = \frac{2\mu\sqrt{1+\mu^2}}{\mu\sqrt{1+\mu^2}+\arcsinh\mu}.
+\]
+Factor $\sqrt{1+\mu^2}$ from numerator and denominator:
+\[
+  \SI{b}{J} = \frac{2\mu}{\mu + \arcsinh\mu/\sqrt{1+\mu^2}}.
+\]
+This matches the stated formula. $\checkmark$
+
+\textbf{Computing $\SI{\lambda}{J}$.} Differentiating $J = (\mu\sqrt{1+\mu^2}+\arcsinh\mu)/(2\lambda)$
+with $\mu = \lambda b$ (so $\partial\mu/\partial\lambda = b = \mu/\lambda$):
+
+\[
+  \frac{\partial J}{\partial\lambda}
+  = \frac{b\bigl(\sqrt{1+\mu^2} + \mu^2/\sqrt{1+\mu^2} + 1/\sqrt{1+\mu^2}\bigr)}{2\lambda}
+  - \frac{J}{\lambda}.
+\]
+Simplifying $\sqrt{1+\mu^2} + \mu^2/\sqrt{1+\mu^2} + 1/\sqrt{1+\mu^2}
+= (1+\mu^2+\mu^2+1)/\sqrt{1+\mu^2} = (2+2\mu^2)/\sqrt{1+\mu^2} = 2\sqrt{1+\mu^2}$:
+\[
+  \frac{\partial J}{\partial\lambda}
+  = \frac{\mu\sqrt{1+\mu^2}}{\lambda^2} - \frac{J}{\lambda}.
+\]
+Therefore
+\[
+  \SI{\lambda}{J}
+  = \frac{\lambda}{J}\cdot\frac{\partial J}{\partial\lambda}
+  = \frac{\lambda}{J}\!\left(\frac{\mu\sqrt{1+\mu^2}}{\lambda^2} - \frac{J}{\lambda}\right)
+  = \frac{\mu\sqrt{1+\mu^2}}{\lambda J} - 1.
+\]
+Substituting $J = (\mu\sqrt{1+\mu^2}+\arcsinh\mu)/(2\lambda)$:
+\[
+  \SI{\lambda}{J}
+  = \frac{2\mu\sqrt{1+\mu^2}}{\mu\sqrt{1+\mu^2}+\arcsinh\mu} - 1
+  = \frac{2\mu\sqrt{1+\mu^2} - \mu\sqrt{1+\mu^2} - \arcsinh\mu}
+         {\mu\sqrt{1+\mu^2}+\arcsinh\mu}
+  = \frac{\mu\sqrt{1+\mu^2} - \arcsinh\mu}
+         {\mu\sqrt{1+\mu^2}+\arcsinh\mu}.
+\]
+This matches the stated formula. $\checkmark$
+
+\solnote{This is primarily an integration and chain-rule exercise.
+The key pedagogical point: both SIs depend only on $\mu = \lambda b$
+(the dimensionless parameter group), illustrating why dimensional
+analysis and natural parameterization matter. Full credit requires
+correct derivation of both formulas; partial credit for correct
+setup with algebra error.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.4}{L3}
+
+\solanswer
+
+Let $J_+ = (-b + \sqrt{b^2-4ac})/(2a)$. Denote $D = b^2-4ac > 0$.
+Note that $J_+$ satisfies $aJ_+^2 + bJ_+ + c = 0$, so $aJ_+^2 = -bJ_+ - c$.
+
+The denominator in all three formulas is
+$2aJ_+ + b = \sqrt{b^2-4ac} = \sqrt{D}$
+(from the quadratic formula: $2aJ_+ = -b + \sqrt{D}$, so $2aJ_+ + b = \sqrt{D}$).
+
+\textbf{Computing $\SI{a}{J_+}$:}
+\[
+  \frac{\partial J_+}{\partial a}
+  = \frac{-b+\sqrt{D}}{-2a^2} + \frac{-4c/2}{2a\sqrt{D}}
+  \cdot(-1)
+  \quad\text{[quotient rule + chain rule]}
+\]
+Simpler via implicit differentiation: differentiate $aJ_+^2 + bJ_+ + c = 0$
+with respect to $a$:
+\[
+  J_+^2 + (2aJ_+ + b)\frac{\partial J_+}{\partial a} = 0
+  \implies
+  \frac{\partial J_+}{\partial a} = -\frac{J_+^2}{2aJ_++b}.
+\]
+Therefore
+\[
+  \SI{a}{J_+} = \frac{a}{J_+}\cdot\frac{\partial J_+}{\partial a}
+  = \frac{a}{J_+}\cdot\frac{-J_+^2}{2aJ_++b}
+  = \frac{-aJ_+}{2aJ_++b}. \checkmark
+\]
+
+\textbf{Computing $\SI{b}{J_+}$:}
+Differentiate $aJ_+^2 + bJ_+ + c = 0$ with respect to $b$:
+\[
+  J_+ + (2aJ_++b)\frac{\partial J_+}{\partial b} = 0
+  \implies
+  \frac{\partial J_+}{\partial b} = -\frac{J_+}{2aJ_++b}.
+\]
+\[
+  \SI{b}{J_+} = \frac{b}{J_+}\cdot\frac{-J_+}{2aJ_++b}
+  = \frac{-b}{2aJ_++b}. \checkmark
+\]
+
+\textbf{Computing $\SI{c}{J_+}$:}
+Differentiate with respect to $c$:
+\[
+  (2aJ_++b)\frac{\partial J_+}{\partial c} + 1 = 0
+  \implies
+  \frac{\partial J_+}{\partial c} = -\frac{1}{2aJ_++b}.
+\]
+\[
+  \SI{c}{J_+} = \frac{c}{J_+}\cdot\frac{-1}{2aJ_++b}
+  = \frac{-c}{J_+(2aJ_++b)}. \checkmark
+\]
+
+\textbf{Numerical verification at $a=1$, $b=-3$, $c=2$:}
+$J_+ = (3+\sqrt{9-8})/2 = 2$, $2aJ_++b = 4-3 = 1$.
+\[
+  \SI{a}{J_+} = -\frac{1\cdot 2}{1} = -2,\quad
+  \SI{b}{J_+} = -\frac{-3}{1} = 3,\quad
+  \SI{c}{J_+} = -\frac{2}{2\cdot 1} = -1.
+\]
+Verification by finite differences (centered, $h = 10^{-6}$):
+$\partial J_+/\partial a \approx (J_+(a+h)-J_+(a-h))/(2h)$,
+multiplied by $a/J_+ = 1/2$, gives $\SI{a}{J_+} \approx -2.000000$ $\checkmark$.
+
+\solnote{Implicit differentiation is the most elegant approach and avoids
+messy quotient-rule algebra. Students who use explicit differentiation
+of the quadratic formula are not wrong but often make sign errors.
+The numerical check at $a=1$, $b=-3$, $c=2$ is important: students
+should verify that their symbolic answers match finite differences.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.5}{L3}
+
+\solanswer
+
+The SEIR reproduction number is
+\[
+  R_0 = \frac{k\beta\nu}{(\nu+\mu)(\gamma+\mu)}.
+\]
+Reparameterize: $\tau_E = 1/\nu$, $\tau_I = 1/\gamma$, $L = 1/\mu$.
+Substituting $\nu = 1/\tau_E$, $\gamma = 1/\tau_I$, $\mu = 1/L$:
+
+\[
+  R_0 = \frac{k\beta/\tau_E}{(1/\tau_E + 1/L)(1/\tau_I + 1/L)}
+  = \frac{k\beta L^2\tau_I}{(\tau_E + L)(\tau_I\tau_E + \tau_E L + \tau_I L + L^2/\tau_E)}
+\]
+For $L \gg \tau_E, \tau_I$ (lifespan much longer than disease timescales,
+which is $10{,}000 \gg 7$ in the SIR examples):
+\[
+  R_0 \approx k\beta\tau_I\tau_E\cdot\frac{\nu}{\nu+\mu}\cdot\frac{1}{1+\mu/\gamma}
+  \approx k\beta\tau_I \cdot \frac{\tau_E}{1}
+  \quad\text{(since } \mu\ll\nu, \mu\ll\gamma).
+\]
+
+\textbf{Sensitivity indices} (using log-derivative form):
+Writing $R_0 = k\beta\nu/[(\nu+\mu)(\gamma+\mu)]$:
+\[
+  \ln R_0 = \ln k + \ln\beta + \ln\nu - \ln(\nu+\mu) - \ln(\gamma+\mu).
+\]
+\[
+  \SI{k}{R_0} = 1, \qquad \SI{\beta}{R_0} = 1.
+\]
+\[
+  \SI{\nu}{R_0} = \frac{d\ln R_0}{d\ln\nu}
+  = 1 - \frac{\nu}{\nu+\mu} = \frac{\mu}{\nu+\mu}.
+\]
+In duration parameterization ($\tau_E = 1/\nu$, and $\SI{\tau_E}{R_0} = -\SI{\nu}{R_0}$):
+\[
+  \SI{\tau_E}{R_0} = -\frac{\mu}{\nu+\mu} = -\frac{1/L}{1/\tau_E+1/L}
+  = \frac{-\tau_E}{L+\tau_E}.
+\]
+Similarly, $\SI{\gamma}{R_0} = -\mu/(\gamma+\mu)$ and
+\[
+  \SI{\tau_I}{R_0} = \frac{\mu}{\gamma+\mu}/({\text{sign flip}})
+  = \frac{\mu}{\gamma+\mu}\cdot\frac{\tau_I}{\tau_I}
+  \implies
+  \SI{\tau_I}{R_0} = \frac{1}{1+\mu\tau_I} = \frac{L}{L+\tau_I}.
+\]
+For nominal values $k=5$, $\beta=0.06$, $\tau_E=5.5$ days,
+$\tau_I=7$ days, $L=10{,}000$ days:
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\POI & $k$ & $\beta$ & $\tau_E$ & $\tau_I$ \\
+\midrule
+SI   & $1.000$ & $1.000$ & $-0.00055$ & $0.0007$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+For $L \gg \tau_E, \tau_I$: $\SI{\tau_E}{R_0} \approx -\tau_E/L \approx 0$
+and $\SI{\tau_I}{R_0} \approx \tau_I/L \approx 0$.
+In the demographic limit, $k$ and $\beta$ dominate, and both $\tau_E$
+and $\tau_I$ have negligible SI because the mortality rate is so small.
+(If $L$ were short, e.g., $L = 30$ days, the disease timescales
+would matter significantly.)
+
+\solnote{Key lesson: in models with demography, the lifespan $L$ modulates
+how much the exposed period matters. Students often expect $\tau_E$ to
+have a larger SI; explaining why it doesn't requires understanding
+$\mu/(\nu+\mu) = \tau_E/(\tau_E+L)$.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.6}{L4}
+
+\solanswer
+
+\textbf{Paragraph for the policy maker:}
+
+Both papers are reporting the same underlying biology, but in different
+parameterizations. The first paper uses $\gamma$, the recovery rate
+(units: $\text{day}^{-1}$), while the second uses $\tau = 1/\gamma$,
+the mean infectious period (units: days). For the SIR model,
+$R_0 = k\beta/\gamma = k\beta\tau$, so increasing $\gamma$
+decreases $R_0$ (negative index), while increasing $\tau$ increases
+$R_0$ (positive index). The reciprocal relationship $\tau = 1/\gamma$
+means that ``$\gamma$ increases'' and ``$\tau$ decreases'' describe
+the same biological event: faster recovery. Both papers are correct;
+the sign difference reflects the direction of the parameterization,
+not a scientific disagreement.
+
+For policy, the duration parameterization ($\tau$) is more informative:
+public health officers think in terms of ``the average patient is
+infectious for 7 days,'' not ``the recovery rate is 0.14 per day.''
+A positive $\SI{\tau}{R_0} = +1$ communicates directly that reducing
+the infectious period by $10\%$ (through treatment or isolation) would
+reduce $R_0$ by $10\%$. Reporting should use the duration parameterization
+and state explicitly that reducing $\tau$ reduces $R_0$.
+
+\solnote{The one-paragraph format is deliberate: the exercise tests
+whether students can synthesize the parameterization concept into a
+clear, jargon-free explanation. Deduct credit if the student simply
+writes equations without a clear explanation for a non-technical reader.
+The policy-relevance component (which parameterization is more actionable)
+is essential for full credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.7}{L4}
+
+\solanswer
+
+The sensitivity indices (sorted by $|\cdot|$, descending):
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\POI & SI & $|\text{SI}|$ \\
+\midrule
+$\tau_c$ (contamination duration) & $+2.1$ & $2.1$ \\
+$\beta_f$ (food-to-person transmission) & $+1.8$ & $1.8$ \\
+$\tau_s$ (hand-washing interval) & $-1.3$ & $1.3$ \\
+$k_f$ (food contacts per day) & $+0.7$ & $0.7$ \\
+$\mu$ (clearance rate) & $-0.2$ & $0.2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{a} MATLAB code using \texttt{tornado\_plot} from the repository:
+\begin{verbatim}
+SI     = [2.1; 1.8; -1.3; 0.7; -0.2];
+labels = {'$\tau_c$','$\beta_f$','$\tau_s$','$k_f$','$\mu$'};
+tornado_plot(SI, labels, 'J');   %% J = mean illness cases
+\end{verbatim}
+The resulting plot has $\tau_c$ as the widest bar (top), extending
+right to $+2.1$; $\mu$ as the shortest bar (bottom), extending left
+to $-0.2$.
+
+\solpart{b} \textbf{Intervention priority:}
+Target $\tau_c$ first (SI $= +2.1$): reducing contamination duration
+has the largest effect on illness cases. Shortening the contamination
+event (e.g., faster detection and decontamination protocols) would
+reduce cases roughly proportionally.
+
+\solpart{c} \textbf{Interpreting $\SI{\tau_c}{J} = +2.1$:}
+A $1\%$ reduction in mean contamination duration reduces illness
+cases by approximately $2.1\%$. The index exceeds 1 because the
+model is nonlinear in $\tau_c$ (total cases grow super-linearly with
+contamination duration; longer events expose more people per event).
+
+\solpart{d} \textbf{$\SI{\tau_s}{J} = -1.3$ (negative):}
+More frequent hand-washing (smaller $\tau_s$ = shorter interval between
+washings) reduces transmission, so illness cases decrease as $\tau_s$
+decreases. ``Increasing $\tau_s$'' means less frequent hand-washing,
+which increases cases. Hence the positive-$\tau_s$ direction corresponds
+to increased illness: SI is negative (longer interval between washings $\to$
+more transmission). The intervention is to \emph{decrease} $\tau_s$
+(increase hand-washing frequency).
+
+\solnote{Part (c) is a good teaching moment: SI $> 1$ does not
+indicate an error. For a model that is super-linear in a parameter
+(e.g., $J \propto \tau^2$), the SI is $2$, not $1$. This is one
+of the cases where the sign and magnitude carry richer information
+than a simple linear model would predict.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.8}{L5}
+
+\solanswer
+
+\textbf{Model answer (design for a six-parameter respiratory model).}
+
+\solpart{a} \textbf{Parameterization.}
+Use duration parameterization throughout: mean latent period $\tau_E$,
+mean infectious period $\tau_I$, mean immunity duration $\tau_R$
+(if applicable), and mean lifespan $L$ in days. Report contact
+rates $k$ (contacts/person/day) and transmission probability $\beta$
+as dimensionless or rate parameters but interpret sensitivity indices
+in terms of ``a 10-day increase in $\tau_I$'' rather than
+``a 0.14 decrease in $\gamma$.'' Rationale: the WHO team includes
+epidemiologists and clinicians; duration units are actionable
+(isolation protocols target $\tau_I$; vaccine protection duration
+targets $\tau_R$).
+
+\solpart{b} \textbf{QOI selection.}
+Primary: total deaths at 6 months (directly relevant to allocation decisions).
+Secondary: $R_0$ (determines whether epidemic occurs at all, a natural
+threshold). Optional: peak hospitalization rate (determines whether
+healthcare capacity is overwhelmed). Using multiple \QOIs catches
+cases where the most important parameter for $R_0$ is different from
+the most important parameter for peak hospitalization.
+
+\solpart{c} \textbf{Method.}
+Start with local SA (forward sensitivity equations or centered finite
+differences, 6 parameters, $\approx 13$ model evaluations). This gives
+fast rankings to guide early decisions. If the model is nonlinear
+(identifiable only from aggregate data, or exhibiting threshold
+behavior near $R_0 = 1$), follow with Sobol indices on the top
+3--4 parameters. If each evaluation takes seconds, a full Sobol at
+$N = 1000$ is feasible immediately.
+
+\solpart{d} \textbf{Validation.}
+Check that SI values for $R_0$ match the analytic values ($\SI{k}{R_0} = \SI{\beta}{R_0} = \SI{\tau_I}{R_0} = 1$) using the analytic formula. Use this as a sanity check before reporting any sensitivity results for deaths.
+
+\solpart{e} \textbf{Limitation.}
+Local SA is evaluated at a single fitted parameter set. For a new
+pathogen, the true parameters may be far from the fitted values.
+The SI rankings might change substantially across the plausible
+parameter range. I would report this limitation explicitly and
+flag any parameter whose SI changes sign or magnitude substantially
+across a 50\% confidence interval around the fitted values.
+
+\solnote{Rubric: 1 point each for (a) justification of parameterization,
+(b) motivated \QOI choice, (c) specific SA method with cost estimate,
+(d) validation procedure, (e) genuine limitation. Five points total.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{2.9}{L6}
+
+\solanswer
+
+\textbf{The error:} The recovery rate $\gamma$, mortality rate $\mu$,
+and waning immunity rate $\rho$ are all \emph{rates} (units: $\text{day}^{-1}$);
+increasing them corresponds to faster recovery, faster death, and
+faster waning, respectively. For standard epidemic models:
+\begin{itemize}
+  \item $\SI{\gamma}{R_0} = -1$ (faster recovery reduces $R_0$) --- \textbf{negative}.
+  \item $\SI{\mu}{R_0}$ is typically negative (background mortality
+        reduces effective infectious period).
+  \item $\SI{\rho}{R_0}$ for a model with waning immunity is also
+        typically negative or zero (faster waning increases
+        susceptibility, which could increase $R_0$ --- this one
+        is genuinely positive in some formulations).
+\end{itemize}
+The claim that ``all sensitivity indices were positive'' is inconsistent
+with these mathematical relationships for at least $\gamma$ and $\mu$.
+
+\textbf{What specifically is wrong:}
+The authors either (a) computed derivatives without the normalization
+factor $p/q$ (so they computed $\partial R_0/\partial\gamma < 0$,
+giving negative sign, but then reported absolute values); or
+(b) reparameterized implicitly and are reporting $\SI{\tau_I}{R_0} = +1$
+(which is positive) without acknowledging the parameterization switch;
+or (c) made a coding error that reversed the sign. Option (b) is
+most charitable and most common.
+
+\textbf{What should have been done:}
+The paper should state explicitly which parameterization was used
+(rates or durations) and report the actual signed SI values. If
+duration parameterization was used, the table should identify
+each parameter as a rate or duration to avoid confusion. A statement
+that ``all sensitivity indices were positive'' without this context
+is ambiguous and potentially incorrect.
+
+\solnote{This exercise targets a common real-world error in published
+papers. The key diagnostic is: rates and reproduction numbers always
+have negative SI relationships (increasing rates reduces $R_0$
+through faster depletion of infectious individuals). Students who
+only identify ``wrong sign'' without explaining \emph{why} should
+receive partial credit. Full credit requires identifying the
+mechanism (normalization, parameterization, or sign error).}
+
+\end{solution}

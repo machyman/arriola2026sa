@@ -1,0 +1,684 @@
+\chapter{Caveat Emptor --- Limitations of Local Sensitivity Analysis}
+
+\begin{flushright}
+\textit{Local sensitivity is a linear truth, and nature is rarely linear for long.}
+\end{flushright}
+
+\bigskip
+
+In 2019, Saltelli et al.~\cite{saltelli2019why} reviewed sensitivity analyses
+published in 280 highly cited papers across top environmental modeling journals.
+More than half used the wrong method for the question being asked.
+Specifically, studies that asked global questions, how does output
+uncertainty relate to input uncertainty across the full parameter range?;
+used local methods: derivatives computed at a single nominal parameter value.
+The derivatives were computed correctly. But they answered a different question
+than the one the authors claimed to answer.
+
+\medskip
+\begin{center}
+\textit{Assuming local sensitivity holds globally is the triumph\\
+of mathematical hope over nonlinear reality.}
+\end{center}
+\medskip
+
+This chapter asks the question that should be asked before any SA is begun:
+is local SA the right tool for this question?
+
+%%------------------------------------------------------------
+\section{Method-Question Mismatch}\index{method-question mismatch}
+\label{sec:mismatch}
+%%------------------------------------------------------------
+
+Local sensitivity analysis is built on a derivative. A derivative
+is a local object: it measures the behavior of a function at one point,
+and it is only meaningful in the vicinity of that point.
+This makes local SA powerful for some questions and completely wrong
+for others.
+
+Local SA can answer: \emph{which parameter most affects the model
+near the nominal parameter values?}
+
+Local SA cannot answer: \emph{which parameter most affects the model
+across its full range of uncertainty?} That question requires the parameter
+to actually vary across its range, and a derivative does not do that.
+
+Local SA cannot answer: \emph{how does the model behave at parameter
+values far from the nominal?} The derivative approximates linear behavior;
+real models are often highly nonlinear.
+
+The principle is simple and unforgiving. The method must match the question.
+Using local SA to answer a global question is not merely suboptimal;
+it can produce a ranking of parameter importance that is entirely wrong.
+A parameter that appears unimportant locally may dominate the output
+variance when varied across its full uncertainty range.
+A parameter that appears important locally may have negligible effect
+at realistic perturbation sizes if the model is highly nonlinear
+in that parameter.
+
+A small sensitivity index does not mean a parameter can be ignored globally.
+It means the model is approximately linear in that parameter near the nominal
+value, and the linear coefficient happens to be small.
+Section~\ref{sec:globalneeded} shows a specific example where the local
+ranking is the opposite of the global ranking.
+
+\begin{selfcheck}
+A published SA study reports: ``All sensitivity indices are less than 0.05,
+confirming that the model is robust to parameter uncertainty.''
+The study used nominal parameter values from the literature, with
+no information on parameter uncertainty ranges.
+Identify two specific claims in this statement that go beyond what
+local SA can actually establish.
+\end{selfcheck}
+\begin{scAnswer}
+(1) ``Robust to parameter uncertainty'': local SA says nothing about
+parameter uncertainty. It describes behavior near the nominal value.
+If the uncertainty range for some parameters is large (e.g., $\pm50\%$),
+the model could be highly sensitive to that parameter globally even
+though the local SI is small.
+
+(2) The conclusion depends implicitly on the nominal parameter values
+chosen. If the nominal values are changed, the local SI values change
+too (for nonlinear models). A study with different nominal values
+might find very different rankings. This sensitivity of local SA
+to the choice of nominal values is itself a limitation that the study
+does not address.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Bifurcations and SA Failure}\index{bifurcation!SA failure near}
+\label{sec:bifurcations}
+%%------------------------------------------------------------
+
+Local SA requires the model output to be differentiable with respect
+to the parameters at the nominal values. When this fails, local SA
+fails completely. The most important way it fails is at a bifurcation.
+
+A bifurcation is a parameter value at which the qualitative behavior
+of the model changes: two equilibria merge into one, a stable fixed
+point becomes unstable, or an epidemic threshold is crossed~\cite{strogatz2018nonlinear,kuznetsov2004elements}.
+At a bifurcation point, the derivative $\partial u/\partial p$ is
+either undefined or infinite. Local SA breaks down entirely.
+The precise mathematical reason is given by the Fredholm alternative
+(Appendix~\ref{appsec:solvability}): near a bifurcation the Jacobian
+becomes singular, so the FSE $D_{\vec{u}}[\vec{f}]\,(\partial\vec{u}/\partial p) = \vec{r}$
+may have no solution or infinitely many.
+For models with periodic limit cycles, sensitivity near a bifurcation
+of the periodic orbit involves Floquet multipliers; this is treated
+in Appendix~\ref{app:floquet}.
+
+\subsection{The Quadratic Example}
+
+Consider the scalar equation $f(u; p) = u^2 + p = 0$.
+For $p < 0$, there are two real roots: $u = \pm\sqrt{-p}$.
+At $p = 0$, the two roots merge. For $p > 0$, there are no real roots.
+
+The FSE for the sensitivity of the positive root $u^* = \sqrt{-p}$ is:
+\[
+  \pd{u^*}{p} = \frac{-\pd{f}{p}}{\pd{f}{u}} = \frac{-1}{2u^*}
+              = \frac{-1}{2\sqrt{-p}}.
+\]
+The normalized SI is:
+\[
+  \SI{p}{u^*} = \frac{p}{u^*}\,\pd{u^*}{p}
+              = \frac{p}{\sqrt{-p}}\cdot\frac{-1}{2\sqrt{-p}}
+              = \frac{1}{2}.
+\]
+This is constant (independent of $p$) for all $p < 0$;
+the positive root is always in exact proportion $1/2$ to any
+fractional change in $p$.
+
+But as $p \to 0^-$:
+\[
+  \pd{u^*}{p} = \frac{-1}{2\sqrt{-p}} \to -\infty.
+\]
+The derivative diverges at the bifurcation. Near $p = 0$, the
+model is infinitely sensitive to the parameter $p$: any small
+positive perturbation to $p$ destroys the equilibrium entirely.
+
+\unifyingidea{3} This is Unifying Idea~3 in its most dramatic form.
+The sensitivity index is the derivative-based linearization of the
+model response. At a bifurcation, the function $u^*(p)$ has
+infinite curvature, its graph has a vertical tangent, and
+no linear approximation is valid.
+The linearization does not just become inaccurate at the bifurcation;
+it becomes undefined.
+
+\unifyingidea{1} The failure at a bifurcation is a failure of the
+normalized derivative. The sensitivity index $\SI{p}{q}$ exists only
+when $\partial q/\partial p$ is finite. Near a bifurcation it is not,
+and the index either blows up or vanishes depending on which side
+of the threshold you are computing from.
+
+\unifyingidea{2} The adjoint SA system inherits exactly the same
+failure mode. The adjoint ODE is driven by the Jacobian $J_F^T$
+of the forward model. Near a bifurcation, the Jacobian has a
+near-zero eigenvalue, and the adjoint solution grows without bound
+over the integration interval. Both the forward and adjoint
+approaches fail at the same bifurcation for the same reason:
+the transpose of a singular matrix is also singular.
+
+\begin{selfcheck}
+For $f(u;p) = u^2 + p$ with $p = -4$:
+(a) Find the two roots $u^*_\pm$.
+(b) Compute $\SI{p}{u^*_+}$ analytically. Compare with the derivative $\partial u^*_+/\partial p$.
+(c) Estimate $\partial u^*_+/\partial p$ numerically using a centered difference
+    with $h = 0.1, 0.01, 0.001$. At what value of $p$ near zero does
+    the finite-difference estimate become unreliable?
+\end{selfcheck}
+\begin{scAnswer}
+(a) $u^*_\pm = \pm\sqrt{4} = \pm 2$.
+(b) $\partial u^*_+/\partial p = -1/(2\sqrt{-p}) = -1/4$.
+$\SI{p}{u^*_+} = (p/u^*_+)(-1/(2\sqrt{-p})) = (-4/2)(-1/4) = 1/2$.
+
+(c) Numerically at $p = -4$: all three step sizes give $\approx -0.250$ \checkmark.
+As $p \to 0^-$, the function $u^*_+ = \sqrt{-p}$ has a square-root singularity;
+finite differences become inaccurate when the curvature term dominates the
+step-size error, which occurs when $h \gtrsim |p|$. Near $p = 0$, even very
+small $h$ is not small compared to $|p|$, so finite differences fail.
+\end{scAnswer}
+
+\subsection{The SIR Model at the Epidemic Threshold}
+
+The SIR model has a transcritical bifurcation at $R_0 = 1$:
+for $R_0 < 1$, the only equilibrium is the disease-free state;
+for $R_0 > 1$, the endemic equilibrium appears.
+
+The endemic equilibrium fraction
+$i^* = 1 - 1/R_0$
+exists only for $R_0 > 1$. Its sensitivity with respect to $R_0$ is:
+\[
+  \pd{i^*}{R_0} = \frac{1}{R_0^2}, \qquad
+  \SI{R_0}{i^*} = \frac{R_0}{i^*}\cdot\frac{1}{R_0^2}
+                = \frac{1}{R_0(1-1/R_0)} = \frac{1}{R_0 - 1}.
+\]
+As $R_0 \to 1^+$, $\SI{R_0}{i^*} \to +\infty$: near the epidemic
+threshold, the endemic equilibrium is infinitely sensitive to changes
+in $R_0$. This is exactly the bifurcation behavior identified above.
+
+SA of the endemic equilibrium for $R_0$ values close to 1 must be
+interpreted with extreme caution. A small change in any parameter
+that affects $R_0$ could eliminate the endemic equilibrium entirely
+or cause it to surge. Local SA correctly identifies this extreme
+sensitivity but cannot predict the qualitative change.
+
+For $R_0 \leq 1$: SA of the endemic equilibrium is undefined;
+the equilibrium does not exist. Computing SA under the assumption
+that $i^*$ exists when $R_0 < 1$ is a mathematical error.
+MATLAB will simply return a negative or complex value without warning.
+
+\medskip\noindent
+\textbf{Operational rule: when to stop reporting SI as a ranking.}
+A sensitivity index is meaningful as a ranking tool only when
+the linearization is a fair local approximation.
+Two practical checks:
+
+\begin{enumerate}[nosep]
+\item \textit{Magnitude check.} If $|\SI{p}{q}| > 10$ for a normalized
+      index, treat the result as a qualitative warning
+      (``this parameter region is highly sensitive'') rather than a
+      quantitative ranking. An SI of 100 does not mean the parameter
+      matters 10$\times$ more than one with SI 10;
+      it may mean the model is near a threshold.
+\item \textit{Condition-number check.} Compute $\kappa(J_F)$
+      (the condition number of the model Jacobian at the operating point).
+      If $\kappa(J_F) > 10^4$, the sensitivity computation is
+      ill-conditioned: small errors in the model evaluation
+      may be amplified by $\kappa(J_F)$ in the sensitivity values.
+      Always report $\kappa(J_F)$ alongside SI values computed
+      near a bifurcation or near parameter degeneracy.
+\end{enumerate}
+
+%%------------------------------------------------------------
+\section{Ill-Conditioning}\index{ill-conditioning}
+\label{sec:illconditioning}
+%%------------------------------------------------------------
+
+For linear algebraic models, SA failure takes a different form.
+When the coefficient matrix $A$ in $A\vec{u} = \vec{b}$ is
+nearly singular, small changes in the right-hand side $\vec{b}$
+(or in the matrix entries) produce large changes in the solution.
+The sensitivity indices are large not because the model is interesting
+but because the model is poorly identified.
+
+\subsection{The Condition Number}
+
+The \textbf{condition number}\index{condition number} $\kappa(A) = \|A\|\|A^{-1}\|$
+(see Appendix~\ref{appsec:SVD} for the SVD-based definition $\kappa_2 = \sigma_1/\sigma_r$)
+measures how much the solution $\vec{u}$ can change relative to
+a change in the data. For the 2-norm,
+\begin{equation}
+  \kappa_2(A) = \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)},
+  \label{eq:condnum}
+\end{equation}
+where $\sigma_{\max}$ and $\sigma_{\min}$ are the largest and smallest
+singular values of $A$. A matrix with $\kappa_2(A) = 1$ is perfectly
+conditioned (orthogonal); a matrix approaching singularity has
+$\sigma_{\min} \to 0$ and $\kappa_2(A) \to \infty$.
+
+The key bound: if the data changes by a relative amount $\epsilon$,
+the solution changes by at most $\kappa(A)\,\epsilon$:
+\[
+  \frac{\|\delta\vec{u}\|}{\|\vec{u}\|} \leq \kappa(A)\,
+  \frac{\|\delta\vec{b}\|}{\|\vec{b}\|}.
+\]
+When $\kappa(A) \gg 1$, even tiny changes in the data produce
+large changes in the solution.
+
+\subsection{SA and Ill-Conditioning}
+
+For SA, the key insight is that large sensitivity indices are not
+necessarily a property of the model's \emph{true} behavior.
+They may simply reflect ill-conditioning: the fact that the linear
+system is nearly singular.
+
+A colleague who reports ``the sensitivity of $u_1$ to $b_1$
+is extremely large'' may be reporting either:
+(a) a genuine model property (the output truly varies strongly
+    with this parameter), or
+(b) a numerical artifact (the linear system is nearly singular
+    and small input changes have large numerical effects on the solution).
+
+Distinguishing (a) from (b) requires computing $\kappa(A)$.
+If $\kappa(A) \approx 10^6$, then numerical errors of size
+$\varepsilon_{\text{mach}} \approx 10^{-16}$ can contaminate the
+solution at the level of $10^{-10}$: 6 digits of the solution
+may be meaningless.
+
+Ill-conditioning is itself a SA result: it warns the investigator
+that the model parameters are nearly unidentifiable from data,
+and that predictions cannot be trusted without more precise
+parameter measurements.
+This is not a failure of SA; it is one of the most important
+things SA can reveal.
+
+\begin{selfcheck}
+The $2\times2$ matrix $A(\epsilon) = \begin{pmatrix} 1 & 1 \\ 1 & 1+\epsilon \end{pmatrix}$
+with $\epsilon > 0$:
+(a) Compute $\det(A(\epsilon))$ and show $A \to$ singular as $\epsilon \to 0$.
+(b) Compute the condition number $\kappa_2(A)$ for $\epsilon = 1, 0.1, 0.01$.
+(c) For $\vec{b} = (2, 2+\epsilon)^T$, solve $A\vec{u} = \vec{b}$ and compute
+    $\SI{\epsilon}{u_1}$. What happens to this SI as $\epsilon \to 0$?
+\end{selfcheck}
+\begin{scAnswer}
+(a) $\det = \epsilon \to 0$ as $\epsilon \to 0$. Singular at $\epsilon = 0$.
+(b) $\kappa_2(A) = \sigma_{\max}/\sigma_{\min}$. For $\epsilon = 1$: $\kappa \approx 5.83$.
+For $\epsilon = 0.1$: $\kappa \approx 40$. For $\epsilon = 0.01$: $\kappa \approx 400$.
+As $\epsilon \to 0$: $\kappa \to \infty$.
+
+(c) $A^{-1} = \epsilon^{-1}\begin{pmatrix}1+\epsilon & -1\\ -1 & 1\end{pmatrix}$.
+$\vec{u} = A^{-1}\vec{b} = (1, 1)^T$ for all $\epsilon > 0$.
+$\SI{\epsilon}{u_1}$: differentiate $u_1 = (2(1+\epsilon) - (2+\epsilon))/\epsilon
+= \epsilon/\epsilon = 1$ with respect to $\epsilon$, but the simplification
+$u_1 = 1$ holds exactly, so $\SI{\epsilon}{u_1} = 0$. The sensitivity vanishes!
+
+This illustrates a subtlety: large condition number does not always imply large SI.
+What the condition number warns is that \emph{numerical} computation of $\vec{u}$
+will be inaccurate; the exact mathematical SI may nonetheless be finite or zero.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Separatrices and Trajectory Sensitivity}\index{separatrix}\index{trajectory sensitivity}
+\label{sec:separatrices}
+%%------------------------------------------------------------
+
+Dynamical systems often have regions of qualitatively different behavior
+separated by a \textbf{separatrix}: a boundary in state space that
+trajectories cannot cross. SA computed on one side of a separatrix
+describes behavior qualitatively different from SA on the other side.
+
+For the SIR model, the relevant separatrix is the epidemic threshold
+$S(0) > \gamma N / (k\beta)$ (equivalently, $R_0 > 1$). If the
+initial susceptible population exceeds this threshold, an epidemic
+occurs. If it does not, the infection dies out without spreading.
+
+Suppose SA is performed at a parameter value where an epidemic occurs
+($R_0 = 1.5$) and the sensitivity index $\SI{\beta}{I_{\max}}$
+is computed. This index describes how the epidemic peak changes with
+a small perturbation to $\beta$ within the epidemic regime.
+It says nothing about what happens if $\beta$ is reduced below the
+threshold: in that regime, $I_{\max}$ is not a smooth function of $\beta$
+it drops to zero discontinuously as the separatrix is crossed.
+
+The practical implication: if any parameter perturbation of interest
+crosses a qualitative threshold (endemic vs.\ disease-free, outbreak
+vs.\ no outbreak, stable vs.\ oscillatory), local SA cannot be used to
+predict the response. The model must be analyzed separately in each
+qualitative regime, and the boundary itself requires special treatment.
+
+A related limitation applies to models with multiple stable attractors.
+When a model can settle into qualitatively different long-run states
+depending on initial conditions, the sensitivity index computed near one
+attractor says nothing about behavior near another.
+Extensions of the SIR model that exhibit bistability (where both a
+disease-free and an endemic equilibrium are stable for the same parameter
+values) require separate SA studies for each attractor.
+Local SA at one equilibrium cannot warn the analyst that another
+equilibrium exists.
+
+%%------------------------------------------------------------
+\section{When Global SA Is Needed}\index{global sensitivity analysis!when needed}
+\label{sec:globalneeded}
+%%------------------------------------------------------------
+
+\begin{flushright}
+\textit{\small Local SA studies the neighborhood. Global SA studies the country.}
+\end{flushright}
+
+Local SA fails to answer the right question in three specific
+situations. When any of these conditions holds, Chapter~9's global
+SA methods are required. The practical decision framework for
+choosing between local and global SA is developed at length by
+Saltelli et al.~\cite{saltelli2004sensitivity,saltelli2006sensitivity}.
+
+To reiterate the misconception that opened this chapter:
+a sensitivity index near zero does not mean a parameter is globally
+unimportant. It means the linearization at the nominal value is
+nearly flat. What happens away from the nominal, across the
+full uncertainty range of the parameter, requires global SA to determine.
+
+\subsection{Large Parameter Uncertainty}
+
+When a parameter is known only to within a factor of 2 or 3;
+common in epidemiology, ecology, and environmental modeling;
+the linearization underlying local SA may be very poor across
+the plausible range.
+
+As a concrete example, consider a model where the \QOI depends
+on a parameter $p$ through $q(p) = e^p$. At nominal value $p^* = 0$:
+$\SI{p}{q} = p^*(dq/dp)/q = 0 \cdot 1/1 = 0$. The local SI is zero.
+But if the uncertainty range is $[-2, 2]$, the \QOI varies from
+$e^{-2} \approx 0.14$ to $e^2 \approx 7.4$: a factor of 53.
+The parameter is globally important but invisible to local SA.
+
+\subsection{Highly Nonlinear Models}
+
+Two models with identical local SIs for a parameter $p$ may
+behave very differently when $p$ is perturbed by $20\%$:
+one model may be nearly linear (the SI is a good approximation),
+while the other may be highly curved (the SI understates the true change).
+
+The sigma-normalized sensitivity index (Section~9.1) provides
+the minimal bridge: it weights the local SI by the parameter's
+standard deviation, giving a measure that at least accounts for
+the relative magnitudes of parameter uncertainties.
+
+\subsection{Correlated Parameters}
+
+Local SA under the independence assumption gives misleading results
+when parameters are correlated (Chapter~3). Global SA methods in
+Chapter~9 include specific tools for handling this case.
+
+\subsection{The Portfolio Example}
+
+Consider a model $Y = s_1 Q_1 + s_2 Q_2$ with $s_1 = 2$, $s_2 = 1$
+and parameter standard deviations $\sigma_1 = 1$, $\sigma_2 = 3$.
+
+Local SA gives $\SI{Q_1}{Y} = 2 > \SI{Q_2}{Y} = 1$:
+parameter~1 appears more important.
+
+The sigma-normalized index:
+$S_i^\sigma = (s_i\sigma_i)/\sigma_Y$,
+where $\sigma_Y = \sqrt{4+9} = \sqrt{13}$.
+So $S_1^\sigma = 2/\sqrt{13} \approx 0.55$ and $S_2^\sigma = 3/\sqrt{13} \approx 0.83$.
+
+Parameter~2 dominates the output variance, even though it has a smaller
+local SI. The local ranking is inverted because parameter~2 has much
+larger uncertainty. Chapter~9's Sobol indices provide the rigorous
+global version of this sigma-normalized assessment.
+
+\begin{selfcheck}
+For the SIR model, suppose $\beta$ has uncertainty $\sigma_\beta = 0.02$
+and $\tau$ has uncertainty $\sigma_\tau = 3$~days, at nominal values
+$\beta^* = 0.06$ and $\tau^* = 7$~days.
+
+(a) From Chapter~2, $\SI{\beta}{R_0} = \SI{\tau}{R_0} = 1$.
+   Which parameter appears more important from local SA alone?
+
+(b) Compute $\sigma_\beta/\beta^*$ and $\sigma_\tau/\tau^*$ (the relative uncertainties).
+   Which parameter has larger relative uncertainty?
+
+(c) Compute the sigma-normalized indices for $R_0$ with respect to
+    $\beta$ and $\tau$. Which parameter drives more variance in $R_0$?
+\end{selfcheck}
+\begin{scAnswer}
+(a) Both have SI = 1, so local SA alone says they are equally important.
+
+(b) $\sigma_\beta/\beta^* = 0.02/0.06 \approx 0.33$ (33\%);
+$\sigma_\tau/\tau^* = 3/7 \approx 0.43$ (43\%). The mean infectious
+period has larger relative uncertainty.
+
+(c) $S_\beta^\sigma = \SI{\beta}{R_0} \cdot (\sigma_\beta/\beta^*) = 1 \times 0.33 = 0.33$.
+$S_\tau^\sigma = \SI{\tau}{R_0} \cdot (\sigma_\tau/\tau^*) = 1 \times 0.43 = 0.43$.
+The mean infectious period drives more variance in $R_0$, despite both
+having the same local SI. Chapter~9 will quantify this more precisely
+with Sobol indices.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{When SA Guides Data Collection}
+\label{sec:ch8datacollection}
+%%------------------------------------------------------------
+
+The three chapters preceding this one have identified when SA
+can mislead. This section completes the practical argument
+the book has been building since Chapter~1: how to use SA
+\emph{correctly} to make decisions about field measurement.
+
+\textbf{The decision chain.}
+A sensitivity study produces a ranked list of parameters.
+Translating that list into a field-measurement plan requires
+three additional steps that SA alone cannot provide:
+
+\begin{enumerate}
+\item \textit{Identifiability:} Can the high-sensitivity parameter
+      actually be estimated from the available data, or is it
+      structurally confounded with another parameter?
+      Section~\ref{sec:correlatedPOIs} showed that parameters
+      with identical sensitivity indices are not separately identifiable
+      from outbreak data alone; measuring one is equivalent
+      to measuring the other.
+      For the SIR model, $k$ and $\beta$ always appear as the product
+      $k\beta$, so field studies should estimate $k\beta$ directly
+      (e.g., from secondary attack rates) rather than $k$ and $\beta$
+      separately.
+
+\item \textit{Measurability:} Is the high-sensitivity parameter
+      actually measurable with available instruments and budget?
+      The mean infectious period $\tau$ appears in the top tier
+      of every SIR sensitivity analysis, and it is measurable:
+      clinicians record the duration from symptom onset to recovery.
+      The lifespan $L$ has negligible SI for short-horizon models
+      and is measurable anyway from demographic records.
+      A parameter with large SI but no feasible measurement pathway
+      should be \emph{reduced} rather than measured, by redesigning
+      the intervention.
+
+\item \textit{Actionability:} Can the high-sensitivity parameter
+      be reduced by a feasible public health intervention?
+      SA of the SIR model with $J = \max_t I(t)$ consistently identifies
+      $k$ (contact rate) and $\beta$ (transmission probability) as the
+      most influential parameters.
+      Contact rates can be reduced by social distancing, school closures,
+      and remote-work policies.
+      Transmission probability per contact can be reduced by mask
+      requirements, hand-hygiene campaigns, and vaccination.
+      These two routes correspond to different interventions with
+      different costs, compliance rates, and social acceptability.
+      SA identifies both as equally valuable targets; the choice between
+      them requires policy judgment beyond the model.
+\end{enumerate}
+
+\textbf{The two-budget problem.}
+A common practical scenario: a government agency has funding to
+(1) measure exactly $k_{\text{meas}}$ parameters precisely in the field,
+and (2) implement exactly $k_{\text{int}}$ interventions.
+The correct SA-guided procedure is:
+
+\begin{enumerate}[nosep]
+\item Run local SA (or Morris screening for large parameter sets)
+      to rank all parameters by $|\SI{p_j}{\text{peak}~I}|$.
+\item From the top-ranked parameters, apply the identifiability filter:
+      remove any parameter that is structurally confounded
+      with a higher-ranked parameter.
+\item Apply the measurability filter: remove any parameter for which
+      no feasible measurement protocol exists within the budget.
+\item The remaining top $k_{\text{meas}}$ parameters are the
+      measurement priorities.
+\item From the ranked list, apply the actionability filter separately:
+      the top $k_{\text{int}}$ actionable parameters are the
+      intervention priorities. These sets may overlap.
+\end{enumerate}
+
+\textbf{What the model cannot tell you.}
+The complete picture requires one more piece: the second semester.
+Smith's \\emph{Uncertainty Quantification}~\\cite{smith2014uncertainty}
+Chapters~7--8 covers Bayesian parameter estimation --- the step
+that actually quantifies how much a given measurement budget
+reduces parameter uncertainty.
+SA tells you \emph{which} parameters matter most; parameter estimation
+tells you \emph{how precisely} you can learn them from data;
+optimal experimental design (Smith Chapter~11) tells you
+\emph{how to design the measurement study} to learn those parameters
+as efficiently as possible.
+
+These three disciplines --- SA, parameter estimation, and optimal
+experimental design --- form a complete pipeline for model-based
+decision making. This book has equipped you for the first stage.
+
+\medskip\noindent
+\textit{If a parameter is influential and poorly known,
+that is not a nuisance. That is your research agenda.}
+
+%%------------------------------------------------------------
+\section{MATLAB Laboratory: Bifurcation and Ill-Conditioning}
+\label{sec:ch8matlab}
+%%------------------------------------------------------------
+
+\textbf{Part 1: The quadratic bifurcation.}
+For $f(u;p) = u^2 + p$, compute the positive root $u^* = \sqrt{-p}$
+and the SI $\SI{p}{u^*} = 1/2$ analytically.
+Plot $u^*$ vs.\ $p$ for $p \in [-4, -0.01]$.
+Estimate $\partial u^*/\partial p$ by centered differences at
+$p = -4, -1, -0.1, -0.01, -0.001$.
+Compare the finite-difference estimates with the analytic value.
+At what value of $p$ does the finite-difference estimate become unreliable?
+
+\textbf{Part 2: SIR bifurcation diagram using MATCONT.}
+Download and install MATCONT (\url{https://matcont.sourceforge.io}).
+Define the SIR equilibrium equations as a MATCONT system.
+Use MATCONT's continuation capability to trace the endemic equilibrium
+$i^* = 1 - 1/R_0$ as $R_0$ increases from 0.5 to 3.0.
+MATCONT will automatically detect the transcritical bifurcation at $R_0 = 1$
+and flag it. Plot the bifurcation diagram (equilibrium value vs.\ $R_0$).
+If MATCONT is unavailable, trace the equilibrium manually:
+for $R_0 \leq 1$, $i^* = 0$ (disease-free); for $R_0 > 1$, $i^* = 1 - 1/R_0$.
+
+\textbf{Part 3: FSA comparison across $R_0 = 1$.}
+Using the full SIR ODE system, compute $\SI{\beta}{I(T)}$ at
+$T = 90$~days for $R_0 = 0.8, 1.0, 1.2, 2.0$.
+At each value, use centered finite differences.
+Tabulate the results. At $R_0 = 1$: does the SI blow up, return NaN,
+or behave normally? Try $h = 0.01, 0.001, 0.0001$ to see what happens.
+
+\textbf{Part 4: Condition number of the SIR Jacobian as a function of $R_0$.}
+For the SIR endemic equilibrium, the Jacobian $J_F$ at $(S^*, I^*, R^*)$
+depends on $R_0$. Compute $\kappa_2(J_F)$ using MATLAB's \texttt{cond}
+for $R_0 \in \{1.01, 1.05, 1.1, 1.5, 2.0, 3.0\}$.
+Plot $\kappa_2(J_F)$ vs.\ $R_0$.
+Observe the spike as $R_0 \to 1^+$: the Jacobian becomes nearly singular
+at the bifurcation. What does this imply about SA of the SIR endemic equilibrium
+for parameter values that place $R_0$ close to 1?
+
+\textbf{Part 5: Sigma-normalized SIs for the SIR model.}
+Using the SIR model with uncertainty ranges $\sigma_k = 1$
+(contacts/day), $\sigma_\beta = 0.02$, $\sigma_\tau = 3$~days,
+$\sigma_L = 500$~days (all at $1\sigma$), compute the sigma-normalized
+indices for $R_0$. Compare the ranking with the local SI ranking
+from Chapter~2. Which parameter most affects $R_0$ given its
+realistic uncertainty range?
+
+%%------------------------------------------------------------
+\section{Exercises}
+%%------------------------------------------------------------
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch8:quadratic}
+For the equation $g(u; p) = u^3 - 3pu + 2 = 0$:
+\begin{enumerate}[label=(\alph*)]
+  \item Find all real roots at $p = 1$. Which root changes most rapidly with $p$?
+  \item Compute $\SI{p}{u^*}$ for each real root at $p = 1$
+        using the implicit function theorem.
+  \item Plot the roots as functions of $p$ for $p \in [0.8, 1.2]$.
+        At what value of $p$ do two roots merge?
+  \item At the bifurcation value of $p$, what does the FSE predict?
+        Verify numerically using finite differences.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch8:SIRthreshold}
+Using the SIR model with $k = 5$, $\tau = 7$~days, $L = 10{,}000$~days:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $\SI{\beta}{I(T)}$ for $\beta = 0.04, 0.06, 0.08, 0.12$
+        at $T = 90$~days using centered finite differences.
+        Note: $R_0 = k\beta\tau$ takes values $1.4, 2.1, 2.8, 4.2$.
+  \item Now recompute for $\beta = 0.02$ ($R_0 = 0.7$).
+        Compare with the results for $R_0 > 1$. Explain any qualitative differences.
+  \item If you were to add a bifurcation analysis tool (e.g., MATCONT),
+        what would you expect the bifurcation diagram to look like for
+        the endemic equilibrium of this SIR model as $\beta$ varies?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch8:conditioning}
+For the $3\times3$ linear system $A\vec{u} = \vec{b}$ where:
+\[
+  A = \begin{pmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9+\epsilon \end{pmatrix},
+  \quad \vec{b} = A\vec{u}_{\text{exact}}, \quad \vec{u}_{\text{exact}} = (1,1,1)^T.
+\]
+\begin{enumerate}[label=(\alph*)]
+  \item For $\epsilon = 1, 0.1, 0.01, 0.001, 0.0001$, compute $\kappa(A)$
+        and $\|\hat{\vec{u}} - \vec{u}_{\text{exact}}\|$ where
+        $\hat{\vec{u}} = A\backslash\vec{b}$ in MATLAB.
+  \item Plot $\|\hat{\vec{u}} - \vec{u}_{\text{exact}}\|$ vs.\ $\kappa(A)$
+        on log-log axes. What is the approximate slope?
+  \item What does this experiment tell you about interpreting large SI values
+        for nearly singular models?
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L5}]
+\label{ex:ch8:report}
+You are asked to perform SA on an epidemic model whose best-fit
+parameter values give $R_0 = 1.04$, very close to the epidemic threshold.
+Write a one-page advisory report for a public health agency explaining:
+\begin{enumerate}[label=(\alph*)]
+  \item What local SA can and cannot tell you at this parameter value.
+  \item What specific numerical problems to expect when computing
+        sensitivity indices near $R_0 = 1$.
+  \item What additional analyses you would recommend before advising
+        on interventions.
+  \item How you would explain the concept of a bifurcation and its
+        implications to a non-mathematical policy maker.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L6}]
+\label{ex:ch8:critique}
+A published modeling paper reports: ``Sensitivity analysis of the
+endemic equilibrium of our malaria model found that all indices
+are less than $0.1$, indicating the model is robust to parameter
+uncertainty. The basic reproduction number at fitted parameter
+values is $R_0 = 1.15$.''
+
+Identify at least three specific methodological concerns with
+this analysis and its conclusions. For each concern, state:
+(a) what the problem is; (b) what evidence the authors would need
+to provide to address it; and (c) what alternative analysis
+would give a more complete picture.
+\end{exercise}
+
+%%------------------------------------------------------------
+

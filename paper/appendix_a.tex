@@ -1,0 +1,180 @@
+%% ============================================================
+%% Appendix A: Inner Products, Norms, and Function Spaces
+%% ============================================================
+
+\chapter{Inner Products, Norms, and Function Spaces}
+\label{app:innerproduct}
+
+This appendix provides the minimum background in functional analysis
+needed to read Appendix~\ref{app:adjointformalism} and Smith's companion
+volume~\cite{smith2014uncertainty}. Readers who are comfortable with inner products
+and the $L^2$ space can proceed directly to Appendix~\ref{app:adjointformalism}.
+
+%%------------------------------------------------------------
+\section{Inner Products and Norms}
+\label{appsec:innerproducts}
+%%------------------------------------------------------------
+
+An \textbf{inner product}\index{inner product} on a vector space $V$ over $\R$ is a function
+$\langle \cdot, \cdot \rangle : V \times V \to \R$ satisfying:
+\begin{enumerate}[nosep]
+  \item \textit{Symmetry}: $\langle u, v \rangle = \langle v, u \rangle$.
+  \item \textit{Linearity in the first argument}:
+        $\langle \alpha u + \beta w, v \rangle
+        = \alpha\langle u, v\rangle + \beta\langle w, v\rangle$.
+  \item \textit{Positive definiteness}: $\langle u, u \rangle \geq 0$,
+        with equality only when $u = 0$.
+\end{enumerate}
+
+The \textbf{induced norm}\index{norm!induced} is $\|u\| = \sqrt{\langle u, u \rangle}$.
+The Cauchy-Schwarz inequality states $|\langle u, v \rangle| \leq \|u\|\,\|v\|$.
+
+\medskip
+
+\noindent\textbf{Example~A.1 (Euclidean inner product).}
+For $\vec{u}, \vec{v} \in \R^n$:
+\[
+  \langle \vec{u}, \vec{v} \rangle = \vec{u}^T\vec{v} = \sum_{i=1}^n u_i v_i.
+\]
+This is the dot product. The induced norm is the Euclidean norm
+$\|\vec{u}\|_2 = \sqrt{\sum u_i^2}$.
+
+\noindent\textbf{Example~A.2 (Weighted inner product).}
+For a symmetric positive definite matrix $W \in \R^{n\times n}$:
+$\langle \vec{u}, \vec{v}\rangle_W = \vec{u}^T W \vec{v}$.
+The induced norm $\|\vec{u}\|_W = \sqrt{\vec{u}^T W \vec{u}}$ is the
+$W$-weighted Euclidean norm. SA computations sometimes use this when
+parameters have very different scales.
+
+%%------------------------------------------------------------
+\section{The $L^2$ Inner Product}
+\label{appsec:L2}
+%%------------------------------------------------------------
+
+For functions $f, g : [a,b] \to \R$ that are square-integrable
+(i.e., $\int_a^b f(t)^2\,dt < \infty$), the \textbf{$L^2$ inner product}\index{$L^2$ inner product} is:
+\begin{equation}
+  \langle f, g \rangle_{L^2} = \int_a^b f(t)\,g(t)\,dt.
+  \label{eq:L2ip}
+\end{equation}
+The induced norm is $\|f\|_{L^2} = \sqrt{\int_a^b f(t)^2\,dt}$.
+
+The space $L^2([a,b])$ of all square-integrable functions on $[a,b]$
+with inner product~\eqref{eq:L2ip} is a \textbf{Hilbert space}\index{Hilbert space}:
+a complete inner product space.
+Completeness means that every Cauchy sequence converges to a function
+in $L^2([a,b])$.
+
+For Sobol decomposition (Chapter~9), the relevant space is $L^2([0,1]^m)$
+with inner product $\langle f, g\rangle = \int_{[0,1]^m} f(\vec{q})g(\vec{q})\,d\vec{q}$.
+
+%%------------------------------------------------------------
+\section{Integration by Parts as Transposition}
+\label{appsec:IBP}
+%%------------------------------------------------------------
+
+The key connection between adjoint sensitivity analysis and linear algebra
+is this: integration by parts is the function-space analog of the
+matrix transpose.
+
+In $\R^n$, for vectors $\vec{u}$, $\vec{v}$ and a matrix $A$:
+\[
+  \langle A\vec{u}, \vec{v}\rangle = (A\vec{u})^T\vec{v} = \vec{u}^T(A^T\vec{v})
+  = \langle\vec{u}, A^T\vec{v}\rangle.
+\]
+So $A^T$ is the operator satisfying $\langle Au, v\rangle = \langle u, A^Tv\rangle$.
+
+In $L^2([0,T])$, for functions $u, v$ and the differentiation operator $L = d/dt$:
+\[
+  \langle Lu, v\rangle_{L^2}
+  = \int_0^T \dot{u}(t)\,v(t)\,dt
+  = \bigl[u(t)v(t)\bigr]_0^T - \int_0^T u(t)\,\dot{v}(t)\,dt
+  = \bigl[uv\bigr]_0^T + \langle u, L^*v\rangle_{L^2},
+\]
+where $L^* = -d/dt$ (with appropriate boundary conditions) is the
+\textbf{adjoint operator} of $L = d/dt$.
+The boundary term $[uv]_0^T$ gives rise to the terminal condition
+$\lambda(T) = -h'(u(T))$ in the adjoint ODE derivation of Chapter~6.
+
+This correspondence makes precise what we stated informally throughout
+the book: the adjoint ODE is the ODE whose differential operator
+is the transpose of the forward ODE's operator, exactly as $A^T$
+is the transpose of $A$.
+
+%%------------------------------------------------------------
+\section{Orthogonality and the ANOVA Decomposition}
+\label{appsec:ortho}
+%%------------------------------------------------------------
+
+Two elements $u, v$ of an inner product space are \textbf{orthogonal}\index{orthogonality}
+if $\langle u, v\rangle = 0$.
+
+In $L^2([0,1]^m)$ with the uniform measure, the functions appearing in
+the Sobol ANOVA decomposition (Chapter~9) are mutually orthogonal.
+Specifically, for the decomposition
+$f = f_0 + \sum_i f_i + \sum_{i<j} f_{ij} + \cdots$,
+each term is orthogonal to every other term:
+$\langle f_{u}, f_{v}\rangle_{L^2} = 0$ when $u \neq v$ (as index sets).
+
+This orthogonality is why the output variance decomposes as a sum:
+$\Var(Y) = \sum_i D_i + \sum_{i<j} D_{ij} + \cdots$.
+It also explains why the decomposition requires independent parameters:
+independence of the $Q_i$ makes the integration over $[0,1]^m$ factorize,
+which is what produces the orthogonality.
+
+%%------------------------------------------------------------
+\section{Exercises}
+\label{appsec:A_exercises}
+%%------------------------------------------------------------
+
+\begin{selfcheck}
+Let $f(t) = e^{-t}$ and $g(t) = \cos(\pi t)$ on $[0, 1]$.
+(a) Compute $\langle f, g \rangle_{L^2}$ numerically (use MATLAB's
+\texttt{integral} function).
+(b) Are $f$ and $g$ orthogonal in $L^2([0,1])$?
+(c) Compute $\|f\|_{L^2}$ and $\|g\|_{L^2}$, and verify the
+Cauchy--Schwarz inequality $|\langle f,g\rangle| \leq \|f\|\,\|g\|$.
+\end{selfcheck}
+\begin{scAnswer}
+(a) $\langle f, g\rangle_{L^2} = \int_0^1 e^{-t}\cos(\pi t)\,dt$.
+Integrating by parts twice: result $\approx 0.218$ (verify numerically).
+(b) No — the inner product is nonzero, so $f$ and $g$ are not orthogonal.
+(c) $\|f\|_{L^2}^2 = \int_0^1 e^{-2t}\,dt = (1-e^{-2})/2 \approx 0.432$,
+so $\|f\|_{L^2} \approx 0.657$.
+$\|g\|_{L^2}^2 = \int_0^1 \cos^2(\pi t)\,dt = 1/2$, so $\|g\|_{L^2} = 1/\sqrt{2} \approx 0.707$.
+Cauchy--Schwarz: $|0.218| \leq 0.657 \times 0.707 \approx 0.464$. \checkmark
+\end{scAnswer}
+
+\begin{selfcheck}
+The integration-by-parts identity in Section~\ref{appsec:IBP}
+establishes that $L^* = -d/dt$ (with zero terminal condition)
+is the adjoint of $L = d/dt$ (with zero initial condition)
+in $L^2([0,T])$.
+(a) Write out $\langle Lu, v\rangle_{L^2}$ explicitly for
+$u(t) = t^2$ and $v(t) = t$ on $[0,1]$.
+(b) Compute $\langle u, L^*v\rangle_{L^2}$ for the same functions.
+(c) Verify that the two results differ by the boundary term $[u(t)v(t)]_0^1$.
+\end{selfcheck}
+\begin{scAnswer}
+(a) $Lu = 2t$. $\langle Lu, v\rangle = \int_0^1 2t \cdot t\,dt = \int_0^1 2t^2\,dt = 2/3$.
+(b) $L^*v = -dv/dt = -1$. $\langle u, L^*v\rangle = \int_0^1 t^2 \cdot(-1)\,dt = -1/3$.
+(c) Boundary term: $[u(t)v(t)]_0^1 = 1\cdot1 - 0\cdot0 = 1$.
+Check: $\langle Lu,v\rangle = \langle u, L^*v\rangle + [uv]_0^1 \Rightarrow 2/3 = -1/3 + 1 = 2/3$. \checkmark
+\end{scAnswer}
+
+\begin{selfcheck}
+The ANOVA decomposition in $L^2([0,1]^2)$ for the model
+$f(Q_1, Q_2) = Q_1 + Q_2 + Q_1 Q_2$ (with $Q_i \sim \mathcal{U}(0,1)$) is:
+$f = f_0 + f_1(Q_1) + f_2(Q_2) + f_{12}(Q_1,Q_2)$.
+Compute each term and verify that all terms are mutually orthogonal
+in $L^2([0,1]^2)$.
+\end{selfcheck}
+\begin{scAnswer}
+$f_0 = \mathbb{E}[f] = 1/2 + 1/2 + 1/4 = 5/4$.
+$f_1(Q_1) = \mathbb{E}[f|Q_1] - f_0 = Q_1 + 1/2 + Q_1/2 - 5/4 = 3Q_1/2 - 3/4$.
+$f_2(Q_2) = 3Q_2/2 - 3/4$ (by symmetry).
+$f_{12} = f - f_0 - f_1 - f_2 = Q_1Q_2 - Q_1/2 - Q_2/2 + 1/4 = (Q_1-1/2)(Q_2-1/2)$.
+Orthogonality: $\langle f_1, f_2\rangle = \int_0^1\int_0^1 (3Q_1/2-3/4)(3Q_2/2-3/4)\,dQ_1\,dQ_2
+= \left[\int_0^1(3Q/2-3/4)\,dQ\right]^2 = 0^2 = 0$. \checkmark
+Similarly all other pairs integrate to zero.
+\end{scAnswer}

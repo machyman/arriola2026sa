@@ -1,0 +1,215 @@
+%% ============================================================
+%% Foundations of Sensitivity Analysis: Theory, Computation, and Applications
+%% Leon M. Arriola and James M. Hyman
+%%
+%% Master book file — compile with pdflatex (two passes)
+%% ============================================================
+
+\documentclass[12pt]{book}
+
+%% ---- Shared preamble (packages, macros, environments) ----
+\input{preamble}
+
+%% ---- Book metadata ----
+\title{%
+  \textbf{Foundations of Sensitivity Analysis}\\[6pt]
+  \large Theory, Computation, and Applications
+}
+\author{Leon M. Arriola \and James M. Hyman}
+\date{}
+
+%% ============================================================
+\begin{document}
+%% ============================================================
+
+\frontmatter
+
+%% ---- Title page ----
+\maketitle
+
+%% ---- Copyright / colophon ----
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\small
+\copyright\ 2026 Leon M. Arriola and James M. Hyman.\\
+All rights reserved.\\[12pt]
+\textit{Part 1 of a two-semester sequence.}\\
+\textit{Companion volume: R.~C. Smith,
+\emph{Uncertainty Quantification: Theory, Implementation,
+and Applications}, SIAM, 2014.}
+\end{center}
+\vspace*{\fill}
+\clearpage
+
+%% ---- Table of contents ----
+\tableofcontents
+\clearpage
+
+%% ---- Preface ----
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+
+This book develops sensitivity analysis (SA) as a mathematical discipline,
+not merely as a collection of computational recipes.
+SA asks the foundational question of quantitative modeling:
+which parameters most strongly determine the model's predictions?
+
+\medskip
+
+Three ideas run through every chapter:
+\begin{enumerate}[nosep]
+  \item The sensitivity index is a normalized derivative.
+  \item The adjoint is the transpose, in whatever space you work.
+  \item Local SA is a linearization, with all the limitations that implies.
+\end{enumerate}
+
+Students who understand these three ideas (not just their definitions
+but their implications and connections) will be equipped to design,
+implement, and critique SA studies in any application domain.
+
+\medskip
+
+The SIR epidemic model serves as the running example throughout.
+Every method is demonstrated on this one model, so students can
+track increasing mathematical sophistication against a fixed biological
+context.
+All computational examples use MATLAB; each chapter includes a
+structured laboratory and a reusable code template.
+All code is freely available in the companion repository:
+\begin{center}
+  \texttt{https://github.com/mhyman/arriola2026sa}
+\end{center}
+The repository contains the complete \texttt{src/} library of
+production-quality MATLAB functions (one per major algorithm),
+three test suites with 48 automated checks, and this instructor's
+solutions manual.
+
+\medskip
+
+The adjoint method (Chapters~5--7) is the
+conceptual centerpiece of the book. It is the same idea encountered
+three times in three different mathematical spaces: the matrix transpose
+in linear algebra, the reversed computation graph in algorithmic
+differentiation, and a backward ODE in dynamical systems.
+Chapter~8, \emph{Caveat Emptor}, asks when sensitivity analysis can
+mislead, and is the chapter students most frequently cite as the
+one that changed how they think about mathematical models.
+
+\medskip
+
+\noindent\textbf{Relationship to existing literature.}
+Cacuci (1981) established the adjoint formalism for nonlinear systems;
+Giles and Pierce (2000) developed it for aeronautical design;
+Cao et al.\ (2002) gave the computational treatment for ODE systems;
+and Griewank and Walther (2008) treat the computation-graph view
+comprehensively. The present book differs from each of these in its
+pedagogical aim: it is the only undergraduate text that introduces all
+three forms of the adjoint (matrix, graph, and ODE) as instances
+of a single unifying idea, and that teaches students when \emph{not}
+to trust the results they compute.
+
+\medskip
+
+\noindent\textbf{For instructors.}
+The book covers a one-semester undergraduate course.
+Students need calculus, linear algebra, and ODEs; no measure theory or
+functional analysis is assumed.
+A minimal one-semester course can omit the computational AD material
+in Chapter~7 and all appendices without loss of continuity.
+Chapters~1--4 and~8--9 form a self-contained global-SA course
+for students who will not use the adjoint in their research.
+Exercises tagged \textsc{[Bloom~L5]} and \textsc{[L6]} are designed for
+semester projects and take-home examinations; those tagged \textsc{[L2]}--\textsc{[L4]}
+are suitable for weekly problem sets.
+
+\medskip
+
+\medskip
+
+\noindent\textit{Leon M. Arriola, University of Wisconsin-Whitewater}\\
+\noindent\textit{James M. Hyman, Tulane University}
+
+\medskip
+
+\noindent\textbf{Acknowledgments.}
+We thank the students in our sensitivity analysis courses at the
+University of Wisconsin-Whitewater, Tulane University, and the
+Mathematical and Theoretical Biology Institute (MTBI) at Arizona
+State University, whose questions and confusion shaped every page
+of this book.
+
+The MATLAB code library in the companion GitHub repository
+(\texttt{https://github.com/mhyman/arriola2026sa}) was
+developed with support from the Tulane University Department of
+Mathematics.
+
+\medskip
+
+\noindent\textbf{Dedication.}
+
+\medskip
+\begin{center}
+\textit{To our students, past and future:} \\[4pt]
+\textit{May you always ask which parameters matter} \\
+\textit{before you run the model.}
+\end{center}
+
+%% ============================================================
+\mainmatter
+%% ============================================================
+
+%% ---- Part I: The Sensitivity Question ----
+\part{The Sensitivity Question}
+
+\input{ch01_body}
+\input{ch02_body}
+
+%% ---- Part II: Computing SA in Practice ----
+\part{Computing Sensitivity in Practice}
+
+\input{ch03_body}
+
+%% ---- Part III: Analytic Forward SA ----
+\part{Analytic Forward Sensitivity Analysis}
+
+\input{ch04_body}
+
+%% ---- Part IV: The Adjoint Approach ----
+\part{The Adjoint Approach}
+
+\input{ch05_body}
+\input{ch06_body}
+\input{ch07_body}
+
+%% ---- Part V: Limitations and Extensions ----
+\part{Limitations and Extensions}
+
+\input{ch08_body}
+\input{ch09_body}
+
+%% ============================================================
+\appendix
+%% ============================================================
+
+\part*{Appendices}
+\addcontentsline{toc}{part}{Appendices}
+
+\input{appendix_a}
+\input{appendix_b}
+\input{appendix_c}
+\input{appendix_d}
+\input{appendix_e}
+
+%% ============================================================
+\backmatter
+%% ============================================================
+
+%% ---- Bibliography ----
+\bibliographystyle{siam}
+\bibliography{references}
+
+%% ---- Index ----
+\printindex
+
+\end{document}

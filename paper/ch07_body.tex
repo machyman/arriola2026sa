@@ -1,0 +1,670 @@
+\chapter{Adjoint Sensitivity in Practice}
+
+\begin{flushright}
+\textit{Reverse the calculation, and one output can speak about many inputs.}
+\end{flushright}
+
+\bigskip
+
+You need the sensitivities of a complex disease model with 30~parameters.
+The model is your own code, you wrote it yourself, so it is differentiable.
+You know from Chapter~6 that the adjoint requires only 2~ODE solves instead
+of 30~FSE solves.
+
+But deriving the adjoint equations by hand for 30~coupled nonlinear ODEs would
+take weeks and would almost certainly introduce errors in the derivation.
+
+Is there a way to obtain the adjoint computation without deriving the adjoint
+equations by hand? Yes, algorithmic differentiation does this automatically~\cite{naumann2012art}.
+And there is a way to use it from MATLAB today, without writing
+a single AD routine from scratch.
+
+%%------------------------------------------------------------
+\section{The Annuity Function: A Worked Comparison}
+\label{sec:annuity}
+%%------------------------------------------------------------
+
+Before examining the computational tools, we work through a concrete
+example where all three methods, forward mode, reverse mode,
+and symbolic differentiation, can be compared exactly.
+
+\subsection{The Problem}
+
+An annuity pays a fixed amount $P$ per period for $n$~periods at
+interest rate $r$. The present value is
+\begin{equation}
+  A(P, r, n) = P\,\frac{1 - (1+r)^{-n}}{r}.
+  \label{eq:annuity}
+\end{equation}
+We want all three sensitivity indices: $\SI{P}{A}$, $\SI{r}{A}$,
+$\SI{n}{A}$.
+
+\subsection{Forward Mode: Three Passes}
+
+In forward mode we differentiate the computation one parameter at a time,
+propagating $\dot{v}_k = \partial v_k/\partial q$ through intermediate
+values. We trace the computation of $A$ through the following steps:
+\[
+  v_1 = (1+r)^{-n}, \quad
+  v_2 = 1 - v_1, \quad
+  v_3 = v_2/r, \quad
+  A = P v_3.
+\]
+
+For $q = P$: set $\dot{P} = 1$, $\dot{r} = 0$, $\dot{n} = 0$.
+\[
+  \dot{v}_1 = 0, \quad \dot{v}_2 = 0, \quad \dot{v}_3 = 0, \quad
+  \dot{A} = \dot{P}\,v_3 + P\,\dot{v}_3 = v_3.
+\]
+So $\partial A/\partial P = v_3 = (1-(1+r)^{-n})/r$.
+
+For $q = r$: set $\dot{r} = 1$, $\dot{P} = 0$, $\dot{n} = 0$.
+\[
+  \dot{v}_1 = n(1+r)^{-n-1}, \quad
+  \dot{v}_2 = -n(1+r)^{-n-1}, \quad
+  \dot{v}_3 = \frac{\dot{v}_2\,r - v_2}{r^2}, \quad
+  \dot{A} = P\,\dot{v}_3.
+\]
+
+For $q = n$: set $\dot{n} = 1$, $\dot{P} = 0$, $\dot{r} = 0$.
+\[
+  \dot{v}_1 = -\ln(1+r)\,(1+r)^{-n}, \quad
+  \dot{v}_2 = \ln(1+r)\,(1+r)^{-n}, \quad
+  \dot{v}_3 = \dot{v}_2/r, \quad
+  \dot{A} = P\,\dot{v}_3.
+\]
+
+Three passes through the computation graph give three derivatives.
+Each pass involves the same number of operations as one evaluation
+of $A$, so the total cost is approximately $3\times$ the cost
+of a single function evaluation.
+
+\subsection{Reverse Mode: One Pass}
+
+In reverse mode, we compute all three derivatives in one backward
+pass. Set $\bar{A} = 1$. Work backward through the computation:
+\begin{align*}
+  \bar{P}  &= \bar{A}\,v_3 = v_3, \\
+  \bar{v}_3 &= \bar{A}\,P = P, \\
+  \bar{v}_2 &= \bar{v}_3 / r, \\
+  \bar{r}   &= \bar{v}_3 \cdot (-v_2/r^2) + \bar{v}_1\cdot\pd{v_1}{r}, \\
+  \bar{v}_1 &= -\bar{v}_2, \\
+  \bar{n}   &= \bar{v}_1 \cdot \pd{v_1}{n}
+             = -\bar{v}_2 \cdot \bigl(-\ln(1+r)(1+r)^{-n}\bigr).
+\end{align*}
+
+One backward pass gives $\partial A/\partial P$, $\partial A/\partial r$,
+and $\partial A/\partial n$ simultaneously. Total cost: approximately
+$2\times$ one function evaluation (one forward pass to store values;
+one backward pass to accumulate derivatives), independent of
+how many parameters $m$ there are.
+
+\subsection{Cost Summary}
+
+\subsection{Symbolic Differentiation}
+
+As a third comparison, we differentiate the formula~\eqref{eq:annuity}
+by hand (or by a computer algebra system). Define $v = (1+r)^{-n}$.
+Then $A = P(1-v)/r$, giving:
+\[
+  \pd{A}{P} = \frac{1-v}{r}, \quad
+  \pd{A}{r} = P\!\left(\frac{nv/(1+r) - (1-v)/r}{r}\right),
+  \qquad
+  \pd{A}{n} = P\,\frac{\ln(1+r)\,v}{r}.
+\]
+Symbolic differentiation produces exact closed-form expressions that can
+be evaluated at any $(P, r, n)$ with a single function evaluation;
+no passes through the computation graph are required at query time.
+The cost is paid upfront in the derivation; the payoff is that evaluation
+is cheap thereafter.
+
+\subsection{Exact Operation Counts}
+
+For the annuity function, we can count arithmetic operations precisely.
+The function $A$ requires: 1 addition, 1 exponentiation, 1 subtraction,
+2 divisions, 1 multiplication = 6 operations.
+
+Forward mode for one parameter: 6 operations for the primal values,
+plus 6 tangent operations = 12 total. For $m = 3$ parameters: 36 operations.
+
+Reverse mode: 12 operations (6 forward + 6 backward) regardless of $m$.
+For $m = 3$: still 12 operations.
+
+The ratio: forward mode costs $\approx 2m$ times a single evaluation;
+reverse mode costs $\approx 2$ times a single evaluation. For the annuity
+with $m = 3$, forward mode uses $3\times$ more operations than reverse mode.
+For a climate model with $m = 500$, forward mode uses $250\times$ more.
+For a neural network with $m = 10^7$ parameters and one scalar loss function,
+reverse mode still requires only one backward pass --- the same cost as the
+annuity --- while forward mode would require $10^7$ separate sweeps.
+This is why reverse-mode AD made modern deep learning computationally feasible.
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Method & Passes & Operations (annuity, $m=3$) & Scales as \\
+\midrule
+Forward mode & $m = 3$ & $\approx 36$ & $O(m)$ \\
+Reverse mode & 2 & $\approx 12$ & $O(1)$ in $m$ \\
+Symbolic diff & 1 (at query time) & $\approx 6$ & $O(1)$ in $m$ \\
+Finite diff & $2m + 1 = 7$ evals & $\approx 42$ & $O(m)$, approx \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At nominal values $P = 1000$, $r = 0.05$, $n = 20$, all methods give:
+$\SI{P}{A} = 1$, $\SI{r}{A} \approx -0.604$, $\SI{n}{A} \approx 0.482$.
+(The derivation of the analytic formulas is Exercise~7.1.)
+
+\begin{selfcheck}
+From the annuity formula~\eqref{eq:annuity}, compute $\SI{P}{A}$ analytically
+using the derivative form $\SI{P}{A} = (P/A)(\partial A/\partial P)$.
+Verify that it equals $1$ for any nominal values of $P$, $r$, $n$.
+\end{selfcheck}
+\begin{scAnswer}
+$\partial A/\partial P = (1-(1+r)^{-n})/r = A/P$.
+So $\SI{P}{A} = (P/A)(A/P) = 1$.
+
+This holds for any $r$, $n$: the present value is linear in $P$,
+so a $1\%$ increase in the payment amount produces exactly a $1\%$
+increase in present value, regardless of the interest rate or
+number of periods.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{Algorithmic Differentiation}
+\label{sec:AD}
+%%------------------------------------------------------------
+
+Algorithmic differentiation (AD), also called automatic
+differentiation, is the chain rule applied systematically
+to every arithmetic operation in a computer program.
+It is neither symbolic differentiation (which manipulates formulas)
+nor numerical differentiation (which approximates derivatives).
+It is exact to machine precision and applies to any differentiable code.
+
+Students sometimes expect AD to produce a formula for the derivative,
+like a computer algebra system would. It does not.
+AD produces the numerical value of the derivative at a specific
+input, by accumulating the chain rule through the sequence of
+arithmetic operations the program performs.
+
+Similarly, reverse-mode AD is not the same as numerical differentiation.
+A centered-difference estimate of $\partial A/\partial r$ has error
+$O(h^2)$ from the truncation of the Taylor series; reverse-mode AD
+gives the exact derivative (to floating-point precision) with no
+step-size selection required.
+
+\subsection{Forward Mode}
+
+Forward-mode AD attaches a tangent value $\dot{v}_k = \partial v_k/\partial q$
+to each intermediate variable $v_k$, for one chosen parameter $q$.
+At each arithmetic operation, the tangent is updated using the chain rule:
+\[
+  v_k = f(v_i, v_j) \implies
+  \dot{v}_k = \pd{f}{v_i}\dot{v}_i + \pd{f}{v_j}\dot{v}_j.
+\]
+At the end of the computation, $\dot{v}_{\text{output}}$ contains
+$\partial J/\partial q$. Repeat for each parameter: $m$~passes total.
+
+\subsection{Reverse Mode}
+
+Reverse-mode AD attaches an adjoint value $\bar{v}_k = \partial J/\partial v_k$
+to each intermediate variable. In the backward pass, these are accumulated
+using the chain rule in reverse:
+\[
+  v_k = f(v_i, v_j) \implies
+  \bar{v}_i \mathrel{+}= \pd{f}{v_i}\bar{v}_k, \quad
+  \bar{v}_j \mathrel{+}= \pd{f}{v_j}\bar{v}_k.
+\]
+The forward pass computes and stores all intermediate values.
+The backward pass accumulates all $\partial J/\partial q_i$ simultaneously.
+Total cost: one forward pass + one backward pass, regardless of $m$.
+
+Reverse-mode AD is the discrete-computation-graph version
+of the adjoint ODE derived in Chapter~6. The adjoint ODE propagates
+$\vec{\lambda}(t)$ backward through a continuous system; reverse-mode
+AD propagates $\bar{v}_k$ backward through a discrete computation graph.
+The underlying mathematical operation is identical: transposition of
+the derivative operator.
+
+\unifyingidea{2} Reverse-mode AD implements Unifying Idea~2 automatically:
+the adjoint is the transpose in whatever space you are working in, and AD
+constructs that transpose through the backward pass without requiring the analyst to derive the adjoint equations by hand.
+For a model written as differentiable code, this eliminates the main
+practical barrier to adjoint SA: instead of deriving and implementing
+the adjoint ODE, the analyst uses an AD library that differentiates
+the code directly. The adjoint equation is implicit in the
+reverse accumulation; the analyst never writes it explicitly.
+
+\subsection{Available Tools}\index{algorithmic differentiation!software}
+
+The 2009 source material for this book referenced ADIFOR, DAFOR,
+and TAMC, tools that are now outdated or unmaintained.
+Table~\ref{tab:ADtools} lists the current ecosystem.
+For a comprehensive survey of AD methods, see Baydin et al.~\cite{baydin2018automatic}
+and Margossian~\cite{margossian2019review}.
+
+\begin{table}[htb]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{2cm}p{4.2cm}p{2.5cm}p{3.5cm}}
+\toprule
+Language & Tool & Mode(s) & Notes \\
+\midrule
+MATLAB & Symbolic Math Toolbox & Symbolic & Exact; limited scalability \\
+MATLAB & Deep Learning Toolbox \texttt{dlarray} & Reverse & AD for code; GPU support \\
+Python & JAX & Forward + Reverse & NumPy-compatible; JIT compilation \\
+Python & PyTorch \texttt{autograd} & Reverse & Widely used in ML \\
+Julia & ForwardDiff.jl & Forward & High performance \\
+Julia & Zygote.jl & Reverse & Source-to-source; flexible \\
+C/Fortran & ADOL-C & Forward + Reverse & Mature; still active \\
+C/Fortran & Tapenade & Forward + Reverse & Source transformation \\
+\bottomrule
+\end{tabular}
+\caption{Current AD tools by language (as of 2025).
+         For MATLAB users, the Deep Learning Toolbox \texttt{dlarray}
+         provides reverse-mode AD for arbitrary differentiable code.
+         For large-scale scientific computing, JAX (Python) or ADOL-C
+         (C/Fortran) are the most commonly used options.}
+\label{tab:ADtools}
+\end{table}
+
+\begin{selfcheck}
+Explain in one sentence each why: (a)~AD is not symbolic differentiation;
+(b)~reverse-mode AD is not the same as centered finite differences;
+(c)~forward-mode AD requires $m$ passes while reverse-mode requires 2.
+\end{selfcheck}
+\begin{scAnswer}
+(a) Symbolic differentiation manipulates formulas algebraically;
+AD applies the chain rule numerically to the sequence of operations
+in the code, producing a number rather than a formula.
+
+(b) Centered finite differences approximate the derivative with error
+$O(h^2)$ via $(f(p+h)-f(p-h))/(2h)$; reverse-mode AD computes the
+exact derivative (to floating-point precision) by accumulating the
+chain rule backward through the computation graph.
+
+(c) Forward mode propagates the tangent $\dot{v}_k = \partial v_k/\partial q$
+for one parameter $q$ per pass, requiring one pass per parameter.
+Reverse mode propagates the adjoint $\bar{v}_k = \partial J/\partial v_k$
+for one response $J$ per backward pass, giving all $m$ derivatives simultaneously.
+\end{scAnswer}
+
+%%------------------------------------------------------------
+\section{The Master Decision Table}
+\label{sec:mastertable}
+%%------------------------------------------------------------
+
+With all methods now in hand, Table~\ref{tab:masterSA} consolidates
+the decision rules developed across Chapters~3--7.
+
+\begin{table}[htb]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{2.8cm}p{1.9cm}p{2.4cm}p{1.8cm}p{3.5cm}}
+\toprule
+Model type & $m$ vs.\ $r$ & Method & Accuracy & Cost \\
+\midrule
+Black-box & Any & FD (Ch.~3) & $O(h^2)$ & $2m{+}1$ evals \\
+Analytic, simple & $m \leq r$ & FSE (Ch.~4) & Exact & $m$ solves \\
+Analytic, diff.\ code & $m \gg r$ & AD, reverse & Exact & 2 passes \\
+Analytic, manual & $m \gg r$ & Adjoint (Ch.~6) & Exact & 2 solves \\
+Correlated POIs & Any & Reparameterize & --- & Depends \\
+Near bifurcation & Any & FSE + caution & Exact* & $m$ solves \\
+Large uncertainty & Any & Global SA (Ch.~9) & Variance & $N(m{+}2)$ evals \\
+\bottomrule
+\end{tabular}
+\caption{Master decision table for SA method selection;
+         see Pianosi et al.~\cite{pianosi2016sensitivity} for a broader SA survey.
+         The primary driver is whether the model is black-box or
+         differentiable, and whether $m \gg r$ or $m \leq r$.
+         (*Near a bifurcation, the FSE is exact but the SI diverges;
+         use the result with caution and consult Chapter~8.)
+         \textbf{AD vs analytic adjoint:}
+         use reverse-mode AD when the model is implemented in differentiable code
+         and memory allows storing the computation tape.
+         Use the analytic adjoint (Chapter~6) when the model is a nonlinear ODE or PDE,
+         memory is constrained, or the numerical integrator (e.g., adaptive \texttt{ode45})
+         is not itself differentiable.}
+\label{tab:masterSA}
+\end{table}
+
+There is no single universally correct method. The right choice depends
+on the model, the available tools, and the question being asked.
+A useful heuristic: start with finite differences (Chapter~3) to
+get SA results quickly, then switch to the adjoint (Chapter~6 or
+AD) if the computation time is unacceptable or if $m$ is large.
+
+One principle applies universally: whatever method you use, always
+sanity-check at least two sensitivity indices against an independent
+method before trusting the full result. For finite differences,
+verify one analytic SI if available. For the adjoint, verify two
+values against finite differences. This cross-check catches the
+majority of implementation errors.
+
+You should not need to choose between finite differences and the adjoint.
+Both serve distinct roles: FD is the right tool for black-box models;
+the adjoint is the right tool for white-box (differentiable) models
+with many parameters. They are complementary, not competing.
+But each tool has failure modes that practitioners encounter repeatedly.
+
+%%------------------------------------------------------------
+\section{Practical Guidance and Common Pitfalls}
+\label{sec:pitfalls}
+%%------------------------------------------------------------
+
+\subsection{Discretize-Then-Adjoint\index{discretize-then-adjoint} vs.\ Adjoint-Then-Discretize}
+
+When computing adjoint sensitivities for ODE systems, two strategies
+are available. In the \textbf{adjoint-then-discretize} approach
+(used throughout Chapter~6), the adjoint ODE is derived analytically
+from the continuous ODE and then solved numerically. In the
+\textbf{discretize-then-adjoint} approach, the ODE is first
+discretized into a finite-difference recurrence, and the adjoint
+is then derived for that discrete system.
+
+For linear ODEs with fixed step sizes, both approaches give identical
+results. For nonlinear ODEs with adaptive solvers, they can differ:
+the adjoint-then-discretize approach may give sensitivities that
+disagree with finite-difference verification because the continuous
+adjoint assumes a smooth forward trajectory that the adaptive solver
+does not produce. The discretize-then-adjoint approach is always
+consistent with finite differences but requires differentiating
+through the step-size control logic, which is non-trivial.
+
+For the applications in this book, the adjoint-then-discretize approach
+with a fixed-step-size forward solver is the most practical choice.
+Sirkes and Tziperman~\cite{sirkes1997finite} discuss the implications
+for geophysical models where both approaches are used in practice.
+
+\subsection{Memory Requirements for the Adjoint}\index{checkpointing}
+
+The adjoint ODE requires the forward solution $\vec{u}(t)$ stored at
+every time point where the adjoint ODE coefficients are evaluated.
+For a system with $n = 100$ state variables solved over $10{,}000$
+time steps in double precision, the stored forward solution requires
+$100 \times 10{,}000 \times 8$ bytes $= 8$~MB, modest.
+For a climate model with $n = 10^6$ state variables and $10^6$
+time steps, the requirement is $8 \times 10^{12}$~bytes $= 8$~TB;
+infeasible to store in memory.
+
+For large systems, two strategies address this:
+\textbf{Checkpointing}\index{checkpointing!adjoint} stores the forward solution only at a subset
+of time points and recomputes intermediate values as needed during
+the backward pass. \textbf{Adjoint-of-checkpoint} schemes
+(Griewank \& Walther~\cite{griewank2008evaluating}) achieve optimal trade-offs
+between memory and recomputation cost.
+For the models in this course, dense storage is always
+adequate.
+
+\subsection{Adaptive Step-Size Solvers}
+
+As noted in Chapter~3, adaptive ODE solvers (such as \texttt{ode45})
+introduce non-smoothness in the model output as a function of parameters:
+the step-size controller makes discrete decisions that change discontinuously
+with the parameter value. The continuous adjoint ODE from Chapter~6
+assumes a smooth forward solution; when adaptive solvers introduce
+discontinuities, the continuous adjoint may give inaccurate results.
+
+The safest approach: use fixed-step-size integration (e.g., \texttt{ode4}
+in MATLAB, a 4th-order Runge-Kutta) for the forward solve when
+computing adjoint sensitivities. This eliminates the non-smoothness
+and makes the continuous and discrete adjoints equivalent.
+Alternatively, use tight tolerances (\texttt{RelTol} $\leq 10^{-8}$)
+with adaptive solvers to minimize the non-smoothness.
+
+\begin{selfcheck}
+You compute adjoint sensitivities for the SIR model using
+\texttt{ode45} with default tolerances for the forward solve,
+then verify against centered finite differences.
+The adjoint gives $\SI{\beta}{J} = 1.04$ while centered FD gives $0.87$.
+Name two possible causes of this discrepancy, and describe
+the diagnostic steps you would take to identify which cause applies.
+\end{selfcheck}
+\begin{scAnswer}
+Possible causes: (1)~The adaptive step-size control in \texttt{ode45}
+introduces non-smoothness that corrupts the continuous adjoint.
+(2)~The finite-difference step size $h$ was chosen poorly (e.g.,
+too small, causing catastrophic cancellation, or too large, causing
+truncation error). Diagnostics: (a)~Recompute the adjoint with
+fixed-step-size \texttt{ode4}: if the discrepancy disappears,
+the solver is the culprit. (b)~Plot the U-curve for the FD estimate
+to verify the step size is optimal; if the FD value changes
+significantly with $h$, the FD is unreliable.
+Always use finite differences as a sanity check for any adjoint
+implementation; a discrepancy above $1\%$ warrants investigation.
+\end{scAnswer}
+
+\subsection{Discontinuities Break AD}\index{algorithmic differentiation!discontinuities}
+
+AD requires the model to be differentiable at the nominal parameter values.
+Common sources of non-differentiability in practice include \texttt{if} statements
+whose conditions depend on parameters,\footnote{%
+  \textit{If-statements are where smooth calculus goes to lose its temper.}
+  When an \texttt{if} condition switches branches as a parameter is perturbed,
+  the forward and reverse passes follow different computational paths,
+  and the resulting ``derivative'' is the derivative of whichever branch
+  happened to be active, which may be zero or undefined at the transition.}
+\texttt{min} and \texttt{max} functions,
+piecewise-defined model components such as quarantine thresholds or saturation
+functions with hard cutoffs, and look-up tables interpolated without smoothing.
+When these are present, AD will silently compute the derivative of one
+branch, which may be zero or undefined at the branch point.
+The diagnostic: compare AD results against centered finite differences.
+If they disagree significantly for small $h$, suspect a discontinuity.
+Replacing piecewise functions with smooth approximations (sigmoid
+functions, smooth max/min) restores differentiability.
+
+\begin{selfcheck}
+A disease model contains the piecewise function:
+$\beta(I) = \beta_0$ if $I < 0.1N$, else $\beta_0/2$.
+This represents reduced contact when hospitalizations are high.
+(a) Is this function differentiable with respect to $I$ everywhere?
+(b) If you run reverse-mode AD through this function at $I = 0.09N$,
+what derivative will AD report? Is this reliable?
+(c) Propose a smooth approximation that would make the model
+fully differentiable.
+\end{selfcheck}
+\begin{scAnswer}
+(a) No. The function has a jump discontinuity at $I = 0.1N$,
+so $\partial\beta/\partial I$ is undefined there.
+(b) At $I = 0.09N$, the \texttt{if} condition is false ($I < 0.1N$),
+so AD will compute the derivative of $\beta_0$ with respect to $I$,
+which is zero. This is locally correct for $I$ strictly below the
+threshold, but gives no information about the discontinuity itself,
+and will be completely wrong for sensitivity with respect to $I$ near
+the threshold. It is unreliable as a global SA result.
+(c) Replace the step with a sigmoid:
+$\beta(I) = \beta_0\bigl(1 - 0.5\,\sigma(k(I/N - 0.1))\bigr)$,
+where $\sigma(x) = 1/(1+e^{-x})$ and $k > 0$ controls sharpness.
+As $k \to \infty$ this recovers the discontinuous original;
+a moderate $k$ (e.g., $k = 100$) approximates it closely while
+remaining differentiable everywhere.
+\end{scAnswer}
+
+\unifyingidea{1} Every method in this chapter (forward mode,
+reverse mode, symbolic differentiation, finite differences, the adjoint
+ODE) computes the same object: Unifying Idea~1, the sensitivity index
+defined in Chapter~2. The methods differ in computational cost,
+accuracy, and applicability to different model types, but the result they
+produce is always the same number: $\SI{p_j}{J} = (p_j/J)(dJ/dp_j)$.
+
+%%------------------------------------------------------------
+\section{MATLAB Laboratory: Four Methods, One Model}
+\label{sec:ch7matlab}
+%%------------------------------------------------------------
+
+This laboratory computes the same sensitivity ($\partial J/\partial\beta$
+for the SIR model with $J = \int_0^{90} I\,dt$, using all four methods
+and compares their accuracy, speed, and ease of implementation.
+
+\textbf{Part 1: Finite differences (Chapter~3 method).}
+Use the \texttt{sensitivity\_jacobian} template from Chapter~3 with the
+SIR model. Record the estimated $\SI{\beta}{J}$ and the computation time.
+
+\textbf{Part 2: Analytic FSE (Chapter~4 method).}
+Solve the 15-equation augmented system from Chapter~4 for the $\beta$
+parameter alone. Extract $\partial I(t)/\partial\beta$ at all time points
+and integrate numerically. Record the result and time.
+
+\textbf{Part 3: Adjoint ODE (Chapter~6 method).}
+Solve the adjoint system from Chapter~6. Use
+formula~\eqref{eq:sensfml_vec} to compute $dJ/d\beta$.
+Record the result and time.
+
+\textbf{Part 4: MATLAB Symbolic Toolbox.}
+Define the SIR ODE symbolically and compute the sensitivity
+of the equilibrium $R_0 = k\beta/\gamma$ with respect to $\beta$
+as a sanity check. Note: the Symbolic Toolbox computes sensitivities
+of closed-form expressions, not of ODE solutions over time.
+
+\begin{verbatim}
+syms k beta gamma positive
+R0   = k * beta / gamma;
+SI_b = simplify( (beta/R0) * diff(R0, beta) )
+
+%% For the time-dependent sensitivity via dlarray:
+%% (requires Deep Learning Toolbox)
+p_nom = [5, 0.06, 7, 10000];    %% [k, beta, tau, L]
+p_dl  = dlarray(p_nom);
+J_fn  = @(p) SIR_integral(p);   %% function returning integral of I
+dJdp  = dlgradient(J_fn(p_dl), p_dl);
+fprintf('AD sensitivity for beta: %.6f\n', extractdata(dJdp(2)));
+\end{verbatim}
+
+\textbf{Part 5: Comparison table.}
+Fill in the following table from your measurements:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Method & $\SI{\beta}{J}$ & Rel.\ error & Time (s) & Lines of new code \\
+\midrule
+Finite differences & & & & \\
+Analytic FSE & & & & \\
+Adjoint ODE & & & & \\
+AD (\texttt{dlarray}) & & & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Discuss: which method is easiest to implement? Most accurate?
+Fastest? Which would you use in practice for this model?
+
+\textbf{Extension: introducing a discontinuity.}
+Modify the SIR model to include a treatment threshold: if $I(t) > 0.1N$,
+reduce $\tau$ by $20\%$ (faster treatment when infection is high).
+Re-run all four methods. Which methods give consistent results?
+Which methods silently produce wrong answers? How does the U-curve
+(Chapter~3) change for finite differences near $\beta$?
+
+%%------------------------------------------------------------
+\paragraph{Connection to optimization.} The adjoint computed in this
+chapter is the same object as the Lagrange multiplier in constrained
+optimization and the costate variable in optimal control.
+Appendix~\ref{app:optimization} develops this connection through
+LP duality and Pontryagin's minimum principle.
+
+%%------------------------------------------------------------
+\section{Exercises}
+%%------------------------------------------------------------
+
+\begin{exercise}[\bloom{L3}]
+\label{ex:ch7:annuity}
+For the annuity function~\eqref{eq:annuity} at nominal values
+$P = 1000$, $r = 0.05$, $n = 20$:
+\begin{enumerate}[label=(\alph*)]
+  \item Compute $A$ numerically.
+  \item Compute all three sensitivities $\SI{P}{A}$, $\SI{r}{A}$, $\SI{n}{A}$
+        analytically by differentiating~\eqref{eq:annuity}.
+  \item Implement forward mode by hand for $q = r$ (as in Section~7.1)
+        and verify your answer from (b).
+  \item Implement reverse mode for all three parameters in one pass
+        and verify all three answers.
+  \item Count the number of arithmetic operations in each approach.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch7:decisiontable}
+For each of the following SA problems, select the most appropriate
+method from Table~\ref{tab:masterSA} and justify in two sentences:
+\begin{enumerate}[label=(\alph*)]
+  \item A climate model with 800 parameters written in Fortran.
+        Each model run takes 10~hours. You want sensitivities for
+        2 response functionals.
+  \item A pharmacokinetic model with 5 parameters and analytic
+        closed-form solutions. You want sensitivities for 8 drug
+        concentration time points.
+  \item A traffic simulation with 40~parameters implemented as a
+        compiled C++ executable. Parameter values can be set via
+        a configuration file. Each run takes 3~minutes.
+  \item A 10-parameter epidemic model written in MATLAB with
+        \texttt{ode45}. You want one response functional.
+        The model contains an \texttt{if} statement that triggers
+        a quarantine intervention when $I > 0.05N$.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L4}]
+\label{ex:ch7:dlarray}
+Using MATLAB's Deep Learning Toolbox \texttt{dlarray}:
+\begin{enumerate}[label=(\alph*)]
+  \item Wrap the function $R_0(k, \beta, \tau) = k\beta\tau$ as a
+        differentiable computation and use \texttt{dlgradient} to compute
+        all three partial derivatives at $k=5$, $\beta=0.06$, $\tau=7$.
+  \item Compare with the analytic derivatives.
+  \item Wrap the SIR equilibrium calculation (solve $\vec{f}(\vec{u}) = 0$
+        numerically) and compute $\partial\bar{I}/\partial\beta$ at the
+        endemic equilibrium. Compare with the FSE result from Chapter~4.
+  \item What happens when you try to apply \texttt{dlgradient} through
+        a call to \texttt{ode45}? Explain why, and what the remedy is.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L5}]
+\label{ex:ch7:workflow}
+Design the complete SA workflow for a dengue fever transmission
+model~\cite{chitnis2008determining} with the following properties:
+$n = 8$ state variables (human and mosquito compartments),
+$m = 14$ parameters (mortality rates, biting rates, transmission
+probabilities, mean durations), $r = 2$ response functionals
+(basic reproduction number and endemic human infection prevalence),
+each ODE solve taking approximately 2~minutes.
+
+Specify:
+\begin{enumerate}[label=(\alph*)]
+  \item Which SA method you would use and why.
+  \item The expected total computation time.
+  \item How you would validate the implementation.
+  \item How you would handle the fact that two parameters
+        ($\sigma_v$ and $\sigma_h$, the mosquito and human biting rates)
+        are structurally correlated.
+  \item What output format you would use to present results to
+        a non-mathematical public health audience.
+\end{enumerate}
+\end{exercise}
+
+\begin{exercise}[\bloom{L6}]
+\label{ex:ch7:disagree}
+A research group uses reverse-mode AD to compute adjoint sensitivities
+for a mosquito population model with adaptive-step-size ODE integration.
+They report that some sensitivity indices agree with finite differences
+but others disagree by $10$--$20\%$, with no obvious pattern.
+The discrepancies are largest for parameters that appear in the
+mortality rate expressions.
+\begin{enumerate}[label=(\alph*)]
+  \item Identify the most likely technical cause of the discrepancy.
+  \item Describe two diagnostic tests that would confirm or rule out
+        this cause.
+  \item Propose two remedies and explain the trade-offs between them.
+  \item At what point would you conclude that the disagreement indicates
+        a genuine SA result (the linearization is poor for these parameters)
+        rather than a numerical artifact?
+\end{enumerate}
+\end{exercise}
+
+%%------------------------------------------------------------
+

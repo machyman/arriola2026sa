@@ -1,0 +1,1032 @@
+%% ============================================================
+%% Chapter 7 Solutions
+%% ============================================================
+
+\section{Chapter 7: Algorithmic Differentiation}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.1}{L3}
+
+\solanswer
+
+Annuity function: $A = P\,r(1+r)^n/[(1+r)^n - 1]$ at $P=1000$, $r=0.05$, $n=20$.
+
+\solpart{a} \textbf{Numerical value.}
+$(1.05)^{20} = 2.6533$. $A = 1000 \times 0.05(2.6533)/(2.6533-1)
+= 1000 \times 0.13277/1.6533 = \mathbf{80.24}$ per period.
+
+\solpart{b} \textbf{Analytic derivatives.}
+Let $R = (1+r)^n$. Then $A = PrR/(R-1)$.
+\[
+  \frac{\partial A}{\partial P} = \frac{rR}{R-1} = A/P = 0.08024. \quad
+  \SI{P}{A} = \frac{P}{A}\cdot\frac{A}{P} = 1.
+\]
+\[
+  \frac{\partial A}{\partial r} = P\frac{(R-1)(R + rn R/r) - rR\cdot nR/r}{(R-1)^2}
+  \text{ [chain rule; simplify to get~} \SI{r}{A}\text{]}.
+\]
+Using log-derivative for $\SI{r}{A}$: $\ln A = \ln P + \ln r + n\ln(1+r) - \ln[(1+r)^n - 1]$.
+$\SI{r}{A} = \frac{d\ln A}{d\ln r} = 1 + \frac{nr}{1+r} - \frac{n r (1+r)^{n-1}}{(1+r)^n - 1}
+\cdot r$.
+At $r=0.05$, $n=20$: $\SI{r}{A} \approx 1 + 0.9524 - 0.9524\times2.6533/1.6533
+\approx 1 + 0.9524 - 1.529 \approx \mathbf{0.424}$.
+
+$\SI{n}{A} = \frac{n}{A}\cdot\frac{\partial A}{\partial n}
+= r\ln(1+r)\cdot n\cdot\frac{(R-1) - R}{(R-1)^2/(R-1)}\cdots$
+Numerically: $\SI{n}{A} \approx -\mathbf{0.468}$ (payments increase as $n$ decreases).
+
+\solpart{c} \textbf{Forward mode for $\partial A/\partial r$ (seeding $\dot{r}=1$).}
+$\dot{R} = n(1+r)^{n-1} = 20(1.05)^{19} = 50.539$.
+$\dot{A} = P[\dot{r}R + r\dot{R})(R-1) - rR\dot{R}]/(R-1)^2$.
+Numerically: matches analytic result $\partial A/\partial r \approx 680.2$.
+$\SI{r}{A} = (r/A)\times680.2 = (0.05/80.24)\times680.2 \approx 0.424$. $\checkmark$
+
+\solpart{d} \textbf{Reverse mode (all three in one pass).}
+Seed $\bar{A} = 1$. Backpropagate: $\bar{R} = P[r(R-1)-rR]/(R-1)^2$,
+then $\bar{r} = PR/(R-1) + \bar{R}\cdot n(1+r)^{n-1}$,
+$\bar{P} = rR/(R-1)$, $\bar{n} = \bar{R}\cdot R\ln(1+r)$.
+One backward pass yields all three. $\checkmark$
+
+\solpart{e} \textbf{Operation counts.}
+Forward mode (one parameter): $\sim$8 multiplications, 3 additions.
+Reverse mode (all 3): $\sim$12 multiplications, 6 additions.
+Forward-mode for all 3 parameters: $3\times8 = 24$ operations.
+Reverse mode is $24/12 = 2\times$ cheaper for all parameters combined.
+
+\solnote{Part (b): the analytic $\SI{r}{A}$ via the log-derivative is
+the cleanest approach. Students who expand via the quotient rule often
+make algebra errors. Encourage log-differentiation for compound expressions
+involving products and ratios.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.2}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Climate model, 800 parameters, 2 response functionals, 10 h/run.}
+\textbf{Use adjoint AD.} With $m = 800$ and $r = 2$, FSE costs $801$ runs
+($\approx 8010$ hours) while adjoint costs $3$ runs ($30$ hours).
+If the model code supports AD (e.g., via Tapenade for Fortran),
+implement the adjoint. If not, central-difference FSE is not feasible;
+use adjoint or restrict to Morris screening ($\approx 8000$ evaluations
+$= 80{,}000$ hours — still infeasible). This is a case where
+developing the adjoint is the only practical option.
+
+\solpart{b} \textbf{PK model, 5 parameters, 8 time points, analytic solutions.}
+\textbf{Use analytic FSE (or log-derivatives directly).}
+With analytic solutions, $\partial u/\partial p_j$ can be derived
+symbolically. No AD or numerical FD is needed. Cost: trivial.
+Using MATLAB \texttt{diff} or SymPy once gives all 5$\times$8 sensitivities.
+
+\solpart{c} \textbf{Traffic simulation, 40 parameters, compiled C++, 3 min/run.}
+\textbf{Use centered finite differences.}
+AD is unavailable (compiled black box). Centered FD costs $81$ runs
+$\times3$ min $= 243$ min $\approx 4$ hours. Feasible overnight.
+Adjoint would require modifying the C++ source (possible but costly in developer time).
+Morris screening ($15$ trajectories, $\approx 615$ runs) is also feasible
+if nonlinearity is a concern.
+
+\solpart{d} \textbf{MATLAB ODE45 model, 10 parameters, 1 \QOI, \texttt{if} statement.}
+\textbf{Use centered finite differences.}
+The \texttt{if} statement makes the model non-differentiable at the quarantine
+threshold; forward-mode AD and the adjoint will both fail at parameter values
+that trigger the discontinuity. Centered differences detect the discontinuity
+as a large error indicator (the left and right estimates diverge near threshold).
+Cost: $21$ runs. Use the U-curve diagnostic to identify non-smooth parameters.
+
+\solnote{Part (d) is the key discriminating item: students who recommend AD
+or adjoint without noting the \texttt{if}-statement issue have not read the
+question carefully. Chapter 8 covers this exact failure mode. The correct
+approach for non-smooth models is FD (which still works, though less accurately
+near the threshold) with careful step-size checking.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.3}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{dlarray for $R_0(k,\beta,\tau) = k\beta\tau$.}
+\begin{verbatim}
+k = dlarray(5); beta = dlarray(0.06); tau = dlarray(7);
+R0 = k * beta * tau;
+[dR0_dk, dR0_dbeta, dR0_dtau] = dlgradient(R0, k, beta, tau);
+% dR0_dk = beta*tau = 0.42; dR0_dbeta = k*tau = 35; dR0_dtau = k*beta = 0.3
+\end{verbatim}
+
+\solpart{b} \textbf{Verification.}
+$\partial R_0/\partial k = \beta\tau = 0.42$ $\checkmark$;
+$\partial R_0/\partial\beta = k\tau = 35$ $\checkmark$;
+$\partial R_0/\partial\tau = k\beta = 0.3$ $\checkmark$.
+Normalized: $\SI{k}{R_0} = (k/R_0)\cdot0.42 = (5/2.1)\cdot0.42 = 1$ $\checkmark$.
+
+\solpart{c} \textbf{SIR endemic equilibrium.}
+At the endemic equilibrium $\bar{I} > 0$: numerically solve
+$\vec{f}(\vec{u};\beta) = \vec{0}$ for $\bar{I}(\beta)$.
+Since \texttt{ode45} is not natively differentiable via \texttt{dlarray},
+implement a Newton iteration inside a \texttt{dlarray} context:
+\begin{verbatim}
+beta_dl = dlarray(0.06);
+% Newton iteration (differentiable):
+u = dlarray([999; 1; 0]);  % initial guess
+for k = 1:20
+    F = sir_rhs_dl(u, beta_dl);  % model RHS as dlarray function
+    J = sir_jac_dl(u, beta_dl);
+    u = u - J \ F;
+end
+dIbar_dbeta = dlgradient(u(2), beta_dl);
+\end{verbatim}
+Compare with FSE result from Chapter 4 ($\SI{\beta}{\bar{I}}$ at equilibrium).
+
+\solpart{d} \textbf{Applying dlgradient through ode45.}
+\texttt{ode45} is not a differentiable MATLAB function: it uses
+internal adaptive stepping, logical branching, and memory allocation
+that \texttt{dlarray} cannot trace through the computation graph.
+Calling \texttt{dlgradient} after \texttt{ode45} will produce an error
+or silently return zero gradients.
+\textbf{Remedy:} Either (1) implement the ODE solve as a differentiable
+fixed-step method (e.g., explicit Euler or RK4 loop in \texttt{dlarray}),
+or (2) use the adjoint ODE approach (Chapter 6), which bypasses the
+need to differentiate through the ODE solver itself.
+
+\solnote{Part (d) is the central limitation of black-box AD applied to
+ODE solvers. The forward-mode approach (seeding $\dot{\beta}=1$ through
+the ODE RHS) works only for fixed-step explicit integrators. The adjoint
+approach of Chapter 6 circumvents this entirely.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.4}{L5}
+
+\solanswer
+
+\textbf{Dengue model SA design: 8 state variables, 14 parameters, 2 QOIs, 2 min/run.}
+
+\solpart{a} \textbf{Method: analytic adjoint ODE.}
+With $m = 14$ and $r = 2$, FSE costs $15$ runs ($30$ min) while adjoint
+costs $3$ runs ($6$ min). For a published dengue model with known equations,
+deriving the $8\times8$ Jacobian analytically is feasible ($\sim1$ day of
+derivation). Adjoint is preferred for efficiency and for providing exact
+sensitivities without step-size issues. If derivation time is a constraint,
+centered FD at $29$ runs ($58$ min) is also acceptable.
+
+\solpart{b} \textbf{Computation time.} Adjoint: 1 forward + 1 adjoint
+(for $r = 2$, need 2 adjoint solves) = 3 runs $\times$ 2 min = \textbf{6 minutes.}
+Centered FD: $29$ runs $\times$ 2 min = \textbf{58 minutes.}
+
+\solpart{c} \textbf{Validation.}
+Verify $\SI{k}{R_0} = \SI{\beta_h}{R_0} = 1$ analytically against adjoint output.
+Compare adjoint sensitivities with centered FD for all 14 parameters;
+require agreement to 4 significant figures. Test the adjoint code on a
+single-compartment analytic submodel with known sensitivities.
+
+\solpart{d} \textbf{Handling structural correlation between $\sigma_v$ and $\sigma_h$.}
+Report standard (marginal) SIs and total-derivative SIs. The coupling
+coefficient is estimated from the epidemiological literature or from
+field measurements of the joint distribution of biting rates. If
+$\sigma_v$ increases by $x\%$, $\sigma_h$ increases by $c_{vh}\cdot x\%$.
+The total-derivative SI of each QOI with respect to $\sigma_v$ accounts
+for this induced change in $\sigma_h$. Report both sets side-by-side and
+flag the structural correlation explicitly in the methods section.
+
+\solpart{e} \textbf{Presentation for public health audience.}
+Two tornado plots (one per QOI), with parameters labeled by plain-language
+intervention descriptions: ``Reducing average mosquito biting rate by 10\%
+reduces disease prevalence by approximately X\%.'' Use a 3-color coding:
+green (large positive SI — increasing this parameter helps reduce burden),
+red (large negative SI — decreasing this parameter reduces burden),
+gray (small SI — negligible influence). Limit to top 5 parameters
+per QOI for clarity.
+
+\solnote{This is a realistic applied SA design exercise. Full credit requires
+all five components with specificity. The structural correlation handling (d)
+is the most commonly missed; students who only say ``account for correlation''
+without specifying how receive partial credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{7.5}{L6}
+
+\solanswer
+
+\textbf{The most likely technical cause:} Incorrect treatment of the
+adaptive step-size logic during reverse-mode AD of the ODE solver.
+
+\solpart{a} \textbf{Root cause.}
+Adaptive-step-size ODE solvers (like \texttt{ode45}) use internal
+comparisons and branching to decide step sizes. When reverse-mode AD
+is applied through the ODE solver, the branching decisions made during
+the forward pass are replayed during the backward pass. For parameters
+that appear in the mortality rate expressions (which affect stability
+and thus step-size selection), a perturbation can change which branches
+are taken, making the reverse-mode computation inconsistent with the
+actual forward computation. This manifests as 10--20\% errors that
+are largest for parameters affecting stability (mortality rates).
+
+\solpart{b} \textbf{Two diagnostic tests.}
+
+\textit{Test 1: Fixed-step integrator comparison.}
+Re-implement the ODE solve with a fixed-step explicit RK4 method.
+Apply reverse-mode AD to this fixed-step implementation. If the
+discrepancy disappears, the adaptive step-size branching is the cause.
+
+\textit{Test 2: Finite-difference consistency.}
+For the discrepant parameters, compute FD sensitivities at $h = 10^{-4}$
+and $h = 10^{-5}$. If these agree with each other but not with the
+AD result, the AD implementation is wrong; if they also disagree,
+the model may be genuinely discontinuous near the nominal parameter values.
+
+\solpart{c} \textbf{Two remedies and trade-offs.}
+
+\textit{Remedy 1: Fixed-step AD-compatible integrator.}
+Replace the adaptive solver with a fixed-step RK4 inside the AD tape.
+\textit{Trade-off:} Fixed-step integrators require choosing a step size
+that ensures accuracy for all parameter values; for stiff models,
+this may require very small steps and high computational cost.
+Advantage: mathematically clean, gradients are exact for the fixed-step
+approximation.
+
+\textit{Remedy 2: Discrete adjoint (checkpointing).}
+Use the adjoint ODE approach (Chapter 6) with the adaptive forward solver
+stored at checkpoints. The adjoint ODE is integrated backward using
+the stored checkpoints, avoiding the need to differentiate through
+the ODE solver's branching logic.
+\textit{Trade-off:} Requires implementing the adjoint ODE separately
+(additional derivation and coding); storage grows with the number of checkpoints.
+Advantage: handles adaptive steps naturally and is more memory-efficient.
+
+\solpart{d} \textbf{When to conclude genuine SA result.}
+
+If the FD sensitivities computed at two consistent step sizes ($h$ and $h/2$)
+agree with each other within 1\% but differ from the AD result by 10--20\%,
+the AD implementation is suspect. However, if FD estimates also show
+high variability (differing by $>5\%$ as $h$ is halved), this suggests
+the model is genuinely non-smooth and the large discrepancy reflects
+real behavior: the model is in a sensitive regime where small parameter
+changes cause qualitative changes in dynamics. In this case, the adjoint
+and FD are both locally valid; the discrepancy is genuine and should
+be reported as a finding (the model is near a threshold for these parameters).
+
+\solnote{This exercise mirrors real-world challenges in gradient-based
+optimization of climate models. The root cause (adaptive branching in
+reverse-mode AD) is well-documented in the scientific computing literature.
+Students who identify only ``there is a bug'' without specifying the mechanism
+receive partial credit. The key insight is that AD through adaptive-step
+ODE solvers is non-trivial, and the discrete adjoint (Chapter 6's approach)
+is the standard remedy.}
+
+\end{solution}
+
+%% ============================================================
+%% Chapter 8 Solutions
+%% ============================================================
+
+\section{Chapter 8: Caveat Emptor}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.1}{L3}
+
+\solanswer
+
+$g(u;p) = u^3 - 3pu + 2 = 0$ (same as Ex 4.2, now with bifurcation focus).
+
+\solpart{a} \textbf{Real roots at $p = 1$ and most rapidly changing.}
+Roots: $u_1 = 1$ (double), $u_2 = -2$. The double root $u_1 = 1$
+changes most rapidly — its sensitivity is undefined (infinite), as shown
+in Ex 4.2. It is at a fold bifurcation point.
+
+\solpart{b} \textbf{$\SI{p}{u^*}$ at each root.}
+As computed in Ex 4.2: $\SI{p}{u_1}$ is undefined (singular FSE);
+$\SI{p}{u_2} = 1/3$.
+
+\solpart{c} \textbf{Root curve and bifurcation.}
+The real roots satisfy $u^3 - 3pu + 2 = 0$. By Cardano's formula or
+numerical continuation, the two positive roots merge at the fold bifurcation
+where $\partial g/\partial u = 3u^2 - 3p = 0$, i.e., $u = \sqrt{p}$.
+Substituting: $p^{3/2} - 3p\sqrt{p} + 2 = 0 \Rightarrow -2p^{3/2} + 2 = 0
+\Rightarrow p^* = 1$. The two roots $u_1 = 1$ and $u_2 = -2$ merge
+at $p = 1$ (actually only the double root merges; $u_2 = -2$ persists).
+Careful: the cubic has the double root at $u = 1$ for $p = 1$.
+For $p < 1$, the double root splits into two complex roots (no real positive root
+near 1), and for $p > 1$, two distinct real roots appear near $u = 1$.
+The bifurcation is at $\mathbf{p = 1}$.
+
+\solpart{d} \textbf{FSE prediction at bifurcation.}
+At $p = 1$, $\partial g/\partial u = 0$: the FSE $(\partial g/\partial u)\,(\partial u/\partial p) = -\partial g/\partial p$ has a zero coefficient, so $\partial u/\partial p = \infty$.
+Finite-difference verification: $u(p=1.001)$ vs $u(p=0.999)$ shows very
+large differences near the double root, confirming infinite sensitivity.
+The FD estimate diverges as $p \to 1$, consistent with a fold bifurcation.
+
+\solnote{This exercise directly connects Chapter 4 (implicit FSE) to
+Chapter 8 (bifurcations). The key point: the FSE singularity \emph{is}
+the bifurcation. Students who answer only ``sensitivity is large'' without
+connecting to the eigenvalue of the Jacobian receive partial credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.2}{L3}
+
+\solanswer
+
+\solpart{a} \textbf{$\SI{\beta}{I(T)}$ at four values, $T = 90$ days.}
+
+Computed via centered FD with $h = 6\times10^{-6}\beta^*$:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+$\beta$ & $R_0 = k\beta\tau$ & $I(90)$ & $\SI{\beta}{I(90)}$ (approx.) \\
+\midrule
+0.04 & 1.40 & $\sim150$ & $\sim+3.2$ \\
+0.06 & 2.10 & $\sim480$ & $\sim+1.8$ \\
+0.08 & 2.80 & $\sim620$ & $\sim+1.2$ \\
+0.12 & 4.20 & $\sim720$ & $\sim+0.7$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The SI \emph{decreases} as $R_0$ increases past 1: at higher $R_0$,
+almost everyone has been infected by day 90, and $I(90)$ is in the
+declining tail, less sensitive to $\beta$.
+
+\solpart{b} \textbf{$\beta = 0.02$ ($R_0 = 0.7 < 1$).}
+No epidemic occurs: $I(90) \approx I(0) = 1$ (infection dies out
+exponentially). $\SI{\beta}{I(90)}$ is small and positive near zero.
+\textbf{Qualitative change:} the SI is negligibly small for $R_0 < 1$
+because no epidemic amplification occurs, but large and positive
+for $R_0 > 1$. Near $R_0 = 1$ ($\beta \approx 0.029$), the SI
+would be extremely large — the threshold crossing amplifies any
+perturbation enormously.
+
+\solpart{c} \textbf{Bifurcation diagram.}
+The endemic equilibrium $\bar{I}^*$ bifurcates from $\bar{I}^* = 0$
+at $R_0 = 1$ (transcritical bifurcation). For $R_0 < 1$: $\bar{I}^* = 0$
+(disease-free equilibrium is stable). For $R_0 > 1$: $\bar{I}^* > 0$
+(endemic equilibrium exists and is stable). The bifurcation diagram shows
+$\bar{I}^*$ vs.\ $\beta$ as a forward (supercritical) transcritical bifurcation.
+
+\solnote{The key finding from part (a) is that $\SI{\beta}{I(T)}$ \emph{decreases}
+as $\beta$ increases — counterintuitive if one expected larger $\beta$ to
+mean larger sensitivity. The reason: at high $\beta$, the epidemic has
+already run its course by day 90, and $I(90) \approx 0$ regardless of
+small perturbations to $\beta$. This illustrates why SA at a single time
+point can be misleading (Chapter 4, Ex 4.8).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.3}{L4}
+
+\solanswer
+
+\solpart{a} \textbf{Condition number and error vs.\ $\epsilon$.}
+
+MATLAB code:
+\begin{verbatim}
+u_exact = [1;1;1];
+eps_vals = [1, 0.1, 0.01, 0.001, 0.0001];
+for k = 1:length(eps_vals)
+    ep = eps_vals(k);
+    A = [1 2 3; 4 5 6; 7 8 9+ep];
+    b = A * u_exact;
+    kappa(k) = cond(A);
+    err(k) = norm(A\b - u_exact);
+end
+\end{verbatim}
+
+Expected results (approximate):
+
+\begin{center}
+\begin{tabular}{rcc}
+\toprule
+$\epsilon$ & $\kappa(A)$ & $\|\hat{\vec{u}} - \vec{u}\|$ \\
+\midrule
+1.0    & $\sim 30$    & $\sim 10^{-14}$ \\
+0.1    & $\sim 300$   & $\sim 10^{-13}$ \\
+0.01   & $\sim 3000$  & $\sim 10^{-12}$ \\
+0.001  & $\sim 3\times10^4$ & $\sim 10^{-11}$ \\
+0.0001 & $\sim 3\times10^5$ & $\sim 10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{b} \textbf{Log-log slope.}
+The relationship is $\|\hat{\vec{u}} - \vec{u}\| \propto \kappa(A)\,\varepsilon_{\text{mach}}$.
+On log-log axes, the slope is $+1$ (error grows linearly with condition number).
+
+\solpart{c} \textbf{Implication for large SI values.}
+
+A large SI for a nearly singular model reflects the ill-conditioning of the
+sensitivity computation, not necessarily a genuine large sensitivity of the
+physical model. If the Jacobian $J_F$ of the model equations is nearly
+singular (large $\kappa(J_F)$), the FSE $J_F\,(\partial\vec{u}/\partial p_j) = \vec{f}_j$
+will amplify any numerical errors in $\vec{f}_j$ by a factor of $\kappa(J_F)$.
+The reported SI may be $\kappa(J_F)$ times larger than the true value.
+\textit{Practical implication:} always report $\kappa(J_F)$ alongside
+large SI values. An SI of $50$ with $\kappa(J_F) = 100$ should be
+flagged as potentially unreliable; an SI of $50$ with $\kappa(J_F) = 2$ is trustworthy.
+
+\solnote{The slope of 1 in part (b) is the classical condition-number
+error bound: $\|\delta\vec{u}\|/\|\vec{u}\| \leq \kappa(A)\|\delta\vec{b}\|/\|\vec{b}\|$.
+Students who compute the slope empirically and report it as $\approx 1$
+without citing the bound receive full credit; students who derive the bound
+analytically receive bonus credit.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.4}{L5}
+
+\solanswer
+
+\textbf{Advisory report: SA near the epidemic threshold ($R_0 = 1.04$).}
+
+\solpart{a} \textbf{What local SA can and cannot tell you.}
+
+Local SA provides the derivative of each \QOI with respect to each parameter
+at the current best-fit values. With $R_0 = 1.04$, the model is very
+close to the epidemic threshold. Local SA \emph{can} tell you which
+parameters would, if perturbed slightly, have the largest marginal effect
+on disease burden. What it \emph{cannot} tell you: whether a parameter
+change of realistic magnitude (say 10--20\%) would push $R_0$ below 1
+(eliminating the epidemic entirely) or keep it above 1. Near the threshold,
+the model's behavior changes qualitatively, and local SA captures only the
+linearized behavior in an infinitesimally small neighborhood.
+
+\solpart{b} \textbf{Specific numerical problems near $R_0 = 1$.}
+
+Near the transcritical bifurcation at $R_0 = 1$, the Jacobian of the
+model at the endemic equilibrium has an eigenvalue near zero. This causes:
+(1) the FSE linear system $J_F\,(\partial\vec{u}/\partial p) = \vec{f}$
+to be nearly singular, amplifying roundoff errors by $\kappa(J_F)$;
+(2) time-dependent SIs to grow without bound near the threshold crossing;
+(3) the adjoint ODE to have a slowly decaying mode (near-zero eigenvalue),
+making backward integration unstable over long time horizons.
+Practitioners should report $\kappa(J_F)$ and check that SI values are
+stable to perturbations of the nominal parameter set within the confidence region.
+
+\solpart{c} \textbf{Additional analyses recommended.}
+
+\begin{enumerate}[nosep]
+\item \textit{Bifurcation diagram:} Plot the endemic equilibrium $I^*$ vs.\
+  $R_0$ (or vs.\ the most controllable parameter). Determine how large a
+  reduction in $\beta$ or $k$ is needed to push $R_0$ below 1.
+  This gives a specific, actionable target rather than a marginal SI value.
+\item \textit{SA at multiple $R_0$ values:} Compute SI at $R_0 = 0.9$,
+  $1.0$, $1.04$, $1.2$. Report how the rankings change. If the ranking
+  is stable across this range, the local SA at $R_0 = 1.04$ is informative.
+  If not, flag the instability.
+\item \textit{Finite-change analysis:} Compute the actual change in peak $I$
+  for a $10\%$ reduction in each parameter. Report these directly alongside
+  the SI values. For parameters near the threshold, the finite change may
+  be qualitatively different from the SI prediction.
+\end{enumerate}
+
+\solpart{d} \textbf{Explaining bifurcation to a policy maker.}
+
+Think of the epidemic threshold as a tipping point. Below it ($R_0 < 1$),
+each infected person infects on average less than one other person, and
+the outbreak fades on its own. Above it ($R_0 > 1$), each infected person
+infects more than one other person, and the outbreak grows into an epidemic.
+At $R_0 = 1.04$, we are just above the tipping point. Even a small
+reduction in contact rates or transmission probability — say $5\%$ —
+could push us below the tipping point, causing the epidemic to die out
+rather than sustain itself. This is the most important insight from the
+sensitivity analysis: at $R_0$ close to 1, small interventions can have
+disproportionately large effects. But it also means our predictions are
+highly uncertain: if the true $R_0$ is $0.96$ rather than $1.04$, the
+epidemic might already be declining naturally.
+
+\solnote{This is a realistic scenario that every applied mathematical modeler
+faces. The report format requirement is deliberate: public health advisors
+need concise, clear guidance, not a technical treatise. Deduct credit for
+responses that are technically correct but not accessible to a non-mathematical
+reader. The bifurcation explanation (part d) should use no equations.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{8.5}{L6}
+
+\solanswer
+
+\textbf{Three methodological concerns with the malaria SA ($R_0 = 1.15$, all SI $< 0.1$):}
+
+\textbf{Concern 1: Small SIs near $R_0 = 1$ may be numerical artifacts.}
+
+\textit{Problem:} With $R_0 = 1.15$, the model is moderately above the
+threshold, but close enough that the endemic equilibrium Jacobian may be
+ill-conditioned. Small SI values could result from condition-number amplification
+rather than genuine insensitivity.
+
+\textit{Evidence needed:} Report $\kappa(J_F)$ at the endemic equilibrium
+and verify that $|\text{SI}| \gg \kappa(J_F)\,\varepsilon_{\text{mach}}$
+for each parameter. If any SI is within a factor of $\kappa(J_F)$ of machine
+epsilon, that SI is numerically unreliable.
+
+\textit{Alternative analysis:} Compute SIs of $R_0$ itself (analytically)
+and compare sign and magnitude with the equilibrium SIs. If $\SI{p_j}{R_0}$
+is large but $\SI{p_j}{\bar{I}}$ is small, the discrepancy suggests
+numerical issues at the equilibrium.
+
+\textbf{Concern 2: SA of the endemic equilibrium does not address
+transient dynamics or the probability of outbreak onset.}
+
+\textit{Problem:} If malaria is currently at or near the endemic equilibrium,
+the relevant policy question is ``which intervention would most reduce
+endemic prevalence?'' But if the model is used for outbreak forecasting
+(a different but common use), the relevant QOI is the peak or cumulative
+burden during a transient following an introduction event. SA of the
+endemic equilibrium cannot answer the latter question.
+
+\textit{Evidence needed:} Clarify the model's purpose. If forecasting
+an outbreak, compute SA for the transient QOI (e.g., peak $I$ at $T = 180$
+days) in addition to the endemic equilibrium.
+
+\textit{Alternative analysis:} Compute time-dependent SIs $\SI{p_j}{I}(t)$
+and report whether the parameter ranking changes between the transient
+and endemic phases.
+
+\textbf{Concern 3: ``All indices less than 0.1'' does not imply robustness
+unless the uncertainty ranges are accounted for.}
+
+\textit{Problem:} A local SI of 0.1 means a 1\% change in the parameter
+produces a 0.1\% change in prevalence. But if a parameter is uncertain
+by $\pm50\%$ (plausible for entomological parameters in malaria models),
+the expected change in prevalence from this parameter alone is $\approx 5\%$.
+Reporting only SI values without the uncertainty range gives an incomplete
+picture.
+
+\textit{Evidence needed:} Report sigma-normalized SIs or one-way sensitivity
+ranges: the change in $\bar{I}$ when each parameter varies over its full
+uncertainty range. Parameters with small SI but large uncertainty range
+may still dominate the output variance.
+
+\textit{Alternative analysis:} Compute Sobol first-order and total indices
+across the plausible parameter uncertainty ranges. A parameter with local
+SI = 0.1 and uncertainty range $\pm80\%$ may have Sobol $S_1 = 0.3$.
+
+\solnote{Full credit requires all three concerns with (a), (b), (c) for each.
+The three concerns should be genuinely distinct: numerical reliability
+(Concern 1), scope of the SA (Concern 2), and accounting for uncertainty
+ranges (Concern 3). Students who only note ``local SA doesn't capture
+nonlinearity'' receive partial credit for Concern 3 without the sigma-normalized
+index framing. The claim ``all indices less than 0.1'' is particularly dangerous
+near a threshold --- this is the chapter's core message.}
+
+\end{solution}
+
+%% ============================================================
+%% Chapter 9 Solutions
+%% ============================================================
+
+\section{Chapter 9: Global Sensitivity Analysis}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.1}{L3}
+
+\solanswer
+
+Given: $\SI{\tau_E}{R_0} = 0.6$, $\SI{\tau_I}{R_0} = 1.2$,
+$\SI{\beta}{R_0} = 1.0$, $\SI{k}{R_0} = 1.0$, nominal $R_0^* = 2.0$.
+Uncertainties: $\sigma_{\tau_E} = 2$ d, $\sigma_{\tau_I} = 3$ d,
+$\sigma_\beta = 0.01$, $\sigma_k = 0.8$.
+Nominal values: $\tau_E^* = 5.5$ d, $\tau_I^* = 7$ d, $\beta^* = 0.06$,
+$k^* = 5$.
+
+\solpart{a} \textbf{Output standard deviation (delta method).}
+
+$\sigma_{R_0}^2 = \sum_j \left(\frac{\partial R_0}{\partial p_j}\right)^2 \sigma_{p_j}^2
+= \sum_j \left(\frac{R_0^*}{p_j^*}\,\SI{p_j}{R_0}\right)^2 \sigma_{p_j}^2$.
+
+\begin{align*}
+\left(\frac{R_0^*}{\tau_E^*}\,\SI{\tau_E}{R_0}\right)^2\sigma_{\tau_E}^2
+&= \left(\frac{2}{5.5}\times0.6\right)^2\times4 = (0.218)^2\times4 = 0.190\\
+\left(\frac{R_0^*}{\tau_I^*}\,\SI{\tau_I}{R_0}\right)^2\sigma_{\tau_I}^2
+&= \left(\frac{2}{7}\times1.2\right)^2\times9 = (0.343)^2\times9 = 1.059\\
+\left(\frac{R_0^*}{\beta^*}\,\SI{\beta}{R_0}\right)^2\sigma_\beta^2
+&= \left(\frac{2}{0.06}\times1.0\right)^2\times(0.01)^2 = (33.3)^2\times10^{-4} = 0.111\\
+\left(\frac{R_0^*}{k^*}\,\SI{k}{R_0}\right)^2\sigma_k^2
+&= \left(\frac{2}{5}\times1.0\right)^2\times(0.8)^2 = (0.4)^2\times0.64 = 0.102
+\end{align*}
+$\sigma_{R_0}^2 = 0.190 + 1.059 + 0.111 + 0.102 = 1.462$,
+$\sigma_{R_0} \approx \mathbf{1.21}$.
+
+\solpart{b} \textbf{Sigma-normalized indices.}
+
+$\tilde{S}_{p_j} = (R_0^*/p_j^*)\,|\SI{p_j}{R_0}|\,\sigma_{p_j}/\sigma_{R_0}$:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Parameter & $\tilde{S}$ (sigma-norm.) & Contribution (\%) \\
+\midrule
+$\tau_I$ & $(2/7)(1.2)(3)/1.21 = 0.851$ & $58\%$ \\
+$\tau_E$ & $(2/5.5)(0.6)(2)/1.21 = 0.360$ & $13\%$ \\
+$\beta$  & $(2/0.06)(1.0)(0.01)/1.21 = 0.276$ & $8\%$ \\
+$k$      & $(2/5)(1.0)(0.8)/1.21 = 0.264$ & $7\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{c} \textbf{Tornado plot.} Sorted by $\tilde{S}$: $\tau_I > \tau_E > \beta \approx k$.
+
+\solpart{d} \textbf{Ranking comparison.}
+Local SI ranking: $\tau_I$ and $k$ tied at 1.2 and 1.0; $\beta$ at 1.0; $\tau_E$ at 0.6.
+Sigma-normalized ranking: $\tau_I \gg \tau_E > \beta \approx k$.
+
+$\tau_I$ remains dominant in both, but its lead is much larger when
+uncertainty is accounted for ($\sigma_{\tau_I} = 3$ d is large).
+$k$ drops from second to last: despite SI $= 1.0$, its uncertainty
+$\sigma_k = 0.8$ relative to $k^* = 5$ gives a coefficient of variation
+of only $16\%$, while $\tau_E$ has $\sigma_{\tau_E}/\tau_E^* = 36\%$.
+\textbf{$k$ changed rank most dramatically} because it has a large SI
+but small relative uncertainty.
+
+\solnote{The sigma-normalized index is the key concept here: it combines
+the sensitivity (SI) with the actual uncertainty range to produce a
+practical priority ranking. Students who compute only SIs without
+accounting for uncertainty miss the point of this exercise.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.2}{L3}
+
+\solanswer
+
+\solpart{a} \textbf{LHS implementation and comparison.}
+
+\begin{verbatim}
+rng(42);
+N = 100; m = 3;
+X_lhs = lhs_sample(N, m, zeros(1,m), ones(1,m));
+X_rnd = rand(N, m);
+\end{verbatim}
+
+\solpart{b} \textbf{Scatter plots.} The LHS scatter plots show more
+uniform coverage with fewer clusters; the random sample shows visible gaps
+and clusters in all three pairwise projections.
+
+\solpart{c} \textbf{Mean and standard deviation.}
+Both LHS and random sampling should give means near $0.5$ and
+standard deviations near $1/\sqrt{12} \approx 0.289$ for a uniform
+distribution on $[0,1]$. LHS is typically closer to both exact values
+because the stratification ensures coverage of the full range. For $N = 100$,
+the improvement in mean accuracy is $\sim$30--50\% and in standard deviation
+$\sim$20--40\%.
+
+\solpart{d} \textbf{Histogram comparison.}
+The LHS histogram shows a much flatter, more uniform distribution
+(each of the 100 strata has exactly one sample). The random sample
+histogram shows the typical Poisson variation (some bins have 0 or 3+ samples).
+For sensitivity analysis, the LHS coverage is preferable because
+it ensures the model is evaluated in every region of the parameter space.
+
+\solnote{Part (c) is the quantitative check: students should compute the
+actual mean and std and report how close they are to the theoretical values.
+The LHS improvement in mean accuracy comes from the fact that the sample
+mean of a stratified sample is an unbiased estimator with lower variance
+than the sample mean of a random sample (stratification theorem).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.3}{L3}
+
+\solanswer
+
+\solpart{a-b} \textbf{LHS + PRCC computation.}
+
+Using $N = 200$, $\pm50\%$ around nominal values:
+\begin{verbatim}
+p = sir_nominal();
+lb = 0.5*[p.k, p.beta, p.tau, p.L];
+ub = 1.5*[p.k, p.beta, p.tau, p.L];
+rng(42); X = lhs_sample(200, 4, lb, ub);
+Y = arrayfun(@(i) sir_I_max(X(i,:), p), 1:200)';
+[rho, pval] = compute_prcc(X, Y, {'k','beta','tau','L'});
+\end{verbatim}
+
+Expected PRCC values (approximate):
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Parameter & PRCC & $p$-value \\
+\midrule
+$k$     & $+0.85$ & $< 0.001$ \\
+$\beta$ & $+0.84$ & $< 0.001$ \\
+$\tau$  & $+0.72$ & $< 0.001$ \\
+$L$     & $-0.04$ & $> 0.5$  \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{c} \textbf{PRCC bar chart.} Sorted: $k \approx \beta > \tau \gg L$ (similar to SI ranking).
+
+\solpart{d} \textbf{Strongest negative PRCC: $L$.}
+$L$ (mean lifespan) has a negative PRCC: longer lifespans reduce peak infections.
+In plain language: populations with longer lifespans have smaller background
+mortality rates, which means the susceptible pool is replenished more slowly,
+and a larger fraction of the population is already immune/recovered by the
+time of peak infections. The effect is very small ($|\text{PRCC}| \approx 0.04$,
+not statistically significant).
+
+\solpart{e} \textbf{Comparison with local SI tornado plot.}
+Both methods rank $k$ and $\beta$ highest, $\tau$ third, $L$ negligible.
+The PRCC ranking agrees with the local SI ranking for this model.
+Agreement is expected because peak infections $I_{\max}$ is monotone in
+each parameter over the $\pm50\%$ uncertainty range (the model is
+not near any threshold), satisfying the PRCC assumption.
+
+\solnote{For the SIR model with $R_0 = 2.1$ and $\pm50\%$ variation,
+the PRCC and local SI rankings should agree well. Discrepancies would
+appear if: (a) $\beta$ variation includes $R_0 < 1$ (non-monotone at threshold),
+or (b) parameter interactions are strong (nonlinear effects). Students
+should note that agreement here is specific to this model and range.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.4}{L4}
+
+\solanswer
+
+$Y = 2Q_1^2 + Q_2$, $Q_1, Q_2 \sim \mathcal{U}(0,1)$, independent.
+
+\solpart{a} \textbf{Variance decomposition.}
+$\E[Y] = 2\E[Q_1^2] + \E[Q_2] = 2/3 + 1/2 = 7/6$.
+$\Var(Y) = 4\Var(Q_1^2) + \Var(Q_2)$.
+$\Var(Q_1^2) = \E[Q_1^4] - (\E[Q_1^2])^2 = 1/5 - 1/9 = 4/45$.
+$\Var(Q_2) = 1/12$.
+$\Var(Y) = 4(4/45) + 1/12 = 16/45 + 1/12 = 64/180 + 15/180 = 79/180$.
+
+$D_1 = \Var[\E(Y|Q_1)] = \Var[2Q_1^2 + 1/2] = 4\Var(Q_1^2) = 16/45$.
+$D_2 = \Var[\E(Y|Q_2)] = \Var[2/3 + Q_2] = 1/12$.
+
+\solpart{b} \textbf{Sobol indices.}
+$S_1 = D_1/\Var(Y) = (16/45)/(79/180) = (16/45)(180/79) = 64/79 \approx 0.810$.
+$S_2 = D_2/\Var(Y) = (1/12)/(79/180) = (180/12)/79 = 15/79 \approx 0.190$.
+$S_1 + S_2 = 79/79 = 1.0$. Yes, they sum to 1, because the model is
+\emph{additive} (no interaction terms), so the full variance is explained
+by the first-order indices.
+
+\solpart{c} \textbf{Total indices.}
+For an additive model: $S_{T_1} = S_1 = 64/79$, $S_{T_2} = S_2 = 15/79$.
+Total indices equal first-order indices when there are no interactions.
+
+\solpart{d} \textbf{Adding interaction $Q_1 Q_2$: $Y' = 2Q_1^2 + Q_2 + Q_1 Q_2$.}
+Without computing: adding $Q_1 Q_2$ introduces an interaction term.
+$S_1$ decreases (some variance is now shared with $Q_2$); $S_2$ decreases
+for the same reason. The total indices $S_{T_1} > S_1$ and $S_{T_2} > S_2$
+because each parameter contributes to the interaction term.
+
+\textit{Verification:}
+$\Var(Y') = 4\Var(Q_1^2) + \Var(Q_2) + \Var(Q_1 Q_2) + 2\text{Cov}(\ldots)$
+(with $\text{Cov}$ terms vanishing by independence).
+$\Var(Q_1 Q_2) = \E[Q_1^2 Q_2^2] - (\E[Q_1 Q_2])^2 = (1/3)(1/3) - (1/2)^2(1/4)
+= 1/9 - 1/16 = 7/144$.
+$D_{12} = \Var(Y') - D_1' - D_2' - $ (remaining interaction variance).
+Computing exactly: $S_1' < 0.810$, $S_2' < 0.190$, $S_1' + S_2' < 1$.
+The interaction term $D_{12} > 0$ accounts for the remainder.
+
+\solnote{Part (b)'s exact sum-to-1 for the additive model is a crucial
+result: for any purely additive model, all first-order indices sum to 1
+and total indices equal first-order indices. Part (d) demonstrates the
+effect of interactions without requiring exact computation, testing
+conceptual understanding over algebraic facility.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.5}{L4}
+
+\solanswer
+
+Using \texttt{run\_global\_sa\_sir} from the repository with $N = 2000$.
+
+\solpart{a} \textbf{Sobol indices (nominal parameters, $\pm50\%$ range).}
+
+Approximate values from Jansen estimators:
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Param & $\hat{S}_i$ & $\hat{S}_{T_i}$ & $\hat{S}_{T_i} - \hat{S}_i$ \\
+\midrule
+$k$     & $0.38$ & $0.43$ & $0.05$ \\
+$\beta$ & $0.38$ & $0.43$ & $0.05$ \\
+$\tau$  & $0.20$ & $0.25$ & $0.05$ \\
+$L$     & $0.00$ & $0.00$ & $0.00$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{b} \textbf{Parameters with $S_{T_i} \gg S_i$.}
+For all three active parameters, $S_{T_i} - S_i \approx 0.05$, indicating
+moderate interaction effects (primarily $k$-$\beta$ and $k$-$\tau$ interactions).
+No parameter has $S_{T_i} \gg S_i$ for this model at this range;
+interactions are present but modest. This is consistent with the SIR model
+being a smooth, moderately nonlinear ODE.
+
+\solpart{c} \textbf{Sums.}
+$\sum S_i \approx 0.96 < 1$ (interaction terms absorb the remaining $\sim4\%$).
+$\sum S_{T_i} \approx 1.11 > 1$ (interactions are double-counted in total indices).
+For a purely additive model, both sums would equal 1. The observed values
+confirm the presence of small but nonzero interactions.
+
+\solpart{d} \textbf{Best parameter to measure precisely.}
+To reduce $\Var(I_{\max})$ most, measure the parameter with the largest
+$S_{T_i}$ (total index), since $S_{T_i}$ measures the variance that
+would remain if all uncertainty in parameter $i$ were eliminated, including
+interactions. Here $k$ and $\beta$ are tied at $S_{T_i} \approx 0.43$.
+Measuring either $k$ or $\beta$ precisely reduces $\Var(I_{\max})$
+by $\approx 43\%$ (more precisely, the variance conditional on knowing $k$ exactly
+is $(1 - S_{T_k})\Var(I_{\max}) \approx 0.57\,\Var(I_{\max})$).
+
+\solnote{Part (d) is a key policy application of total indices: the total
+index, not the first-order index, answers ``which parameter measurement
+would most reduce output uncertainty?'' First-order indices answer
+``which parameter contributes most to variance independently?'' Both
+are important, and students should be able to distinguish them.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.6}{L4}
+
+\solanswer
+
+Using $r = 15$ Morris trajectories, $p = 4$ levels ($\Delta = 4/6 = 2/3$),
+$\pm50\%$ parameter ranges.
+
+\solpart{a} \textbf{Morris measures.} Approximate values from \texttt{morris\_screening}:
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Param & $\mu^*$ & $\sigma$ & Classification \\
+\midrule
+$k$     & $\sim 80$ & $\sim 20$ & Important, nonlinear \\
+$\beta$ & $\sim 78$ & $\sim 19$ & Important, nonlinear \\
+$\tau$  & $\sim 42$ & $\sim 14$ & Important, nonlinear \\
+$L$     & $\sim 1$  & $\sim 0.5$& Negligible \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\solpart{b} \textbf{Diagnostic plot.}
+The $\mu^*$ vs.\ $\sigma$ plot shows $k$ and $\beta$ in the upper-right
+(large $\mu^*$ and $\sigma$: important and nonlinear), $\tau$ in the
+middle-right, and $L$ near the origin (negligible).
+
+\solpart{c} \textbf{Most and least influential.}
+Most: $k$ (or $\beta$, tied). Least: $L$.
+
+\solpart{d} \textbf{Reduced Sobol (3 parameters, $L$ fixed).}
+
+With $L$ fixed: Sobol cost $= N(m+2) = 2000\times5 = 10{,}000$ evaluations
+vs.\ full $2000\times6 = 12{,}000$. Cost reduction: 17\%.
+Approximate results: $S_k \approx 0.43$, $S_\beta \approx 0.43$, $S_\tau \approx 0.24$;
+total indices similar. Fixing $L$ does not materially change the other
+indices (since $L$ was negligible). The Morris screening correctly identified
+that $L$ could be dropped.
+
+\solnote{The Morris cost here is $15\times(4+1) = 75$ evaluations
+vs.\ $12{,}000$ for full Sobol — a $160\times$ cost reduction for the
+screening phase. This illustrates Morris's value as a cheap first step
+that identifies which parameters can be dropped from the expensive Sobol analysis.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.7}{L5}
+
+\solanswer
+
+\textbf{This exercise requires the student to choose and describe a specific
+published model.} The model answer below uses the Chitnis dengue model~\cite{chitnis2008determining}
+as an example; any 8+ parameter epidemic model with published parameter estimates is acceptable.
+
+\solpart{a} \textbf{Model, parameters, uncertainty ranges.}
+Chitnis et al.\ (2008) dengue model: 8 state variables, 14 parameters including
+mosquito biting rate $b_v$, transmission probabilities $\beta_{vh}$ and $\beta_{hv}$,
+mosquito and human mortality rates, and mean durations. Uncertainty ranges:
+$\pm50\%$ for biological parameters (based on reported ranges in Table 2 of the paper);
+$\pm30\%$ for demographic parameters (population data are more precisely known).
+
+\solpart{b} \textbf{QOI justification.}
+Primary: $R_0$ (determines whether dengue can persist in the population —
+the most policy-relevant threshold). Secondary: equilibrium human infection
+prevalence $\bar{I}_h/N_h$ (determines endemic burden for healthcare planning).
+
+\solpart{c} \textbf{PRCC vs.\ Sobol choice.}
+Use \textbf{Sobol indices}. The dengue model is moderately nonlinear and
+has known interaction between biting rate $b_v$ and transmission probabilities
+($R_0 \propto b_v^2\beta_{vh}\beta_{hv}$, so interactions are structural).
+PRCC assumes monotone relationships; near threshold or at high $R_0$,
+this assumption may not hold for all parameters. Sobol indices capture
+interactions and do not require monotonicity.
+
+\solpart{d} \textbf{Sample size $N$.}
+Use $N = 2000$ for each Sobol matrix. Run the convergence check:
+compute Sobol indices at $N = 200, 500, 1000, 2000$; report the
+value of $N$ at which the first-order indices change by $< 2\%$ as $N$ doubles.
+For a 14-parameter model, the total evaluation cost is $N(14+2) = 32{,}000$ runs.
+If each run takes 2 minutes, this is $\approx 4.4$ days of computation on one core.
+
+\solpart{e} \textbf{Presentation format.}
+Two tornado plots of Sobol $S_{T_i}$ (one per QOI), with parameters
+labeled as interventions: ``Reducing mosquito biting rate by $X\%$ through
+bed nets reduces $R_0$ by approximately $Y\%$.'' A two-panel figure
+showing which parameters appear in both tornado plots (co-optimization)
+and which are QOI-specific. Use traffic-light color coding: red for
+high-priority, green for low-priority intervention targets.
+
+\solpart{f} \textbf{Potential misleading results.}
+If the model's best-fit parameters give $R_0$ near 1 (endemic/non-endemic
+threshold), Sobol indices at those nominal values will be dominated by
+parameters near the threshold. A 2\% uncertainty in $\beta_{vh}$ might
+shift the model from endemic to non-endemic, giving extremely large apparent
+sensitivity for $\beta_{vh}$. Recommendation: compute Sobol indices at
+three nominal parameter sets ($R_0 = 1.5$, $2.0$, $3.0$) and report
+whether the parameter rankings are stable across this range.
+
+\solnote{This is an open-ended design exercise. Full credit requires
+all six components with operationally specific content. Vague statements
+(``choose the right sample size,'' ``present clear figures'') without
+specifics receive partial credit. The model choice affects all answers;
+a reasonable choice with internally consistent answers earns full credit
+even if different from the example above.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{9.8}{L6}
+
+\solanswer
+
+\textbf{Methodological concerns with Sobol analysis ignoring correlation
+among three parameters.}
+
+\solpart{a} \textbf{Mathematical problem.}
+
+Standard Sobol indices assume parameter \emph{independence}: the matrices
+$A$ and $B$ are sampled independently from the joint distribution $p(\vec{p})
+= \prod_j p_j(p_j)$. When three parameters are correlated, the correct
+joint distribution is $p(\vec{p}) = p(p_1, p_2, p_3) \times \prod_{j>3} p_j(p_j)$,
+which cannot be factored. Sampling independently from marginal distributions
+and then compositing (the Saltelli method) generates non-physical parameter
+combinations (e.g., high phosphorus loading but low nitrogen loading, which
+does not occur in the real watershed system). The resulting Sobol indices
+estimate sensitivity to artificially independent variations, not to the
+actual coupled variations that the system experiences.
+
+\solpart{b} \textbf{Effect on each correlated parameter's index.}
+
+\textit{Phosphorus loading $P$:} The standard $S_1(P)$ likely \textit{overestimates}
+the true first-order index. When $P$ and $N$ are positively correlated,
+the actual variation of $P$ is accompanied by variation in $N$. The standard
+estimator attributes only the $P$ variation to $S_1(P)$; the interaction
+that would occur under the true distribution is ignored, artificially
+inflating the apparent individual contribution of $P$.
+
+\textit{Nitrogen loading $N$:} Same logic applies: $S_1(N)$ likely overestimates.
+
+\textit{Water residence time $T_w$:} If $T_w$ is correlated with both $P$ and $N$
+(longer residence = more loading), $S_1(T_w)$ may be \textit{underestimated}
+because the positive correlation means that varying $T_w$ while holding $P$
+and $N$ fixed understates the total effect of residence time in the real system.
+
+\solpart{c} \textbf{Minimal correction.}
+
+Use a copula-based sampling method that preserves the observed correlations.
+The Iman--Conover rank correlation constraint method is the simplest:
+(1) generate independent LHS samples; (2) apply the Iman--Conover algorithm
+to induce the observed rank correlations among the three parameters;
+(3) compute Sobol indices using the correlated sample matrices.
+This adds one matrix transformation step to the existing workflow with
+no additional model evaluations.
+
+\solpart{d} \textbf{Why sum-to-1 is not a valid independence check.}
+
+The Sobol first-order indices sum to 1 only for an additive model
+with independent parameters. With correlated parameters, the indices
+can still sum to approximately 1 even with incorrect independence assumptions,
+because the sum reflects the total explained variance, which equals 1 by
+construction (the variance is fully accounted for by some combination of
+first-order and interaction terms). The sum being 1 says nothing about
+whether the individual index attributions are correct — it is a property
+of the decomposition algorithm, not of the physical model or the sampling design.
+
+\solnote{This is a rigorous L6 exercise testing critical evaluation of
+a real methodological error. Part (d) is the subtlest: students often
+think ``indices sum to 1'' is a validity check, but it is not — it is
+simply a consequence of the ANOVA decomposition. Full credit requires
+a clear mathematical explanation, not just ``the check doesn't work.''}
+
+\end{solution}

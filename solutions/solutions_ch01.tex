@@ -1,0 +1,245 @@
+%% ============================================================
+%% Chapter 1 Solutions
+%% ============================================================
+
+\section{Chapter 1: Introduction and Overview}
+
+%% ----------------------------------------------------------
+\begin{solution}{1.1}{L2}
+
+\solanswer
+
+A \textbf{parameter of interest} (\POI) is an input to the model
+whose value may be uncertain or whose influence we wish to quantify.
+A \textbf{quantity of interest} (\QOI) is an output of the model
+that we care about --- the number we are trying to predict or understand.
+
+\smallskip
+For an antibiotic-resistance model in a hospital, two \POIs might be:
+the probability that a patient receives an antibiotic in a given
+hospital stay, and the probability that a resistant strain is
+transmitted per nurse-patient contact. Two \QOIs might be:
+the fraction of patients colonized with a resistant strain after
+30 days, and the mean length of stay for infected patients.
+
+\smallskip
+Running the model tells us the \QOI at the nominal parameter values.
+Sensitivity analysis tells us \emph{how much the \QOI would change}
+if a \POI were different --- that is, which parameters matter most
+for the model's predictions, so we can focus data collection and
+intervention design on those parameters.
+
+\solnote{Accept any reasonable \POI/\QOI pair consistent with the
+antibiotic-resistance context. The key distinction: \POIs are inputs
+controlled or measured by the investigator; \QOIs are outputs that
+answer the policy or scientific question. Students sometimes confuse
+state variables with \POIs; clarify that parameters govern the
+dynamics, while state variables evolve according to those parameters.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{1.2}{L2}
+
+\solanswer
+
+\textbf{Forward SA} answers ``What if?'' questions: if this \POI changes,
+how does the \QOI respond? It computes sensitivity by varying each
+\POI one at a time and observing the effect on the \QOI. The cost
+scales with the number of \POIs (one computation per \POI).
+
+\textbf{Adjoint SA} answers ``How come?'' questions: given that the
+\QOI has the value it does, which parameters are responsible?
+It computes sensitivity by working backward from the \QOI to the \POIs.
+The cost scales with the number of \QOIs (one computation per \QOI).
+
+\smallskip
+Classifying the four questions:
+
+\solpart{a} \emph{If the mean latent period increases by 10\%, how does
+peak infection count change?} --- \textbf{Forward} question (one \POI,
+asking about effect on \QOI).
+
+\solpart{b} \emph{The peak infection count exceeded the hospital capacity.
+Which parameters are most responsible?} --- \textbf{Adjoint} question
+(one \QOI, asking which \POIs drove it).
+
+\solpart{c} \emph{We have 20 uncertain parameters. Which 3 are worth
+measuring precisely?} --- \textbf{Forward} (or global) SA: compute SIs
+for all 20 parameters and identify the largest.
+
+\solpart{d} \emph{We want $\partial J/\partial p$ for 50 parameters where
+$J$ is a single regulatory threshold.} --- \textbf{Adjoint}: one \QOI,
+many \POIs, so adjoint is efficient.
+
+\solnote{Part (d) is a good opportunity to preview the cost comparison
+(Chapter 5): adjoint gives all 50 sensitivities at the cost of one
+computation, vs.\ 50 computations for forward SA.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{1.3}{L4}
+
+\solanswer
+
+\solpart{a} \emph{Climate model, 500 parameters, identify 10 most
+influential on mean surface temperature, 8 hours per run.}
+
+\textbf{Morris screening} (or adjoint, if available). With 8 hours
+per run, a full Sobol analysis at $N = 2000$ would cost $N(m+2) = 1{,}004{,}000$
+runs, or about 916 years of computation. Morris screening with
+$r = 10$ trajectories costs $r(m+1) = 5010$ runs ($\approx$4 years)
+--- still expensive, but feasible on a cluster. Adjoint SA would
+cost the equivalent of one forward run plus storage, giving all
+500 sensitivities simultaneously. If the adjoint is available,
+use it; otherwise, Morris screening on a cluster is the practical alternative.
+
+\solpart{b} \emph{Pollution transport model, 6 parameters, threshold
+exceedance at one monitoring station.}
+
+\textbf{Adjoint SA.} The \QOI is a single threshold value at one
+location --- exactly the scenario where the adjoint is optimal.
+With 6 parameters and 1 \QOI, adjoint costs 1 backward solve vs.\
+6 forward perturbations. The adjoint gives the complete gradient
+of the threshold value with respect to all 6 parameters simultaneously.
+
+\solpart{c} \emph{Pharmacokinetic model, 8 parameters, patient outcome
+is AUC (area under the drug-concentration curve), nonlinear dose-response.}
+
+\textbf{Global SA (Sobol indices).} The dose-response is nonlinear,
+so local SA (forward or adjoint) will miss nonlinear contributions
+and interactions. Sobol indices capture the full variance-based
+sensitivity across the parameter uncertainty range. With 8 parameters,
+a Sobol analysis at $N = 2000$ requires $2000 \times 10 = 20{,}000$ evaluations,
+which is typically feasible for a pharmacokinetic ODE model.
+
+\solpart{d} \emph{Structural engineering FEM model, 200 parameters,
+single safety factor \QOI, model takes 10 seconds per run.}
+
+\textbf{Adjoint SA.} Single \QOI (safety factor), 200 parameters,
+and 10 seconds per run: Sobol at $N=2000$ would take $2000\times202 = 404{,}000$
+evaluations $\approx 47$ days. Adjoint gives all 200 sensitivities
+in $\approx$20 seconds (one forward + one backward solve). The
+adjoint is the clear choice when the model is differentiable and
+$m \gg r$.
+
+\solnote{This exercise builds intuition for the decision table
+(Table 4.2 in the text). Common student errors: choosing global SA
+for (b) because ``nonlinearity might be present'' (the model is not
+stated to be nonlinear, and the threshold \QOI is a single value
+at one station, so adjoint is correct); or choosing forward SA for
+(d) without computing the cost.}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{1.4}{L5}
+
+\solanswer
+
+\textbf{Model answer} (acceptable answers will vary in specifics but
+should include all four required components):
+
+\medskip
+\noindent\textit{SA plan for a dengue fever model with 9 parameters.}
+
+\textbf{QOI choice.} I would use peak infectious count $\max_t I(t)$ as the
+primary \QOI, because it determines whether the healthcare system is
+overwhelmed --- the operationally critical threshold. A secondary \QOI
+would be the basic reproduction number $R_0$ (analytically tractable
+and directly related to whether an epidemic occurs). The relationship
+between the two provides a consistency check.
+
+\textbf{Identifying the 3 parameters to measure.}
+Run a local SA using the forward sensitivity equations (analytic
+if the model is an ODE, or centered finite differences otherwise)
+to compute all 9 sensitivity indices $\SI{p_j}{\text{peak}~I}$.
+Rank by $|\SI{p_j}{\cdot}|$. The three parameters with the largest
+absolute SI values are the priority for precise measurement.
+If two parameters appear in the model only as a product (structural
+correlation), treat the product as a single effective parameter.
+
+Before reporting, also run a Morris screening (15 trajectories,
+cost: $15 \times 10 = 150$ model evaluations) to flag any parameters
+where nonlinearity makes the local SI misleading.
+
+\textbf{Additional information needed for intervention design.}
+SA tells us which parameters \emph{matter most for predictions},
+not which can be controlled by public health interventions.
+I would cross-reference the top-ranked parameters with a table of
+interventions that affect each parameter (e.g., insecticide spraying
+affects vector contact rate; surveillance programs affect reporting rate).
+Only parameters that are both high-sensitivity \emph{and} actionable
+with available resources should drive intervention recommendations.
+
+\textbf{Limitation.}
+The most important limitation is that local SA is a linearization:
+the sensitivity indices are derivatives at the nominal parameter values.
+If the model is highly nonlinear (e.g., near a threshold between
+epidemic and no-epidemic regimes), local SA may not accurately
+reflect sensitivity across the full plausible parameter range.
+I would flag this to the team and recommend a global SA (Sobol)
+on the top 4--5 parameters identified by local SA, to check for
+nonlinear effects.
+
+\solnote{Grading rubric: 1 point for \QOI justification; 2 points
+for the parameter-identification procedure (must mention a specific
+SA method and be operationally specific about the ranking); 1 point
+for the intervention-actionability distinction; 1 point for identifying
+a genuine limitation of local SA. Deduct 1 point if student recommends
+global SA for all 9 parameters without noting the cost implication
+(dengue models are often ODEs; full Sobol is feasible, so this is
+not wrong, but the question asks them to use SA to guide \emph{field}
+measurement decisions, which requires identifying the top 3 specifically).}
+
+\end{solution}
+
+%% ----------------------------------------------------------
+\begin{solution}{1.5}{L6}
+
+\solanswer
+
+\textbf{Problem 1: Conflation of ``all parameters simultaneously''
+with global SA.}
+
+Computing local sensitivity indices (derivatives at best-fit values)
+does \emph{not} analyze all parameters simultaneously. Local SA
+perturbs one parameter at a time, holding all others fixed.
+The statement implies that the joint effect of simultaneous parameter
+uncertainty was assessed, but it was not.
+What should have been done: either (a) state that local SA was used,
+which analyzes one parameter at a time and captures only linear,
+individual effects; or (b) if the goal was to assess robustness to
+joint uncertainty, perform global SA (e.g., Sobol indices), which
+does evaluate sensitivity across the full multi-dimensional parameter
+space.
+
+\textbf{Problem 2: ``Robust to parameter uncertainty'' is not a
+valid conclusion from local SI values.}
+
+Sensitivity indices measure the \emph{rate of change} of the \QOI
+with respect to each parameter. A model with all small SIs at the
+best-fit values is locally insensitive near that point, but could
+be highly sensitive elsewhere (e.g., near a bifurcation).
+``Robust'' should mean that the \QOI changes little across the full
+plausible range of parameter values --- a global property, not a
+local one. What should have been done: specify a plausible parameter
+uncertainty range for each parameter, compute the resulting range
+of \QOI values, and only then make a robustness claim.
+
+\textbf{Optional additional problem} (award bonus credit): Local SA
+at ``best-fit parameter values'' is circular if the model was fitted
+to the same data being used to validate it. Sensitivities may be
+artificially small near the best-fit point if the fitting procedure
+has forced the model to be locally insensitive to parameter changes.
+
+\solnote{This is a Bloom L6 synthesis exercise. Full credit requires
+identifying problems that go beyond surface-level criticism. The
+strongest answers connect ``local vs.\ global'' to the mathematical
+definition of the SI (derivative vs.\ variance decomposition) rather
+than simply noting vague imprecision. Partial credit (1 point each)
+for correct identification of any two genuine methodological issues
+with specific alternative recommendations.}
+
+\end{solution}
