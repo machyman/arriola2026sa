@@ -207,3 +207,130 @@ Total: 5 AI models, 20 cross-model confirmed findings, 0 errors remaining.
 
 **Page count:** 154 (unchanged)
 **Compile status:** 0 errors, 0 undefined references
+
+## v1.7 — 2026-04-06
+
+### Figure 1.2 — Complete redesign
+- New design: tall central Model box in each panel; arrows pass THROUGH the Model
+- Panel (a) Forward SA: p_j column on left, bold path through Model to QOI, faded arrows for other POIs
+- Panel (b) Adjoint SA: one dashed arrow QOI→Model, multiple dashed arrows Model→all POIs
+- New caption: m-solves vs 1-solve contrast; references Chs 5 and 6
+
+### Caption updated to match new figure content
+
+**Page count:** 154 (stable)
+**Compile status:** 0 errors, 0 undefined references
+
+## v1.8 — 2026-04-07  (Literature Review Pass 2 — 6 new references, 7 targeted edits)
+
+### Ch8 — Purpose-driven framing added
+- Extended opening paragraph with Razavi et al. (2021) framing:
+  SA is defined by method rather than purpose; three goals
+  (factor prioritization, fixing, mapping) call for different methods.
+
+### Ch9 — Factor-fixing vs factor-prioritization distinction (§9.1)
+- Added explicit three-goal taxonomy (Saltelli et al. 2000) to chapter opening.
+
+### Ch9 — Jansen estimator endorsed with citation (§Computing Sobol Indices)
+- Added Puy et al. (2022) finding: Jansen outperforms Saltelli (2002)
+  formula across comprehensive benchmarking; Jansen is the safer default.
+
+### Ch9 — eFAST footnote added (§Convergence)
+- Footnote explaining eFAST as alternative path to total-order indices
+  (Saltelli, Tarantola & Chan 1999); notes SALib implementation.
+
+### Ch9 — Shapley effects paragraph added (§Correlated POIs)
+- Explained Shapley value axioms, formula, and bracketing property S_j ≤ φ_j ≤ S_{T_j}.
+  Cites Owen (2014). Notes SALib and R sensitivity package.
+
+### Ch9 — New §"Beyond Variance: Moment-Independent Sensitivity" added
+- Full treatment of Borgonovo δ-index: motivation (skewed epidemic distributions),
+  definition with equation, when it disagrees with Sobol indices,
+  validity under correlated inputs, computational cost and software.
+  Cites Borgonovo (2007) and Lu & Borgonovo (2023).
+
+### Ch9 — SALib software pointer added (§Bridge to Semester 2)
+- Directed Python users to SALib (Herman & Usher 2017) and R sensitivity package.
+
+### Bibliography — 6 new entries added
+  borgonovo2007new, puy2022comprehensive, owen2014sobol,
+  saltelli1999effast, saltelli2000ingredient, herman2017salib
+
+**Page count:** 154 → 156
+**Compile status:** 0 errors, 0 undefined references
+
+## v1.9 — 2026-04-07  (Session A: GSR review + gap closures)
+
+### GSR fixes on literature review additions
+- Shapley bracketing: clarified as normalized Shapley effect Φ_j = φ_j/Var(Y);
+  inequality now reads S_j ≤ Φ_j ≤ S_{T_j} (Owen 2014, eq. 2)
+- Factor taxonomy citation updated from saltelli2000ingredient to
+  saltelli2004sensitivity + saltelli2008global (the papers that formally
+  name the three-goal taxonomy)
+
+### Ch9 new §"Time-Varying Sensitivity" added (§9.1 subsection)
+- Explains that S_{p_i}^{q_j}(t) varies over epidemic trajectory
+- β dominates early; γ dominates near peak; both matter for final size
+- Cost: N(m+2)×T evaluations (same sampling matrix reused)
+- Cites Wu et al. (2013) for epidemic application
+
+### Ch6 new subsection "Beyond ODEs: Pointer to the Wider Adjoint Universe"
+- PDE adjoints, data assimilation (4D-Var), optimal control
+- Connects ODE adjoint in Ch6 to Cacuci (1981) and Giles & Pierce (2000)
+- Both references already in bibliography
+
+### Ch9 §PRCC: Non-monotonicity limitation sharpened
+- Added concrete SIR example: R_0 = kβ/γ is monotone, which is WHY PRCC works
+- Added threshold/bifurcation counter-example where PRCC underestimates
+- Cites saltelli1999effast
+
+**Page count:** 156 (stable)
+**Compile status:** 0 errors, 0 undefined references
+
+## v1.10 — 2026-04-07  (Sessions B–D: MACR fixes + submission preparation)
+
+### Session B — MACR corrections
+- Time-varying SA cost corrected: N(m+2) ODE runs (not N(m+2)×T);
+  each run produces full trajectory, Jansen estimator applied per time step
+- δ-index description clarified: integral is twice the TV distance;
+  factor ½ outside the expectation normalizes δ_i to [0,1]
+
+### Session C — Submission preparation
+- Copyright/colophon: removed remaining "Part 1 of two-semester sequence" text
+- AMS subject classifications added to front matter (65-01, 34A55, 62-07, 92D30, 49K15, 65C05)
+- Keywords added to front matter
+- Submission documents created: SIAM_Submission_Checklist.md, CoverLetter_draft.md, Prospectus_outline.md
+
+### Session D — Final compile and packaging
+- 5-pass compile (pdflatex × 3 + bibtex + makeindex)
+- PDF SHA-256: 6d33732b9acf9b37...
+- Page count: 156 → 158 (AMS/keywords page)
+- Compile status: 0 errors, 0 undefined references
+- Submission package assembled
+
+## v1.11 — 2026-04-07  (Dimensionlessness + graduate pointers)
+
+### Ch2: Dimensionlessness warning added (after Unifying Idea 1)
+- New paragraph: "Why normalization is not optional"
+- Pound-and-inches analogy: comparing raw derivatives across parameters
+  is incommensurable; normalized SIs are unit-free and fair
+- Explains why tornado plot sorts by |SI| not |∂q/∂p|
+- Index entry: sensitivity index!dimensionlessness
+
+### Ch9 §9.1: Dimensionlessness reminder for sigma-normalized index
+- One paragraph after the S_i^σ formula
+- Explains that σ_i/σ_Y cancels units; result is a pure number
+- Cross-references the Ch2 tornado plot explanation
+
+### Ch9 §9.8 (Borgonovo): Graduate pointer added
+- One sentence citing Borgonovo (2017) book for full mathematical treatment
+- New BibTeX entry: borgonovo2017sensitivity
+
+### Ch6 PDE adjoint subsection: Cacuci book pointer added
+- One sentence citing Cacuci (2003) Volume I for graduate-level
+  development of adjoint for general nonlinear functional equations
+- New BibTeX entry: cacuci2003volume1
+
+**Bibliography:** 55 entries (was 53)
+**Page count:** 158 (stable)
+**Compile status:** 0 errors, 0 undefined references

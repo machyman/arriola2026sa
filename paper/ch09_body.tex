@@ -23,6 +23,20 @@ value can see this.
 Chapter~8 showed when local SA fails. This chapter provides the tools
 to replace it.
 
+Before choosing a global SA method, two questions must be answered.
+\textit{What is the goal?} Three distinct purposes call for different methods
+\cite{saltelli2004sensitivity,saltelli2008global}: \textbf{factor prioritization} (which inputs
+most reduce output variance if their uncertainty were eliminated?),
+\textbf{factor fixing} (which inputs can be held constant without materially
+changing the output?), and \textbf{factor mapping} (which input combinations
+drive the output above a critical threshold?).
+\textit{Does the method's assumptions match the model?}
+First-order Sobol indices answer the factor-prioritization question;
+total-order indices answer the factor-fixing question.
+Using either one to answer a question outside its scope produces results
+that are numerically correct but scientifically misleading ---
+the central lesson of Chapter~8.
+
 %%------------------------------------------------------------
 \section{Why Local SA Is Not Enough: The Sigma-Normalized Bridge}
 \label{sec:sigmanorm}
@@ -62,6 +76,15 @@ accounts for both the derivative and the parameter uncertainty:
 Parameter~2 dominates, opposite to the local SA ranking.
 The local ranking was misleading because it ignored the factor-of-3
 difference in parameter uncertainty.
+
+Like the normalized SI in Chapter~2, $S_i^\sigma$ is dimensionless:
+$\sigma_i$ carries the units of $Q_i$ and $\sigma_Y$ carries the units
+of $Y$, so $(\sigma_i/\sigma_Y)\,\partial Y/\partial Q_i$ is a pure
+number.\index{sensitivity index!dimensionlessness}
+This means $S_1^\sigma$ and $S_2^\sigma$ can be compared directly even
+when the two parameters are measured in completely different units ---
+the same reason the tornado plot in Chapter~2 sorted by
+$|\SI{p}{q}|$ rather than by the raw derivative.
 
 \unifyingidea{1} The sigma-normalized index is still the sensitivity
 index from Chapter~2, multiplied by the relative parameter uncertainty.
@@ -106,6 +129,43 @@ $S_\tau^\sigma = 0.3 \times 2/0.726 \approx 0.83$.
 Ranking: $\tau > \beta > k$. The mean infectious period drives the most
 uncertainty in $R_0$, despite all three having equal local SIs.
 \end{scAnswer}
+
+\subsection{Time-Varying Sensitivity}
+\label{sec:timevarying}
+\index{time-varying sensitivity}
+
+The analyses above collapse the SIR model's time-dependent output into a
+single scalar QOI: $R_0$, or peak infections, or final size.
+This is often appropriate, but it discards information.
+For ODE models, sensitivity indices can be computed as functions of time:
+$S_{p_i}^{q_j}(t)$ tells which parameters matter most at each moment
+in the epidemic trajectory.
+
+In the SIR model the answer changes substantially over the course of the outbreak.
+Near the start, the trajectory is exponentially growing and $\beta$ (the
+transmission rate) dominates: small changes in $\beta$ compound rapidly.
+Near the peak, $\gamma$ (the recovery rate) becomes comparably important
+because the balance between new infections and recoveries determines when
+the peak occurs.
+Toward the end, both rates shape the final size, but initial-condition
+parameters that seemed irrelevant during growth can re-emerge as influential.
+A global SA computed against only the peak-infections QOI would miss
+the period when $\gamma$ most needs careful estimation.
+
+Time-varying global SA works by running the Saltelli algorithm against the
+model output at each recorded time step $t_1, t_2, \ldots, t_T$.
+For ODE models this costs no additional model evaluations: a single run
+of the SIR system produces the full trajectory $\vec{u}(t)$ at every
+time step, so the $N(m+2)$ evaluations of the Saltelli construction
+automatically yield model output at all $T$ recorded times.
+The sensitivity indices $\hat{S}_i(t_k)$ and $\hat{S}_{T_i}(t_k)$ are
+then computed by applying the Jansen estimator to the outputs at each
+time step $t_k$ separately --- an arithmetic operation with negligible
+cost compared to the ODE solves.
+Wu et al.~\cite{wu2013sensitivity} apply this approach to epidemic models
+and show that parameter importance rankings shift substantially across the
+trajectory, with direct implications for which parameters to prioritize for
+data collection at each stage of an outbreak.
 
 %%------------------------------------------------------------
 \section{Sampling Methods}
@@ -230,6 +290,18 @@ increases), PRCC may give a near-zero coefficient even for a highly
 important parameter, while the Sobol total index will correctly identify
 it as important. For the models in this course, both methods typically
 agree, but verifying agreement is a useful consistency check.
+
+For the SIR model, $R_0 = k\beta/\gamma$ is monotone increasing in
+$\beta$ and monotone decreasing in $\gamma$, which is why PRCC performs
+reliably on this particular model.
+For output quantities that exhibit threshold or bifurcation behavior ---
+such as the probability that $R_0 > 1$, or the time to peak infections
+in models with multiple competing timescales and parameter-dependent
+qualitative changes --- monotonicity can fail even when the individual
+input-output relationships look locally linear.
+In such cases PRCC will underestimate the importance of parameters that
+drive threshold-crossing, while the Sobol total index captures the full
+nonlinear contribution~\cite{saltelli1999effast}.
 
 %%------------------------------------------------------------
 \section{Sobol Decomposition and Variance-Based SA}
@@ -420,6 +492,12 @@ Use these Jansen estimators, not the original Saltelli (2002) formulas,
 which have higher variance. The Jansen estimator is consistent
 (converges to the true $S_i$ as $N\to\infty$) and nearly unbiased;
 see Jansen~\cite{jansen1999analysis} Theorem~1.
+A comprehensive comparison of eight total-order estimators across a wide
+range of models, sample sizes, input distributions, and dimensionalities
+finds that the Jansen estimator consistently outperforms the Saltelli
+(2002) formula for both factor prioritization and estimation accuracy
+\cite{puy2022comprehensive}; when in doubt, the Jansen formula is the
+safer default.
 The key step is that
 \[
   \E\!\left[\frac{1}{2N}\sum_{j=1}^N (f(B_j) - f(A_{B,j}^{(i)}))^2\right]
@@ -437,7 +515,14 @@ is $O(1/N)$~\cite{jansen1999analysis}, negligible for $N \geq 1000$.
 The estimators converge as $O(1/\sqrt{N})$, the standard Monte Carlo rate.
 In practice, $N \geq 1000$ is needed for reliable estimates.
 For $m = 4$ parameters (SIR model): $N(m+2) = 6000$ evaluations at $N = 1000$.
-If each evaluation takes 0.1~seconds: 10~minutes.
+If each evaluation takes 0.1~seconds: 10~minutes.%
+\footnote{An alternative path to total-order indices is the
+\textbf{extended FAST} (eFAST), which reaches the same indices via Fourier
+analysis along a space-filling search curve through the input space
+\cite{saltelli1999effast}.
+eFAST has different robustness properties at small $N$ but converges to
+the same values as the Jansen estimator; it is implemented alongside the
+matrix-based approach in the SALib Python library.}
 
 Plotting $\hat{S}_i$ and $\hat{S}_{T_i}$ vs.\ $N$ reveals the convergence:
 estimates are noisy for $N < 500$ and stable for $N \geq 2000$.
@@ -573,9 +658,97 @@ use PRCC as the primary global SA tool and grouped Sobol indices as
 a secondary check. Report the correlation structure explicitly alongside
 the SA results.
 
+\textbf{Shapley effects: the principled alternative.}
+For readers seeking a theoretically grounded attribution under correlated
+inputs, the \textbf{Shapley effect} $\phi_j$ is the unique attribution
+satisfying four game-theoretic axioms: efficiency (the $\phi_j$ sum to
+total output variance), symmetry, dummy (zero importance for irrelevant inputs),
+and additivity~\cite{owen2014sobol}.
+The Shapley value of input $j$ is $\phi_j = \sum_{u \ni j} \sigma_u^2 / |u|$:
+each interaction variance component $\sigma_u^2$ is shared equally among
+all inputs in the interaction set $u$.
+Normalizing by the total output variance gives the \emph{normalized Shapley
+effect} $\Phi_j = \phi_j / \mathrm{Var}(Y)$, which lies in $[0,1]$ and
+satisfies $\sum_j \Phi_j = 1$.
+A practical consequence: the Sobol indices already computed in this chapter
+bracket the normalized Shapley effect,
+\[
+  S_j \;\leq\; \Phi_j \;\leq\; S_{T_j},
+\]
+so even when inputs are correlated, first- and total-order Sobol indices
+provide useful bounds on the fair attribution.
+The Shapley value is computationally more expensive than Sobol indices
+but is implemented in SALib and the R \texttt{sensitivity} package.
+
 %%------------------------------------------------------------
-\section{Comparison of All SA Methods}
-\label{sec:methodcomparison}
+\section{Beyond Variance: Moment-Independent Sensitivity}
+\label{sec:borgonovo}
+\index{moment-independent sensitivity}\index{delta index}
+%%------------------------------------------------------------
+
+Sobol indices decompose output \emph{variance}.
+For epidemic models with skewed or multimodal output distributions ---
+the distribution of peak infection counts, for instance, is rarely
+symmetric --- variance is a poor summary of uncertainty.
+A parameter that dominates variance is not necessarily the parameter
+whose uncertainty most shifts the shape of the epidemic trajectory,
+and the parameter most critical to a decision-maker who cares about
+tail events (catastrophic outbreaks) may differ from the one ranked
+highest by Sobol indices.
+
+Borgonovo (2007) introduced a moment-independent sensitivity measure,
+the \textbf{$\delta$-index}~\cite{borgonovo2007new}, that addresses
+this directly.
+Instead of measuring how much fixing $Q_i$ reduces output variance,
+$\delta_i$ measures the \emph{expected shift in the entire output distribution}
+when $Q_i$ is fixed:
+\begin{equation}
+  \delta_i = \frac{1}{2}\,E_{Q_i}\!\left[\int \bigl|f_Y(y) - f_{Y\mid Q_i}(y)\bigr|\,dy\right].
+  \label{eq:delta}
+\end{equation}
+Here $f_Y$ is the unconditional output density and $f_{Y\mid Q_i}$ is
+the conditional density given $Q_i$.
+The integral $\int|f_Y(y) - f_{Y|Q_i}(y)|\,dy$ is twice the total
+variation distance between the two densities; the factor $\frac{1}{2}$
+outside the expectation normalizes $\delta_i$ to lie in $[0,1]$.
+The expectation averages over all values $Q_i$ can take.
+Three properties make $\delta_i$ interpretable: it lies in $[0,1]$;
+it equals zero when $Y$ is independent of $Q_i$; and the joint
+$\delta$ of all inputs together equals one.
+
+\textbf{When do $\delta_i$ and Sobol indices disagree?}
+Borgonovo (2007) demonstrates on the Ishigami test function that
+$\delta_i$ and total-order Sobol indices agree on which parameters
+are \emph{least} important, but can disagree on the most important
+ones: the parameter that most shifts the output distribution is not
+always the one that contributes most to output variance.
+In epidemic models this distinction matters when the decision criterion
+is not variance but exceedance probability: the probability that
+$R_0$ exceeds the critical threshold of~1, or that peak infections
+exceed hospital capacity.
+Lu and Borgonovo~\cite{lu2023global} demonstrate this discrepancy
+for SIR-type models.
+
+\textbf{Definition is valid under correlated inputs.}
+Because $\delta_i$ requires only the joint density $f_{\mathbf{Q}}$
+without assuming independence, it remains well-defined when parameters
+are correlated~\cite{borgonovo2007new} --- a practical advantage over
+standard Sobol indices in epidemiological models where transmission
+rate and contact rate are rarely independent.
+
+\textbf{Computational cost and software.}
+Computing $\delta_i$ requires estimating conditional densities, which
+is more expensive than the matrix construction for Sobol indices.
+Plischke, Borgonovo and Smith (2013) introduced a substantially more
+efficient ``given-data'' estimator.
+Both the standard and efficient estimators are implemented in SALib
+(Python) and the \texttt{sensitivity} package (R).
+For a comprehensive graduate-level treatment of moment-independent
+sensitivity measures, their mathematical properties, and computational
+algorithms, see Borgonovo~\cite{borgonovo2017sensitivity}.
+
+%%------------------------------------------------------------
+\section{Comparison of All SA Methods}\label{sec:methodcomparison}
 %%------------------------------------------------------------
 
 Table~\ref{tab:allSA} consolidates all SA methods from the book.
@@ -665,6 +838,19 @@ discipline that reveals which assumptions the argument depends on.
 \medskip\noindent
 \textit{Good sensitivity analysis does not end the discussion.
 It tells you where to begin it.}
+
+\medskip\noindent
+\textbf{Software for global SA beyond MATLAB.}
+The methods in this chapter are implemented in several open-source
+libraries.
+SALib~\cite{herman2017salib} is the dominant Python library for global SA;
+it implements Morris screening, the Saltelli construction with Jansen
+estimators, eFAST, and the Borgonovo $\delta$-index under a consistent
+API and is freely available at \url{https://salib.readthedocs.io}.
+The \texttt{sensitivity} package for R (Iooss et al.) covers a similar
+range of methods including Shapley effects.
+Both are well-documented, actively maintained, and suitable for
+research-grade applications.
 
 %%------------------------------------------------------------
 \section{MATLAB Laboratory: Complete Global SA Pipeline for SIR}

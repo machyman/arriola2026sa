@@ -15,6 +15,19 @@ used local methods: derivatives computed at a single nominal parameter value.
 The derivatives were computed correctly. But they answered a different question
 than the one the authors claimed to answer.
 
+The deeper problem is not computational but epistemological: sensitivity
+analysis is still often defined by method rather than purpose
+\cite{razavi2021future}.
+Practitioners reach for the method from their own disciplinary tradition
+rather than the one best suited to their question.
+A local method applied to answer a global question will produce results
+that are internally correct but wrong for the stated purpose.
+Before choosing an SA method, two questions must be answered: what is the
+goal --- factor prioritization (which inputs most reduce output variance?),
+factor fixing (which inputs can be frozen without changing the output?),
+or factor mapping (which inputs drive the output above a threshold?) ---
+and does the method's assumptions match the model's behavior?
+
 \medskip
 \begin{center}
 \textit{Assuming local sensitivity holds globally is the triumph\\

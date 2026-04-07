@@ -735,6 +735,43 @@ backward integration. The continuous limit is precisely the adjoint
 ODE derived here.
 
 %%------------------------------------------------------------
+\subsection*{Beyond ODEs: A Pointer to the Wider Adjoint Universe}
+%%------------------------------------------------------------
+
+The adjoint ODE in this chapter is the simplest instance of a
+broader mathematical structure that scales to much larger problems.
+When the governing model is a partial differential equation (PDE)
+rather than an ODE --- a groundwater transport model, an atmospheric
+circulation model, or a structural mechanics simulation --- the
+adjoint becomes a PDE solved backward in both time and space,
+with boundary conditions imposed at the final time in the same way
+that the terminal condition $\vec{\lambda}(T) = -\nabla_u h^T$ is
+imposed here.
+Cacuci~\cite{cacuci1981sensitivity} derived this adjoint formalism
+for nonlinear functional equations in 1981; Giles and
+Pierce~\cite{giles2000introduction} demonstrated its industrial
+power for aerodynamic design optimization, computing the sensitivity
+of aircraft drag with respect to hundreds of shape parameters at the
+cost of a single adjoint solve.
+
+In data assimilation --- fitting a dynamical model to time-series
+observations --- the adjoint provides the gradient of the
+data-mismatch functional with respect to all model parameters
+simultaneously.
+This is the mathematical engine behind the 4D-Var algorithm used in
+operational numerical weather prediction, where the model has
+millions of state variables and the assimilation window spans days
+to weeks.
+The MATLAB adjoint in this chapter is the direct analog of all these
+applications: the mathematical structure --- introduce a Lagrange
+multiplier function, differentiate, integrate by parts, choose the
+multiplier to cancel the unknown sensitivity --- is identical in
+every setting, only the function space changes.
+A systematic graduate-level development of this adjoint formalism
+for general nonlinear functional equations, including PDEs and
+integral equations, is in Cacuci~\cite{cacuci2003volume1}.
+
+%%------------------------------------------------------------
 \section{MATLAB Laboratory: The SIR Adjoint in Practice}
 \label{sec:ch6matlab}
 %%------------------------------------------------------------

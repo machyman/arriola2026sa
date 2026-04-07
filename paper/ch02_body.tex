@@ -269,6 +269,24 @@ for Sobol variance decomposition. Every one of these is the same
 normalized derivative, asked in the same way:
 \emph{if the input changes by $x\%$, by what percentage does the output change?}
 
+\medskip
+\noindent\textbf{Why normalization is not optional.}\index{sensitivity index!dimensionlessness}
+Without the $p/q$ factor, comparing raw derivatives across parameters
+is not meaningful.
+In the SIR model, $\partial R_0/\partial k$ has units of days
+(since $k$ has units day$^{-1}$), while $\partial R_0/\partial \beta$
+has different units entirely.
+Asking which raw derivative is larger is like asking whether
+1~pound is larger than 2~inches: the numbers may have any magnitude,
+but the comparison is incommensurable because the units differ.
+The normalized SI eliminates this problem.
+Both $\SI{k}{R_0}$ and $\SI{\beta}{R_0}$ equal $+1$ --- dimensionless,
+unit-free --- so ranking them is legitimate and the tornado plot
+is an honest comparison.
+This is why the tornado plot sorts by $|\SI{p}{q}|$ rather than
+by $|\partial q/\partial p|$: only the normalized index gives
+a ranking that is independent of how parameters happen to be measured.
+
 \begin{selfcheck}
 Use each of the three forms to compute the sensitivity index
 of the area $A = \pi r^2$ with respect to the radius $r$.
