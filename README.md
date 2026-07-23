@@ -9,19 +9,20 @@ and Engineering* series.
 ## What is here now
 
 **Nine Python notebooks**, one per chapter, that reproduce the worked examples and figures in the
-text. Each runs end to end in Google Colab with no local installation and no data files.
+text. Each runs end to end in Google Colab with no local installation and no data files — click a
+badge to open one directly, no download and no account setup required.
 
-| Notebook | Chapter |
-|---|---|
-| `python/ch01_intro.ipynb` | 1 — Why sensitivity analysis |
-| `python/ch02_local_sa.ipynb` | 2 — Local sensitivity indices |
-| `python/ch03_computing.ipynb` | 3 — Computing derivatives |
-| `python/ch04_analytic_forward_sensitivity_analysis.ipynb` | 4 — Forward sensitivity equations |
-| `python/ch05_the_adjoint_in_linear_algebra.ipynb` | 5 — The adjoint in linear algebra |
-| `python/ch06_adjoint_odes.ipynb` | 6 — The adjoint for dynamical systems |
-| `python/ch07_adjoint_practice.ipynb` | 7 — Automatic differentiation |
-| `python/ch08_caveat_emptor.ipynb` | 8 — When sensitivity analysis misleads |
-| `python/ch09_global_sa.ipynb` | 9 — Global sensitivity analysis |
+| Chapter | Notebook | Run it |
+|---|---|---|
+| 1 — Why sensitivity analysis | `python/ch01_intro.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch01_intro.ipynb) |
+| 2 — Local sensitivity indices | `python/ch02_local_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch02_local_sa.ipynb) |
+| 3 — Computing derivatives | `python/ch03_computing.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch03_computing.ipynb) |
+| 4 — Forward sensitivity equations | `python/ch04_analytic_forward_sensitivity_analysis.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch04_analytic_forward_sensitivity_analysis.ipynb) |
+| 5 — The adjoint in linear algebra | `python/ch05_the_adjoint_in_linear_algebra.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch05_the_adjoint_in_linear_algebra.ipynb) |
+| 6 — The adjoint for dynamical systems | `python/ch06_adjoint_odes.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch06_adjoint_odes.ipynb) |
+| 7 — Automatic differentiation | `python/ch07_adjoint_practice.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch07_adjoint_practice.ipynb) |
+| 8 — When sensitivity analysis misleads | `python/ch08_caveat_emptor.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch08_caveat_emptor.ipynb) |
+| 9 — Global sensitivity analysis | `python/ch09_global_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch09_global_sa.ipynb) |
 
 ## What is coming
 
@@ -36,8 +37,8 @@ these notebooks provide a working reference implementation in Python.
 
 ## Running the notebooks
 
-Open any notebook directly in Colab by replacing `github.com` with `colab.research.google.com/github`
-in its URL, or use the badge links below once the repository is public.
+Click any **Open in Colab** badge above. Nothing is installed locally and no account setup is
+needed beyond a Google login.
 
 Cells are meant to be executed **in order**. Several notebooks build state across cells — for
 example, `ch06_adjoint_odes.ipynb` computes the forward solve, the backward adjoint solve, and
