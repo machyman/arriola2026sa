@@ -1,8 +1,8 @@
 # Companion materials — *Foundations of Sensitivity Analysis*
 
 Companion code for ***Foundations of Sensitivity Analysis: From Local Sensitivity to Global
-Uncertainty*** by Leon M. Arriola and James M. Hyman, SIAM *Foundations in Computational Science
-and Engineering* series.
+Uncertainty*** by Leon M. Arriola and James M. Hyman. Submitted to the SIAM *Computational Science and
+Engineering* series.
 
 ---
 
@@ -86,7 +86,8 @@ significant figures.
   title     = {Foundations of Sensitivity Analysis: From Local Sensitivity
                to Global Uncertainty},
   publisher = {Society for Industrial and Applied Mathematics},
-  series    = {Foundations in Computational Science and Engineering},
+  series    = {Computational Science and Engineering},
+  note      = {Manuscript under review; details subject to change},
   year      = {2026}
 }
 ```
