@@ -1,7 +1,7 @@
 cff-version: 1.2.0
-message: "If you use this textbook or its exercises, please cite it as below."
+message: "This book is in preparation and has not been published. If you use the notebooks or exercises, please cite the work as below and note that details may change."
 type: book
-title: "Foundations of Sensitivity Analysis: Theory, Computation, and Applications"
+title: "Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty"
 authors:
   - family-names: Arriola
     given-names: Leon M.
@@ -11,8 +11,10 @@ authors:
     affiliation: "Tulane University"
     orcid: "https://orcid.org/0000-0001-5247-5794"
 year: 2026
-publisher: "Society for Industrial and Applied Mathematics (SIAM)"
-address: Philadelphia
+notes: >
+  In preparation for submission to SIAM (Computational Science and Engineering
+  series). Not submitted, not under review, not accepted for publication. No
+  publisher field is given, because the book has not been accepted by any publisher.
 keywords:
   - sensitivity analysis
   - adjoint methods
@@ -20,14 +22,16 @@ keywords:
   - SIR model
   - uncertainty quantification
   - mathematical modeling
-  - undergraduate textbook
-version: "v13"
-date-released: "2026-04-06"
-repository-code: "https://github.com/mhyman/arriola2026sa"
+  - graduate textbook
+version: "v1_15_1"
+date-released: "2026-07-24"
+repository-code: "https://github.com/machyman/arriola2026sa"
 abstract: >
-  A one-semester undergraduate textbook developing sensitivity analysis as a
-  mathematical discipline, organized around three unifying ideas: the sensitivity
-  index as a normalized derivative, the adjoint as the transpose in whatever space
-  you are working in, and local SA as a linearization. Uses the SIR epidemic model
-  as a running example throughout all nine chapters. Part 1 of a two-semester
-  sequence; the companion volume is Smith's Uncertainty Quantification (SIAM, 2014).
+  A graduate textbook developing sensitivity analysis as a mathematical
+  discipline, organized around four unifying ideas: the sensitivity index as a
+  normalized derivative; the adjoint as the transpose in whatever space you are
+  working in; local sensitivity analysis as a linearization; and, underlying all
+  of them, that a sensitivity index describes a model rather than the world.
+  Uses the SIR epidemic model as a running example across all nine chapters.
+  Intended as the first part of a two-semester sequence; the companion volume is
+  R. C. Smith, Uncertainty Quantification (SIAM, 2nd ed. 2024).
