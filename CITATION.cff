@@ -23,8 +23,8 @@ keywords:
   - uncertainty quantification
   - mathematical modeling
   - graduate textbook
-version: "v1_15_1"
-date-released: "2026-07-24"
+version: "v1_17_10"
+date-released: "2026-08-16"
 repository-code: "https://github.com/machyman/arriola2026sa"
 abstract: >
   A graduate textbook developing sensitivity analysis as a mathematical
@@ -33,5 +33,7 @@ abstract: >
   working in; local sensitivity analysis as a linearization; and, underlying all
   of them, that a sensitivity index describes a model rather than the world.
   Uses the SIR epidemic model as a running example across all nine chapters.
-  Intended as the first part of a two-semester sequence; the companion volume is
-  R. C. Smith, Uncertainty Quantification (SIAM, 2nd ed. 2024).
+  Pitched at a more elementary audience than R. C. Smith, Uncertainty
+  Quantification (SIAM, 2nd ed. 2024), which is the closest neighbouring text;
+  this book can be read first, or in parallel with the sensitivity analysis
+  chapters there.
