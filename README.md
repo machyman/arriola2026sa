@@ -25,14 +25,25 @@ badge to open one directly, no download and no account setup required.
 | 8 — When sensitivity analysis misleads | `python/ch08_caveat_emptor.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch08_caveat_emptor.ipynb) |
 | 9 — Global sensitivity analysis | `python/ch09_global_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch09_global_sa.ipynb) |
 
+**The MATLAB reference library**, eighteen functions across four modules, with an automated test
+suite. Each function corresponds directly to a concept or algorithm in the text.
+
+| Module | Contents |
+|---|---|
+| [`src/core`](src/core) | the sensitivity index, the Jacobian, the SIR model and its nominal parameters, tornado plots |
+| [`src/fse`](src/fse) | the augmented forward sensitivity system, its Jacobian, time-dependent indices |
+| [`src/adjoint`](src/adjoint) | the SIR adjoint right-hand side and the adjoint solve |
+| [`src/globalsa`](src/globalsa) | LHS, PRCC, Saltelli sampling, the Jansen estimator, Morris screening |
+
+Automated tests are in [`tests/`](tests).
+
+**The compiled book and solutions manual**, in [`paper/`](paper) and [`solutions/`](solutions).
+
 ## What is coming
 
-The complete **MATLAB reference library** — production-quality functions, automated test suites,
-and usage examples — will be released with the published book, alongside Python and R ports. Each
-function in that library corresponds directly to a concept or algorithm in the text.
-
-Until then, the pseudocode in the book describes every algorithm independently of language, and
-these notebooks provide a working reference implementation in Python.
+Python and R ports of the MATLAB library will follow with the published book. Until then, the
+pseudocode in the book describes every algorithm independently of language, and the notebooks above
+provide a working reference implementation in Python.
 
 ---
 
