@@ -1,8 +1,8 @@
 function p = sir_nominal()
 %SIR_NOMINAL  Canonical nominal parameter struct for the book's SIR model.
 %   Returns the single, authoritative set of nominal parameter values used
-%   throughout "Foundations of Sensitivity Analysis: Theory, Computation,
-%   and Applications" (Arriola & Hyman, SIAM 2026).  Every script and function in
+%   throughout "Foundations of Sensitivity Analysis: From Local
+%   Sensitivity to Global Uncertainty" (Arriola & Hyman, in preparation).  Every script and function in
 %   this repository that needs nominal values should call SIR_NOMINAL
 %   rather than hard-coding numbers.
 %
@@ -34,7 +34,7 @@ function p = sir_nominal()
 %   See also: SIR_MODEL, RUN_SIR_EXAMPLE
 
 %   Reference: Arriola & Hyman, "Foundations of Sensitivity Analysis:
-%   Theory, Computation, and Applications", SIAM, 2026.  Parameters defined in Ch.2-4.
+%   From Local Sensitivity to Global Uncertainty", in preparation.  Parameters defined in Ch.2-4.
 
 p.k     = 5;           % contacts per person per day
 p.beta  = 0.06;        % transmission probability per contact

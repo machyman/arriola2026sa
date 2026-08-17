@@ -31,7 +31,7 @@ function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, k, beta, tau, L)
 %   Example:
 %       % See run_sir_adjoint.m for a complete working example.
 %
-%   Reference: Arriola & Hyman, SIAM 2026, eq. (6.17)-(6.20).
+%   Reference: Arriola & Hyman, in preparation, eq. (6.17)-(6.20).
 %   See also: RUN_SIR_ADJOINT, SIR_JACOBIAN, SIR_AUGMENTED
 
 if isrow(lam), lam = lam(:); end

@@ -26,7 +26,7 @@ function [SI_adj, t_fwd, Y_fwd, t_adj, LAM] = run_sir_adjoint(p, options)
 %       t_adj   - adjoint solution time vector (reversed)
 %       LAM     - adjoint solution [lam_S, lam_I, lam_R] (n_t x 3)
 %
-%   Reference: Arriola & Hyman, SIAM 2026, Ch. 6.
+%   Reference: Arriola & Hyman, in preparation, Ch. 6.
 %   See also: SIR_ADJOINT_RHS, SIR_AUGMENTED, SIR_NOMINAL, PLOT_TIME_SI
 
 %% --- Defaults ----------------------------------------------------------

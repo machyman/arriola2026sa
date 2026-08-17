@@ -1,7 +1,7 @@
 %RUN_GLOBAL_SA_SIR  Complete global SA pipeline for the SIR model.
 %   Reproduces the key numerical results of Chapter 9 of
-%   "Foundations of Sensitivity Analysis: Theory, Computation, and Applications"
-%   (Arriola & Hyman, SIAM 2026).
+%   "Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty"
+%   (Arriola & Hyman, in preparation).
 %
 %   This script runs:
 %     1. Morris screening (identify important parameters)

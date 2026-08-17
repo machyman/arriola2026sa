@@ -38,7 +38,7 @@ function dy = sir_augmented(t, y, k, beta, tau, L)
 %       [t,Y] = ode45(f, [0 p.T], y0, opts);
 %       % SI_k(I)(t) = (p.k / Y(:,2)) .* Y(:,5)  (normalized)
 %
-%   Reference: Arriola & Hyman, SIAM 2026, eq. (4.13)-(4.17).
+%   Reference: Arriola & Hyman, in preparation, eq. (4.13)-(4.17).
 %   See also: SIR_MODEL, SIR_JACOBIAN, COMPUTE_TIME_SI
 
 if isrow(y), y = y(:); end

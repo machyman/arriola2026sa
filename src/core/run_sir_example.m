@@ -1,7 +1,7 @@
 %RUN_SIR_EXAMPLE  Demonstration of the core sensitivity analysis library.
 %   Reproduces the key numerical results of Chapters 2-3 of
-%   "Foundations of Sensitivity Analysis: Theory, Computation, and Applications"
-%   (Arriola & Hyman, SIAM 2026).
+%   "Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty"
+%   (Arriola & Hyman, in preparation).
 %
 %   This script:
 %     1. Loads nominal parameters (SIR_NOMINAL)

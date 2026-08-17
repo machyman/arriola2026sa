@@ -26,7 +26,7 @@ function J = sir_jacobian(S, I, R, k, beta, tau, L)
 %       Exact analytic derivatives of eqs. (4.1)-(4.3).
 %       N = S + I + R is conserved (constant total population).
 %
-%   Reference: Arriola & Hyman, SIAM 2026, eq. (4.16)-(4.17).
+%   Reference: Arriola & Hyman, in preparation, eq. (4.16)-(4.17).
 %   See also: SIR_MODEL, SIR_AUGMENTED
 
 N     = S + I + R;

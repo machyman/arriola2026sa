@@ -41,7 +41,7 @@ function SI = sensitivity_index(q, q_nom, p, p_nom)
 %
 %   See also: SENSITIVITY_JACOBIAN, SIR_NOMINAL
 
-%   Reference: Arriola & Hyman, SIAM 2026, Definition 2.1 (eq. 2.1-2.3).
+%   Reference: Arriola & Hyman, in preparation, Definition 2.1 (eq. 2.1-2.3).
 
 %% Input validation
 validateattributes(q_nom, {'numeric'}, {'scalar','finite'}, ...

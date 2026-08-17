@@ -2,7 +2,7 @@ function h = plot_time_si(t, SI_t, Y_state, p, options)
 %PLOT_TIME_SI  Publication figure: time-dependent SI curves alongside I(t).
 %   Produces the replacement for Figure 4.3 ("Schematic of time-dependent
 %   sensitivity indices") with actual computed values at the nominal
-%   parameters from Arriola & Hyman, SIAM 2026.
+%   parameters from Arriola & Hyman, in preparation.
 %
 %   H = PLOT_TIME_SI(T, SI_T, Y_STATE, P) creates the figure.
 %   H = PLOT_TIME_SI(T, SI_T, Y_STATE, P, OPTIONS) uses extra options.

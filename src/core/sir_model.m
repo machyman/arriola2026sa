@@ -1,8 +1,8 @@
 function dy = sir_model(t, y, k, beta, tau, L)
 %SIR_MODEL  Right-hand side of the SIR model with demography.
 %   Implements the three-compartment SIR epidemic model used throughout
-%   "Foundations of Sensitivity Analysis: Theory, Computation, and Applications"
-%   (Arriola & Hyman, SIAM 2026).  Designed to be passed directly to
+%   "Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty"
+%   (Arriola & Hyman, in preparation).  Designed to be passed directly to
 %   MATLAB ODE solvers such as ODE45.
 %
 %   The model (equations 4.1-4.3 in the text):

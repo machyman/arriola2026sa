@@ -45,7 +45,7 @@ function [S, info] = sensitivity_jacobian(model, p_nom, n_q, options)
 %       ratio deviates from 1 by more than 5%.
 %       Cost: 2*n_p + 1 model evaluations.
 %
-%   Reference: Arriola & Hyman, SIAM 2026, Ch.3.  Step-size formula from
+%   Reference: Arriola & Hyman, in preparation, Ch.3.  Step-size formula from
 %   eq. (3.8): h* ≈ eps_mach^(1/3) * |p*| ≈ 6e-6 * |p*|.
 %
 %   See also: SENSITIVITY_INDEX, TORNADO_PLOT, SIR_NOMINAL

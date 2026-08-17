@@ -1,4 +1,4 @@
-# Changelog — Foundations of Sensitivity Analysis: Theory, Computation, and Applications
+# Changelog — Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty
 
 All notable changes to this project are documented here.
 
