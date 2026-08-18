@@ -81,6 +81,7 @@ if verbose, fprintf('Step 4: Computing sensitivity integrals...\n'); end
 % Interpolate adjoint onto forward time grid for numerical integration
 lam_S_fn = griddedInterpolant(flip(t_adj), flip(LAM(:,1)), 'pchip');
 lam_I_fn = griddedInterpolant(flip(t_adj), flip(LAM(:,2)), 'pchip');
+lam_R_fn = griddedInterpolant(flip(t_adj), flip(LAM(:,3)), 'pchip');
 
 SI_adj = zeros(1, 4);
 p_nom  = [p.k, p.beta, p.tau, p.L];
@@ -88,9 +89,11 @@ p_nom  = [p.k, p.beta, p.tau, p.L];
 % Evaluate integrands on the forward time grid
 S_vec = Y_fwd(:,1);
 I_vec = Y_fwd(:,2);
+R_vec = Y_fwd(:,3);
 N_val = p.S0 + p.I0 + p.R0_ic;  % constant population
 lam_S = lam_S_fn(t_fwd);
 lam_I = lam_I_fn(t_fwd);
+lam_R = lam_R_fn(t_fwd);
 
 % dF/dp_j vectors at each time point (only S and I components matter
 % since lam_R contributes through gamma/mu terms)
@@ -98,8 +101,13 @@ integrand_k    = -lam_S .* (p.beta .* S_vec .* I_vec / N_val) + ...
                   lam_I .* (p.beta .* S_vec .* I_vec / N_val);
 integrand_beta = -lam_S .* (p.k   .* S_vec .* I_vec / N_val) + ...
                   lam_I .* (p.k   .* S_vec .* I_vec / N_val);
-integrand_tau  =  lam_I .* (I_vec / p.tau^2);    % from dF_I/dtau = I/tau^2
-integrand_L    =  lam_I .* (I_vec / p.L^2);      % from dF_I/dL   = I/L^2
+% dF/dtau = [0, I/tau^2, -I/tau^2]; the R-equation term is NOT zero
+integrand_tau  =  lam_I .* (I_vec / p.tau^2) ...
+                - lam_R .* (I_vec / p.tau^2);
+% dF/dL = [-(N-S)/L^2, I/L^2, R/L^2], since mu = 1/L enters all three equations
+integrand_L    = -lam_S .* ((N_val - S_vec) / p.L^2) ...
+                + lam_I .* (I_vec / p.L^2) ...
+                + lam_R .* (R_vec / p.L^2);
 
 % Numerical integration (trapezoid rule on ode45 output)
 raw_SI = [-trapz(t_fwd, integrand_k),   ...
