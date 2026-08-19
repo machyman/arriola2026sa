@@ -15,27 +15,27 @@ badge to open one directly, no download and no account setup required.
 
 | Chapter | Notebook | Run it |
 |---|---|---|
-| 1 — Why sensitivity analysis | `python/ch01_intro.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch01_intro.ipynb) |
-| 2 — Local sensitivity indices | `python/ch02_local_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch02_local_sa.ipynb) |
-| 3 — Computing derivatives | `python/ch03_computing.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch03_computing.ipynb) |
-| 4 — Forward sensitivity equations | `python/ch04_analytic_forward_sensitivity_analysis.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch04_analytic_forward_sensitivity_analysis.ipynb) |
-| 5 — The adjoint in linear algebra | `python/ch05_the_adjoint_in_linear_algebra.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch05_the_adjoint_in_linear_algebra.ipynb) |
-| 6 — The adjoint for dynamical systems | `python/ch06_adjoint_odes.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch06_adjoint_odes.ipynb) |
-| 7 — Automatic differentiation | `python/ch07_adjoint_practice.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch07_adjoint_practice.ipynb) |
-| 8 — When sensitivity analysis misleads | `python/ch08_caveat_emptor.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch08_caveat_emptor.ipynb) |
-| 9 — Global sensitivity analysis | `python/ch09_global_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/python/ch09_global_sa.ipynb) |
+| 1 — Why sensitivity analysis | `python/ch01_intro.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch01_intro.ipynb) |
+| 2 — Local sensitivity indices | `python/ch02_local_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch02_local_sa.ipynb) |
+| 3 — Computing derivatives | `python/ch03_computing.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch03_computing.ipynb) |
+| 4 — Forward sensitivity equations | `python/ch04_analytic_forward_sensitivity_analysis.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch04_analytic_forward_sensitivity_analysis.ipynb) |
+| 5 — The adjoint in linear algebra | `python/ch05_the_adjoint_in_linear_algebra.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch05_the_adjoint_in_linear_algebra.ipynb) |
+| 6 — The adjoint for dynamical systems | `python/ch06_adjoint_odes.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch06_adjoint_odes.ipynb) |
+| 7 — Automatic differentiation | `python/ch07_adjoint_practice.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch07_adjoint_practice.ipynb) |
+| 8 — When sensitivity analysis misleads | `python/ch08_caveat_emptor.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch08_caveat_emptor.ipynb) |
+| 9 — Global sensitivity analysis | `python/ch09_global_sa.ipynb` | [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/machyman/arriola2026sa/blob/main/software/python/ch09_global_sa.ipynb) |
 
 **The MATLAB reference library**, eighteen functions across four modules, with an automated test
 suite. Each function corresponds directly to a concept or algorithm in the text.
 
 | Module | Contents |
 |---|---|
-| [`src/core`](src/core) | the sensitivity index, the Jacobian, the SIR model and its nominal parameters, tornado plots |
-| [`src/fse`](src/fse) | the augmented forward sensitivity system, its Jacobian, time-dependent indices |
-| [`src/adjoint`](src/adjoint) | the SIR adjoint right-hand side and the adjoint solve |
-| [`src/globalsa`](src/globalsa) | LHS, PRCC, Saltelli sampling, the Jansen estimator, Morris screening |
+| [`software/matlab/core`](software/matlab/core) | the sensitivity index, the Jacobian, the SIR model and its nominal parameters, tornado plots |
+| [`software/matlab/fse`](software/matlab/fse) | the augmented forward sensitivity system, its Jacobian, time-dependent indices |
+| [`software/matlab/adjoint`](software/matlab/adjoint) | the SIR adjoint right-hand side and the adjoint solve |
+| [`software/matlab/globalsa`](software/matlab/globalsa) | LHS, PRCC, Saltelli sampling, the Jansen estimator, Morris screening |
 
-Automated tests are in [`tests/`](tests).
+Automated tests are in [`software/matlab/tests`](software/matlab/tests).
 
 **The compiled book and solutions manual**, both in [`docs/`](docs), with the version in the
 filename so that review comments can cite it unambiguously. The version also appears on the
@@ -80,11 +80,11 @@ is the function cited in the solutions manual for Exercise 6.3:
 
 ```python
 r = run_sir_adjoint(sir_nominal())
-# J = 5674.5356
-#      c:  raw dJ/dp =    +845.5035    SI = +0.744998
-#   beta:  raw dJ/dp =  +70458.6272    SI = +0.744998
-#  tau_R:  raw dJ/dp =   +1320.9593    SI = +1.629510
-#  tau_m:  raw dJ/dp =      +0.0000    SI = +0.000000
+# J = 5679.0170
+#      c:  raw dJ/dp =    +848.1303    SI = +0.746723
+#   beta:  raw dJ/dp =  +70677.5272    SI = +0.746723
+#  tau_R:  raw dJ/dp =   +1322.5504    SI = +1.630186
+#  tau_m:  raw dJ/dp =      -0.0004    SI = -0.000789
 ```
 
 Two structural checks hold: `dJ/dβ ÷ dJ/dc = c/β = 83.333` exactly, and `S_c = S_β` to six
@@ -93,6 +93,16 @@ significant figures.
 ---
 
 ## Citation
+
+GitHub renders a **Cite this repository** button from `CITATION.cff`, in the sidebar on the
+repository home page. It offers APA and BibTeX and stays in step with the version recorded there.
+
+To cite a specific draft, use the version in the filename, which also appears on the title page and
+in the footer of every page:
+
+> Arriola, L. M. and Hyman, J. M. (2026). *Foundations of Sensitivity Analysis: From Local
+> Sensitivity to Global Uncertainty*, v1_18_1. Manuscript in preparation.
+> https://github.com/machyman/arriola2026sa
 
 ```bibtex
 @unpublished{arriola2026foundations,
@@ -105,6 +115,12 @@ significant figures.
   year   = {2026}
 }
 ```
+
+## Development Tools
+
+This research used AI-assisted workflows for manuscript preparation and review.
+See the manuscript's Acknowledgments section for the full disclosure.
+All mathematical content, proofs, code, and computations are the sole work of the author(s).
 
 ## License
 
