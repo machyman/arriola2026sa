@@ -37,7 +37,9 @@ suite. Each function corresponds directly to a concept or algorithm in the text.
 
 Automated tests are in [`tests/`](tests).
 
-**The compiled book and solutions manual**, in [`paper/`](paper) and [`solutions/`](solutions).
+**The compiled book and solutions manual**, both in [`docs/`](docs), with the version in the
+filename so that review comments can cite it unambiguously. The version also appears on the
+title page and in the footer of every page, so a citation survives downloading or printing.
 
 ## What is coming
 
