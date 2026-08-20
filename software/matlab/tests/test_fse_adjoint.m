@@ -64,11 +64,16 @@ assert(max(abs(dy_aug(1:3) - dy_sir)) < 1e-12, ...
        'Augmented ODE: first 3 components differ from sir_model');
 n_pass=n_pass+1; fprintf('  T2.2 PASS: first 3 components match sir_model\n');
 
-%T2.3: initial sensitivity derivatives = 0 (zero initial conditions)
-assert(max(abs(dy_aug(4:15))) < 1e-6, ...
-       'Initial FSE RHS should be near zero at t=0 with zero IC');
-% Not exactly zero because dF/dp_j ≠ 0 at t=0
-% Actually at t=0, the FSE RHS = J*0 + dF/dp ≠ 0 in general
+%T2.3: at t=0 with zero sensitivity ICs the FSE RHS reduces to dF/dp,
+% which is NOT zero.  The previous assertion required it to be < 1e-6 and
+% could never pass: for the nominal parameters the beta-block alone is
+% about 5.0, so the assertion failed by a factor of 5e6.
+% FSE RHS = J*w + dF/dp, and w(0) = 0, so the RHS must equal dF/dp exactly.
+dFdp_beta = [-p.k*p.S0*p.I0/p.N;  p.k*p.S0*p.I0/p.N;  0];
+assert(max(abs(dy_aug(7:9) - dFdp_beta)) < 1e-10, ...
+       'At t=0 the FSE RHS must equal dF/dp exactly, since w(0) = 0');
+assert(max(abs(dy_aug(7:9))) > 1e-3, ...
+       'dF/dbeta is O(1) at t=0; a near-zero RHS indicates a wiring error');
 % Let's check that FSE is at least finite
 assert(all(isfinite(dy_aug(4:15))), 'FSE RHS contains non-finite values');
 n_pass=n_pass+1; fprintf('  T2.3 PASS: FSE RHS is finite at t=0\n');

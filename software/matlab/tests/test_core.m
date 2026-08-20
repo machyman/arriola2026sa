@@ -161,9 +161,12 @@ end
 %% ====================================================================
 %% SUMMARY
 %% ====================================================================
-fprintf('\n=== SUMMARY: %d/17 tests passed ===\n', n_pass);
-if n_pass == 17
+%% The suite contains 16 tests (T1.1-T1.4, T2.1-T2.4, T3.1-T3.3,
+%% T4.1-T4.3, T5.1-T5.2) and increments n_pass once per test.
+n_tests = 16;
+fprintf('\n=== SUMMARY: %d/%d tests passed ===\n', n_pass, n_tests);
+if n_pass == n_tests
     fprintf('ALL TESTS PASSED.\n');
 else
-    fprintf('WARNING: %d test(s) failed.\n', 17 - n_pass);
+    fprintf('WARNING: %d test(s) failed.\n', n_tests - n_pass);
 end
