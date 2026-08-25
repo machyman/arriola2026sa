@@ -122,6 +122,7 @@ SI_adj = (p_nom / J_nom) .* raw_SI;
 if verbose
     fprintf('  J = integral(I, 0, T) = %.4f\n', J_nom);
     param_names = {'k','beta','tau','L'};
+    pnames_si = {'k','beta','tau','L'};   % MATLAB cannot index a cell literal
     for j = 1:4
         fprintf('  SI_%s(J) = %8.4f\n', param_names{j}, SI_adj(j));
     end
@@ -144,7 +145,7 @@ if verify_fse
         si_wtd  = trapz(t_fwd(valid), si_j(valid) .* I_vec(valid)) / J_nom;
         if verbose
             fprintf('  FSE weighted SI_%s = %8.4f  |  Adjoint = %8.4f  |  diff = %.2e\n', ...
-                    {'k','beta','tau','L'}{j}, si_wtd, SI_adj(j), abs(si_wtd - SI_adj(j)));
+                    pnames_si{j}, si_wtd, SI_adj(j), abs(si_wtd - SI_adj(j)));
         end
     end
 end
