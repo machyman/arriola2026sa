@@ -28,22 +28,32 @@ fprintf('  k = %g (contacts/person/day)\n', p.k);
 fprintf('  beta = %g (transmission prob/contact)\n', p.beta);
 fprintf('  tau = %g days (mean infectious period)\n', p.tau);
 fprintf('  L = %g days (mean lifespan)\n', p.L);
-fprintf('  R0 = k*beta*tau = %.4f\n\n', p.R0);
+fprintf('  R0 = k*beta/(gamma+mu) = %.4f\n\n', p.R0);
 
 %% -----------------------------------------------------------------------
-%% 2. Analytic sensitivity indices for R0 = k * beta * tau
-%%    (Chapter 2, Table 2.1 and self-check answer)
-%%    All three POIs have SI = 1 (or -1 for gamma = 1/tau)
+%% 2. Analytic sensitivity indices for R0 = k*beta/(gamma+mu)
+%%    Parameters from Chapter 2, Table 2.1.  Note that Chapter 2's own
+%%    model has NO demography, so there R0 = k*beta*tau and all three
+%%    indices equal 1 exactly; that is the self-check answer.  This
+%%    library integrates the demographic equations of Chapter 6, so the
+%%    tau and L indices split as below.
+%%    k and beta have SI = 1 exactly, since R0 is proportional to each.
+%%    tau and L share the remainder: SI_tau = L/(L+tau), SI_L = tau/(L+tau),
+%%    which sum to 1 because gamma/(gamma+mu) + mu/(gamma+mu) = 1.
+%%    Without demography SI_tau -> 1 and SI_L -> 0, the familiar case.
 %% -----------------------------------------------------------------------
 fprintf('--- Analytic SI for R0 ---\n');
 fprintf('  SI_k(R0)    = k/R0 * dR0/dk    = %g  (exact: 1)\n', ...
         (p.k / p.R0) * p.beta * p.tau);
 fprintf('  SI_beta(R0) = beta/R0 * dR0/db = %g  (exact: 1)\n', ...
         (p.beta / p.R0) * p.k * p.tau);
-fprintf('  SI_tau(R0)  = tau/R0 * dR0/dt  = %g  (exact: 1)\n', ...
-        (p.tau / p.R0) * p.k * p.beta);
-% L does not appear in R0, so SI_L(R0) = 0
-fprintf('  SI_L(R0)    = 0 (L absent from R0)  (exact: 0)\n\n');
+% dR0/dtau = k*beta*gamma^2/(gamma+mu)^2 / 1, with gamma = 1/tau:
+dR0_dtau = p.k * p.beta * (1/p.tau^2) / (p.gamma + p.mu)^2;
+dR0_dL   = p.k * p.beta * (1/p.L^2)   / (p.gamma + p.mu)^2;
+fprintf('  SI_tau(R0)  = tau/R0 * dR0/dt  = %g  (exact: %g)\n', ...
+        (p.tau / p.R0) * dR0_dtau, p.L / (p.L + p.tau));
+fprintf('  SI_L(R0)    = L/R0 * dR0/dL    = %g  (exact: %g)\n\n', ...
+        (p.L / p.R0) * dR0_dL, p.tau / (p.L + p.tau));
 
 %% -----------------------------------------------------------------------
 %% 3. Numerical SI Jacobian via sensitivity_jacobian (Chapter 3)

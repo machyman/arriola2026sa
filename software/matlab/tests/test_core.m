@@ -28,8 +28,8 @@ end
 n_pass = n_pass + 1; fprintf('  T1.1 PASS: all fields present\n');
 
 %T1.2: R0 consistency
-assert(abs(p.R0 - p.k*p.beta*p.tau) < 1e-14, 'R0 inconsistent');
-n_pass = n_pass + 1; fprintf('  T1.2 PASS: R0 = k*beta*tau = %.4f\n', p.R0);
+assert(abs(p.R0 - p.k*p.beta/(p.gamma + p.mu)) < 1e-14, 'R0 inconsistent');
+n_pass = n_pass + 1; fprintf('  T1.2 PASS: R0 = k*beta/(gamma+mu) = %.4f\n', p.R0);
 
 %T1.3: derived quantities
 assert(abs(p.gamma - 1/p.tau) < 1e-14, 'gamma inconsistent');

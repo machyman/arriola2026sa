@@ -19,13 +19,13 @@ function p = sir_nominal()
 %           .I0    - initial infectious count                         [1]
 %           .R0_ic - initial recovered count                          [0]
 %           .T     - simulation horizon (days)                        [90]
-%           .R0    - basic reproduction number k*beta*tau             [2.1]
+%           .R0    - basic reproduction number k*beta/(gamma+mu)      [2.0985]
 %
 %   Notes:
 %       gamma = 1/tau  is the recovery rate (day^-1).
 %       mu    = 1/L    is the background mortality rate (day^-1).
 %       The force of infection is lambda = k*beta*I/N.
-%       R0 = k * beta * tau = 5 * 0.06 * 7 = 2.1 > 1 (endemic regime).
+%       R0 = k*beta/(gamma+mu) = 2.0985 > 1 (endemic regime).
 %
 %   Example:
 %       p = sir_nominal();
@@ -51,5 +51,9 @@ p.T     = 90;          % simulation horizon (days)
 % Derived quantities (computed, not free parameters)
 p.gamma = 1 / p.tau;   % recovery rate (day^-1)
 p.mu    = 1 / p.L;     % background mortality rate (day^-1)
-p.R0    = p.k * p.beta * p.tau;  % basic reproduction number (= 2.1)
+%% R0 for the DEMOGRAPHIC model that sir_model.m integrates.  The
+%% no-demography form k*beta*tau = 2.1 differs by 0.07% at L = 10,000
+%% days, but the library and the book both use the demographic
+%% equations, so the stored value must match them.
+p.R0    = p.k * p.beta / (p.gamma + p.mu);   % = 2.0985
 end
