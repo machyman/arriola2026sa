@@ -126,8 +126,11 @@ if n_boot > 0
     end
     
     probs = [alpha/2, 1 - alpha/2] * 100;
-    CI_S1 = prctile(S1_boot, probs, 1)';   % 2-by-m
-    CI_ST = prctile(ST_boot, probs, 1)';
+    % prctile(...,1) already returns 2-by-m: [lower; upper].  The transpose
+    % that used to be here made it m-by-2, contradicting the documented shape
+    % and both callers, which index CI(1,j) and CI(2,j).
+    CI_S1 = prctile(S1_boot, probs, 1);    % 2-by-m: [lower; upper]
+    CI_ST = prctile(ST_boot, probs, 1);
 else
     CI_S1 = NaN(2, m);
     CI_ST = NaN(2, m);

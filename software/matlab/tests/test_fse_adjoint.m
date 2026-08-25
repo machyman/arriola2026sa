@@ -30,11 +30,16 @@ J_anal = sir_jacobian(S, I, R, p.k, p.beta, p.tau, p.L);
 assert(isequal(size(J_anal), [3 3]), 'Jacobian must be 3x3');
 n_pass=n_pass+1; fprintf('  T1.1 PASS: Jacobian is 3x3\n');
 
-%T1.2: column-sum property: each column of J sums to 0
-%  (dF_S/dx_j + dF_I/dx_j + dF_R/dx_j = d(dS+dI+dR)/dx_j = 0)
+%T1.2: column-sum property.  With demography dN/dt = mu*N - mu*(S+I+R), so
+%  d(dN/dt)/dx_j = -mu for every j: the columns sum to -mu, not to zero.
+%  They vanish only in the no-demography limit mu -> 0.  The total derivative
+%  along the invariant manifold S+I+R = N is still zero, which is what
+%  population conservation actually asserts.
 col_sums = sum(J_anal, 1);
-assert(max(abs(col_sums)) < 1e-10, 'Column sums nonzero: %.2e', max(abs(col_sums)));
-n_pass=n_pass+1; fprintf('  T1.2 PASS: Jacobian column sums = 0 (population conservation)\n');
+assert(max(abs(col_sums + p.mu)) < 1e-10, ...
+       'Column sums should each equal -mu = %.2e, got max deviation %.2e', ...
+       -p.mu, max(abs(col_sums + p.mu)));
+n_pass=n_pass+1; fprintf('  T1.2 PASS: Jacobian column sums = -mu = %.2e (demographic outflow)\n', -p.mu);
 
 %T1.3: verify J(1,2) = dF_S/dI against FD
 h = 1e-5;

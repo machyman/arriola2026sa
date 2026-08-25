@@ -9,7 +9,8 @@
 %   All tests use assert() for automated checking.  A passing run prints
 %   "ALL TESTS PASSED" with no error output.
 
-fprintf('=== test_core: Running %d tests ===\n\n', 17);
+n_tests = 16;   %% single source: header and summary must agree
+fprintf('=== test_core: Running %d tests ===\n\n', n_tests);
 n_pass = 0;
 tol    = 1e-6;   % tolerance for numerical comparisons
 
@@ -76,16 +77,25 @@ fprintf('\nBlock 3: sensitivity_index...\n');
 %T3.1: SI_tau(R0) = 1 (analytic)
 R0_nom = p.R0;
 h      = 1e-5 * p.tau;
-R0_p   = p.k * p.beta * (p.tau + h);
-SI_tau = sensitivity_index(R0_p, R0_nom, p.tau + h, p.tau);
-assert(abs(SI_tau - 1.0) < tol, 'SI_tau(R0) should be 1, got %.8f', SI_tau);
-n_pass = n_pass + 1; fprintf('  T3.1 PASS: SI_tau(R0) = %.8f (exact: 1)\n', SI_tau);
+% R0_p MUST use the same formula as p.R0, or the finite difference measures
+% the formula mismatch instead of the derivative.
+gamma_p = 1 / (p.tau + h);
+R0_p    = p.k * p.beta / (gamma_p + p.mu);
+SI_tau  = sensitivity_index(R0_p, R0_nom, p.tau + h, p.tau);
+SI_tau_exact = p.L / (p.L + p.tau);          % = 0.99930 for L = 10,000
+assert(abs(SI_tau - SI_tau_exact) < 1e-4, ...
+       'SI_tau(R0) should be %.5f, got %.8f', SI_tau_exact, SI_tau);
+n_pass = n_pass + 1; fprintf('  T3.1 PASS: SI_tau(R0) = %.8f (exact: %.5f)\n', SI_tau, SI_tau_exact);
 
-%T3.2: SI_L(R0) = 0 (L absent from R0)
-R0_Lp = p.k * p.beta * p.tau;  % R0 doesn't change with L
-SI_L  = sensitivity_index(R0_Lp, R0_nom, p.L * 1.01, p.L);
-assert(abs(SI_L) < tol, 'SI_L(R0) should be 0, got %.2e', SI_L);
-n_pass = n_pass + 1; fprintf('  T3.2 PASS: SI_L(R0) = %.2e (exact: 0)\n', SI_L);
+%T3.2: SI_L(R0) = tau/(L+tau), small but NOT zero under demography
+% mu = 1/L enters R0 through (gamma + mu), so R0 DOES change with L.
+L_p    = p.L * 1.0001;       % small step: a 1% step in L is too coarse here
+R0_Lp  = p.k * p.beta / (p.gamma + 1/L_p);
+SI_L   = sensitivity_index(R0_Lp, R0_nom, L_p, p.L);
+SI_L_exact = p.tau / (p.L + p.tau);          % = 6.9951e-04
+assert(abs(SI_L - SI_L_exact) < 1e-5, ...
+       'SI_L(R0) should be %.5e, got %.5e', SI_L_exact, SI_L);
+n_pass = n_pass + 1; fprintf('  T3.2 PASS: SI_L(R0) = %.4e (exact: %.4e)\n', SI_L, SI_L_exact);
 
 %T3.3: dimension mismatch error
 try
@@ -163,7 +173,6 @@ end
 %% ====================================================================
 %% The suite contains 16 tests (T1.1-T1.4, T2.1-T2.4, T3.1-T3.3,
 %% T4.1-T4.3, T5.1-T5.2) and increments n_pass once per test.
-n_tests = 16;
 fprintf('\n=== SUMMARY: %d/%d tests passed ===\n', n_pass, n_tests);
 if n_pass == n_tests
     fprintf('ALL TESTS PASSED.\n');
