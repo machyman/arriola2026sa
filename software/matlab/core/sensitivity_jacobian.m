@@ -98,8 +98,10 @@ for j = 1:n_p
     p_plus  = p_nom;  p_plus(j)  = p_nom(j) + h(j);
     p_minus = p_nom;  p_minus(j) = p_nom(j) - h(j);
 
-    q_plus  = model(p_plus)(:);
-    q_minus = model(p_minus)(:);
+    % MATLAB does not permit indexing a function-call result directly, so
+    % model(p_plus)(:) is a syntax error there even though Octave accepts it.
+    q_plus_raw  = model(p_plus);   q_plus  = q_plus_raw(:);
+    q_minus_raw = model(p_minus);  q_minus = q_minus_raw(:);
     n_evals = n_evals + 2;
 
     % Centered difference derivative

@@ -35,17 +35,18 @@ mu    = 1/L;
 lam   = k*beta*I/N;    % force of infection
 
 % dF_S/d[S,I,R]
-dFS_dS = -lam - mu;
-dFS_dI = -k*beta*S/N + k*beta*S*I/N^2;   % = -k*beta*S*(N-I)/N^2 = -k*beta*S*R... simplified:
-dFS_dI = -k*beta*S/N * (1 - I/N);        % cleaner form
-dFS_dR = k*beta*S*I/N^2;
+% The birth term mu*N depends on all three states, since N = S+I+R.  The
+% previous version omitted d(mu*N)/dx, which left every column summing to
+% -mu instead of 0.  dN/dt = mu*N - mu*(S+I+R) is identically zero, so the
+% columns MUST sum to zero; that identity is the cheapest check on this file.
+dFS_dS = -k*beta*I*(I+R)/N^2;
+dFS_dI =  mu - k*beta*S*(S+R)/N^2;
+dFS_dR =  mu + k*beta*S*I/N^2;
 
-% dF_I/d[S,I,R]
-dFI_dS = lam;
-dFI_dI = k*beta*S/N * (1 - I/N) - (gamma + mu);
+dFI_dS =  k*beta*I*(I+R)/N^2;
+dFI_dI =  k*beta*S*(S+R)/N^2 - (gamma + mu);
 dFI_dR = -k*beta*S*I/N^2;
 
-% dF_R/d[S,I,R]
 dFR_dS = 0;
 dFR_dI = gamma;
 dFR_dR = -mu;

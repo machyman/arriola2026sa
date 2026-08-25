@@ -137,7 +137,10 @@ N_prcc = 500;
 X_test = lhs_sample(N_prcc, 2, [0 0], [1 1]);
 
 %T4.1: purely X1-dependent model
-Y_1 = X_test(:,1);
+% Y = X1 exactly makes the residual after regressing out X1 identically
+% zero, so PRCC(X2) is 0/0 = NaN.  A small noise term keeps the intended
+% meaning, X1 dominant and X2 irrelevant, without the degeneracy.
+Y_1 = X_test(:,1) + 0.01*randn(N_prcc,1);
 [rho_1, pval_1] = compute_prcc(X_test, Y_1);
 assert(abs(rho_1(1) - 1) < 0.05, 'PRCC(X1) = %.4f, expected ~1', rho_1(1));
 assert(abs(rho_1(2))     < 0.15, 'PRCC(X2) = %.4f, expected ~0', rho_1(2));
