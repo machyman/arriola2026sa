@@ -39,7 +39,7 @@ function [S1, ST, CI_S1, CI_ST] = sobol_jansen(f, A, B, n_boot, alpha)
 %       f_test = @(x) c(1)*x(1) + c(2)*x(2);
 %       rng(42);
 %       p   = sir_nominal();
-%       [A, B] = saltelli_sample(2000, 2, [0 0], [1 1]);
+%       [A, B] = saltelli_sample(2048, 2, [0 0], [1 1]);
 %       [S1, ST, CI_S1] = sobol_jansen(f_test, A, B, 200, 0.05);
 %       % Expected: S1 ≈ [0.8, 0.2]
 %

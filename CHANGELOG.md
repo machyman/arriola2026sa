@@ -334,3 +334,45 @@ Total: 5 AI models, 20 cross-model confirmed findings, 0 errors remaining.
 **Bibliography:** 55 entries (was 53)
 **Page count:** 158 (stable)
 **Compile status:** 0 errors, 0 undefined references
+
+## v1_21_0 — 2026-09-05
+
+Corrects errors in the companion code that were found by a seven-reviewer cold
+read of v1_20_0 and by the verification work that followed. Anyone who ran the
+MATLAB adjoint or the Sobol routines from an earlier revision should take this
+update: several of the changes alter computed results, not just wording.
+
+**MATLAB, adjoint.** `sir_adjoint_rhs.m` now integrates the book's boxed
+equation directly, `-d(lam)/dt = J^T lam + grad_g`. It previously passed
+`grad_g - J'*lam` and `run_sir_adjoint.m` compensated with four leading minus
+signs in the sensitivity integrals. The pair returned the right indices while
+matching neither the adjoint equation nor the sensitivity formula, so any
+derived or modified use of it was on unsound footing. Both files are corrected
+together.
+
+**MATLAB, forward sensitivity.** `sir_jacobian.m` returns to the constant-N form
+of the book's Jacobian equation. `test_fse_adjoint.m` no longer asserts that the
+Jacobian columns sum to zero: that identity holds for a state-dependent-N
+convention the book does not use, and the assertion is what held the divergence
+in place. It now compares entrywise against the book's equation.
+
+**MATLAB, global SA.** `saltelli_sample.m` defaults to the quasi-Monte Carlo
+path, and `run_global_sa_sir.m` uses N = 2048 and engages it at both call sites.
+The text justifies a power-of-two sample size by the balance property of a
+Sobol' sequence; the shipped default had been pseudo-random, so that
+justification described a sampler the code never used.
+
+**Python.** `ch09_global_sa.ipynb` draws a genuine Sobol' sequence through
+`scipy.stats.qmc.Sobol` rather than independent uniforms, uses N = 2048, and no
+longer ships with editing artifacts in its source. `ch06_adjoint_odes.ipynb`
+carries no stale stored outputs, and its finite-difference cross-check now
+differences the full demographic model across all four parameters rather than a
+closed SIR across three.
+
+**Documents.** Book and solutions manual refreshed to v1_21_0. The book is now
+built in SIAM's book class, the format it will be published in, so its page
+count changes from 204 to 257; the earlier figure was a letter-size
+proxy. The solutions manual is 97 pages.
+
+**Contents:** 9 Python notebooks, 21 MATLAB files.
+**Compile status:** 0 errors, 0 undefined references, 0 undefined citations in both volumes.

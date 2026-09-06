@@ -24,7 +24,7 @@ function J = sir_jacobian(S, I, R, k, beta, tau, L)
 %
 %   Algorithm:
 %       Exact analytic derivatives of eqs. (4.1)-(4.3).
-%       N = S + I + R is conserved (constant total population).
+%       N is the constant total population, held fixed (see eq. sirJacobian).
 %
 %   Reference: Arriola & Hyman, in preparation, eq. (4.16)-(4.17).
 %   See also: SIR_MODEL, SIR_AUGMENTED
@@ -35,17 +35,17 @@ mu    = 1/L;
 lam   = k*beta*I/N;    % force of infection
 
 % dF_S/d[S,I,R]
-% The birth term mu*N depends on all three states, since N = S+I+R.  The
-% previous version omitted d(mu*N)/dx, which left every column summing to
-% -mu instead of 0.  dN/dt = mu*N - mu*(S+I+R) is identically zero, so the
-% columns MUST sum to zero; that identity is the cheapest check on this file.
-dFS_dS = -k*beta*I*(I+R)/N^2;
-dFS_dI =  mu - k*beta*S*(S+R)/N^2;
-dFS_dR =  mu + k*beta*S*I/N^2;
+% Constant-N convention, matching eq. (sirJacobian) in the book: N is held
+% fixed at the nominal total population, so the birth term mu*N contributes
+% no state derivative.  Column sums are therefore -mu, not zero.  The book's
+% equation is canonical; do not reintroduce d(mu*N)/dx here.
+dFS_dS = -k*beta*I/N - mu;
+dFS_dI = -k*beta*S/N;
+dFS_dR =  0;
 
-dFI_dS =  k*beta*I*(I+R)/N^2;
-dFI_dI =  k*beta*S*(S+R)/N^2 - (gamma + mu);
-dFI_dR = -k*beta*S*I/N^2;
+dFI_dS =  k*beta*I/N;
+dFI_dI =  k*beta*S/N - (gamma + mu);
+dFI_dR =  0;
 
 dFR_dS = 0;
 dFR_dI = gamma;

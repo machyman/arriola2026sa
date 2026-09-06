@@ -37,7 +37,10 @@ function [A, B] = saltelli_sample(N, m, lb, ub, use_qmc)
 %   Reference: Saltelli, A. et al. (2002). Computer Physics Comm. 145:280.
 %   See also: SOBOL_JANSEN, LHS_SAMPLE, MORRIS_SCREENING
 
-if nargin < 5, use_qmc = false; end
+% Default to the quasi-Monte Carlo path.  Section 9.12 instructs the reader
+% to draw a Sobol' sequence and justifies a power-of-two N by its balance
+% property, so the shipped default must be the sampler the book describes.
+if nargin < 5, use_qmc = true; end
 
 %% --- Input validation --------------------------------------------------
 validateattributes(N, {'numeric'}, {'scalar','integer','>=',10}, ...

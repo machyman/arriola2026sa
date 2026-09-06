@@ -30,18 +30,32 @@ J_anal = sir_jacobian(S, I, R, p.k, p.beta, p.tau, p.L);
 assert(isequal(size(J_anal), [3 3]), 'Jacobian must be 3x3');
 n_pass=n_pass+1; fprintf('  T1.1 PASS: Jacobian is 3x3\n');
 
-%T1.2: column-sum property: each column of J sums to 0.
-%  dN/dt = mu*N - mu*(S+I+R) is identically zero when N = S+I+R, so
-%  d(dN/dt)/dx_j = 0 for every j.  A nonzero column sum means the Jacobian
-%  has dropped a term.
-col_sums = sum(J_anal, 1);
-assert(max(abs(col_sums)) < 1e-10, 'Column sums nonzero: %.2e', max(abs(col_sums)));
-n_pass=n_pass+1; fprintf('  T1.2 PASS: Jacobian column sums = 0 (population conservation)\n');
+%T1.2: entrywise agreement with eq. (sirJacobian), the canonical book form.
+%  The book holds N fixed at the nominal total population, so the birth term
+%  contributes no state derivative and the columns sum to -mu, not zero.  Do
+%  not assert zero column sums here: that identity holds for a
+%  state-dependent-N Jacobian, which is a different convention from the
+%  book's.  Compare entrywise against the book's equation instead.
+N_nom = S + I + R;
+gam   = 1/p.tau;  mu_ = 1/p.L;
+J_book = [ -p.k*p.beta*I/N_nom - mu_,  -p.k*p.beta*S/N_nom,               0    ;
+            p.k*p.beta*I/N_nom,         p.k*p.beta*S/N_nom - (gam + mu_), 0    ;
+            0,                          gam,                             -mu_ ];
+assert(max(max(abs(J_anal - J_book))) < 1e-12, ...
+       'Jacobian differs from eq. (sirJacobian): max diff = %.2e', ...
+       max(max(abs(J_anal - J_book))));
+n_pass=n_pass+1; fprintf('  T1.2 PASS: Jacobian matches eq. (sirJacobian) entrywise\n');
 
-%T1.3: verify J(1,2) = dF_S/dI against FD
+%T1.3: verify J(1,2) = dF_S/dI against FD of the constant-N field.
+%  sir_model recomputes N = S+I+R internally, so differencing it would
+%  reproduce the state-dependent linearization the book does not use.  The
+%  book's Jacobian is that of the field with N frozen at nominal, so freeze it.
 h = 1e-5;
-rhs_p = sir_model(0, [S; I+h; R], p.k,p.beta,p.tau,p.L);
-rhs_m = sir_model(0, [S; I-h; R], p.k,p.beta,p.tau,p.L);
+F_fixedN = @(y) [ mu_*N_nom - p.k*p.beta*y(1)*y(2)/N_nom - mu_*y(1);
+                  p.k*p.beta*y(1)*y(2)/N_nom - (gam + mu_)*y(2);
+                  gam*y(2) - mu_*y(3) ];
+rhs_p = F_fixedN([S; I+h; R]);
+rhs_m = F_fixedN([S; I-h; R]);
 J_fd_col2 = (rhs_p - rhs_m)/(2*h);
 assert(max(abs(J_anal(:,2) - J_fd_col2)) < tol_fd, ...
        'Jacobian col 2 mismatch vs FD: max diff = %.2e', ...

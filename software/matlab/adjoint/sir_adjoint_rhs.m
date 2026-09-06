@@ -20,8 +20,10 @@ function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, k, beta, tau, L)
 %
 %   Outputs:
 %       dlam - time derivative of adjoint (3x1)
-%              Note: ODE45 is called with flipped time (tspan=[T,0]),
-%              so the sign convention is: dlam = J_F^T * lam - grad_g.
+%              Book convention, eq. (adjODE): -d(lam)/dt = J_F^T*lam + grad_g,
+%              so d(lam)/dt = -(J_F^T*lam + grad_g).  ode45 is called with
+%              tspan = [T,0] and integrates this same equation backward in
+%              time; running backward does not change the equation's sign.
 %
 %   Integration setup:
 %       Terminal conditions: lam(T) = -h'(u(T)) = [0;0;0] for J = int I dt
@@ -47,14 +49,16 @@ J = sir_jacobian(S, I, R, k, beta, tau, L);
 %% --- Running cost gradient: g = I, so grad_u g = [0; 1; 0] ------------
 grad_g = [0; 1; 0];
 
-%% --- Adjoint ODE (backward form): d(lam)/dt = J_F^T * lam - grad_g ---
-%   Written as d/dt so that ode45 with tspan=[T,0] integrates correctly.
-%   The sign on the adjoint equation in the text is:
-%       -d(lam)/dt = J_F^T * lam - grad_g
-%   which in standard form (dy/dt = ...) becomes:
-%       d(lam)/dt = -(J_F^T * lam - grad_g) = grad_g - J_F^T * lam
-%   BUT ode45 is called with tspan = [T, 0] (backward), so we pass
-%   the RHS WITHOUT the sign flip; ode45 handles the negative time step.
-%   This matches: -dlam/dt = J^T lam - grad_g  =>  dlam/dt = grad_g - J^T lam
-dlam = grad_g - J' * lam;
+%% --- Adjoint ODE, eq. (adjODE) -----------------------------------------
+%   The book's boxed adjoint equation is
+%       -d(lam)/dt = J_F^T * lam + grad_g,
+%   hence in standard form
+%       d(lam)/dt = -(J_F^T * lam + grad_g).
+%   ode45 is called with tspan = [T, 0], which traverses t downward while
+%   solving this same equation; the direction of travel is not a sign change.
+%   Do not flip this sign to compensate for the direction of integration,
+%   and do not compensate for it downstream in run_sir_adjoint.m: a pair of
+%   offsetting sign changes can reproduce the right indices while matching
+%   neither eq. (adjODE) nor eq. (sensfml_vec).
+dlam = -(J' * lam + grad_g);
 end

@@ -112,7 +112,12 @@ for j = 1:n_p
         if abs(q_nom(k)) > eps
             S(k,j) = (p_nom(j) / q_nom(k)) * dqdpj(k);
         else
-            S(k,j) = NaN;   % QOI is zero at nominal; SI undefined
+            % Deliberate (decision D5, Option B): when the QOI vanishes at the
+            % nominal point the relative sensitivity index is undefined, and
+            % NaN says so.  No regularized surrogate is substituted here.  The
+            % book text was corrected to match this behavior rather than the
+            % reverse; do not silently introduce a reference scale.
+            S(k,j) = NaN;
         end
     end
 

@@ -15,7 +15,7 @@
 %   POIs: k (contact rate), beta (transmission), tau (infectious period),
 %         L (lifespan) with ±50% variation around nominal values.
 %
-%   Runtime: ~5-10 minutes (Sobol with N=2000 is the bottleneck).
+%   Runtime: ~5-10 minutes (Sobol with N=2048 is the bottleneck).
 %   For a quick demo, set QUICK_RUN = true (N=200, no bootstrap).
 %
 %   Run from the repository root:
@@ -92,14 +92,14 @@ if QUICK_RUN
     n_boot  = 0;
     fprintf('--- Part 3: Sobol Indices (QUICK_RUN, N=%d, no bootstrap) ---\n',N_sobol);
 else
-    N_sobol = 2000;
+    N_sobol = 2048;   % power of two: Sobol' balance holds in blocks of 2^k
     n_boot  = 200;
     fprintf('--- Part 3: Sobol Indices (N=%d, %d bootstrap replicates) ---\n',...
             N_sobol, n_boot);
 end
 
 fprintf('Generating Saltelli sample (cost: %d evaluations)...\n', N_sobol*(4+2));
-[A, B] = saltelli_sample(N_sobol, 4, lb, ub);
+[A, B] = saltelli_sample(N_sobol, 4, lb, ub, true);   % true: use the Sobol' sequence
 
 fprintf('Running Sobol_Jansen estimator...\n');
 [S1, ST, CI_S1, CI_ST] = sobol_jansen(model, A, B, n_boot, 0.05);
@@ -117,15 +117,16 @@ fprintf('  Sum(S1) = %.4f  Sum(ST) = %.4f\n\n', sum(S1), sum(ST));
 %% PART 4: Convergence plot (S_i vs N)
 %% -----------------------------------------------------------------------
 fprintf('--- Part 4: Sobol Convergence Plot ---\n');
-N_vals = round(logspace(2, log10(N_sobol), 12));
-N_vals = unique(N_vals);
+% Powers of two, so every point in the sweep keeps the Sobol' balance
+% property (Part 5 of the Chapter 9 laboratory).
+N_vals = 2.^(7:log2(N_sobol));
 
 S1_conv = zeros(length(N_vals), 4);
 ST_conv = zeros(length(N_vals), 4);
 
 for k_n = 1:length(N_vals)
     Nk = N_vals(k_n);
-    [Ak, Bk] = saltelli_sample(Nk, 4, lb, ub);
+    [Ak, Bk] = saltelli_sample(Nk, 4, lb, ub, true);
     [s1k, sTk] = sobol_jansen(model, Ak, Bk);
     S1_conv(k_n,:) = s1k;
     ST_conv(k_n,:) = sTk;
