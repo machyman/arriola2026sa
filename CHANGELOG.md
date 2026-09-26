@@ -1,7 +1,7 @@
 # Changelog
 
-Changes to the companion materials in this repository: the Python notebooks and the
-MATLAB library. Until v1_21_5 it also held the compiled book and solutions manual in `docs/`.
+Changes to the companion materials in this repository: the Python notebooks, the
+MATLAB library, and a draft of the book in `docs/`.
 
 Versions match the manuscript, so a change here can be traced to the draft it
 accompanies. The full development history of the book itself is not recorded
@@ -12,7 +12,8 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ## v1_21_5 (2026-09-25)
 
-Brings five notebooks up to the current draft, removes the compiled PDFs, and corrects the README.
+Brings five notebooks up to the current draft, replaces the book PDF with the current draft, removes
+the solutions manual PDF, and corrects the README.
 **If you ran `ch04_analytic_forward_sensitivity_analysis.ipynb` from an earlier revision, run it
 again.** One of its changes alters a computed result.
 
@@ -32,16 +33,16 @@ again.** One of its changes alters a computed result.
 
 The other four notebooks and the MATLAB library are unchanged.
 
-### Removed
-- `docs/`: the compiled book and solutions manual (v1_21_0). Both carried errors since corrected.
-  The repository now holds the software only.
+### `docs/`
+- The v1_21_0 book is replaced by the v1_21_5 draft, `sensitivity_analysis_book_v1_21_5.pdf`.
+- The v1_21_0 solutions manual is removed. Both v1_21_0 PDFs carried errors since corrected.
 
 ### README and citation
 - The README describes what the notebooks check in the book's terms. It no longer implies that a
   notebook which runs cleanly has confirmed every number in its chapter.
 - Chapter titles match the book; notebook names link to the files.
-- Removed: the note on planned ports, the description of `docs/`, and a dependency on `SALib`
-  that no notebook has.
+- Removed: the note on planned ports and a dependency on `SALib` that no notebook has.
+- The `docs/` description names the book draft, the only PDF now posted.
 - The development-tools note is replaced by a summary of the book's declaration on the use of
   AI tools.
 - `CITATION.cff` records version v1_21_5.

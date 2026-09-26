@@ -40,6 +40,11 @@ suite. Each function corresponds directly to a concept or algorithm in the text.
 Automated tests are in [`software/matlab/tests`](https://github.com/machyman/arriola2026sa/tree/main/software/matlab/tests). Changes are recorded in
 [`CHANGELOG.md`](CHANGELOG.md).
 
+**A draft of the book**,
+[`docs/sensitivity_analysis_book_v1_21_5.pdf`](docs/sensitivity_analysis_book_v1_21_5.pdf). It is a
+preliminary version, not yet edited by SIAM. The version is in the filename, on the title page and
+in the footer of every page, so review comments can cite it unambiguously.
+
 ---
 
 ## Running the notebooks
@@ -90,8 +95,8 @@ significant figures.
 GitHub renders a **Cite this repository** button from `CITATION.cff`, in the sidebar on the
 repository home page. It offers APA and BibTeX and stays in step with the version recorded there.
 
-To cite a specific draft, give its version. It appears on the title page and in the footer of every
-page of the manuscript:
+To cite a specific draft, give its version. It appears in the filename, on the title page and in the
+footer of every page:
 
 > Arriola, L. M. and Hyman, J. M. (2026). *Foundations of Sensitivity Analysis: From Local
 > Sensitivity to Global Uncertainty*, v1_21_5. Manuscript in preparation.
