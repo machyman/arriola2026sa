@@ -10,6 +10,25 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_22_2 (2026-10-08)
+
+Replaces the book draft in `docs/` with v1_22_2, stamped "Draft" on every page, and updates the nine
+Python notebooks in `software/python/`. The MATLAB library is unchanged in this release.
+
+### Book draft
+- The Preface's statement on the use of generative AI tools, and the paragraph on the companion code in
+  Chapter 1, now describe more precisely how the numbers the book prints are verified.
+
+### Notebooks
+- Each notebook gains checks of the numbers its chapter prints, at the printed precision. Across the nine
+  notebooks, `assert` statements rise from 108 to 281.
+- 190 checks end with a comment of the form `# book: FILE "TEXT"`. FILE is the LaTeX source of a chapter
+  or appendix, and TEXT is source text from the line whose printed value the check reproduces, so each
+  check can be traced to the sentence it supports.
+- Chapter 9 gains a cell that reproduces the worked example of §9.5.1: the SIR model with three
+  parameters c, beta and tau_R, a Saltelli design with N = 256, the Jansen estimators and 100 bootstrap
+  resamples. Since v1_22_0 the book prints this cell's output.
+
 ## v1_22_1 (2026-10-08)
 
 Replaces the book draft in `docs/` with v1_22_1, stamped "Draft" on every page. The notebooks and the
