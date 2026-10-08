@@ -5,7 +5,7 @@ Uncertainty*** by Leon M. Arriola and James M. Hyman. In preparation for submiss
 *Computational Science and Engineering* series. The book has not been submitted, is not under
 review, and has not been accepted for publication.
 
-These materials match manuscript version v1_21_5.
+These materials match manuscript version v1_22_1.
 
 ---
 
@@ -41,7 +41,7 @@ Automated tests are in [`software/matlab/tests`](https://github.com/machyman/arr
 [`CHANGELOG.md`](CHANGELOG.md).
 
 **A draft of the book**,
-[`docs/sensitivity_analysis_book_v1_21_5.pdf`](docs/sensitivity_analysis_book_v1_21_5.pdf). It is a
+[`docs/sensitivity_analysis_book_v1_22_1.pdf`](docs/sensitivity_analysis_book_v1_22_1.pdf). It is a
 preliminary version, not yet edited by SIAM. The version is in the filename, on the title page and
 in the footer of every page, so review comments can cite it unambiguously.
 
@@ -99,7 +99,7 @@ To cite a specific draft, give its version. It appears in the filename, on the t
 footer of every page:
 
 > Arriola, L. M. and Hyman, J. M. (2026). *Foundations of Sensitivity Analysis: From Local
-> Sensitivity to Global Uncertainty*, v1_21_5. Manuscript in preparation.
+> Sensitivity to Global Uncertainty*, v1_22_1. Manuscript in preparation.
 > https://github.com/machyman/arriola2026sa
 
 ```bibtex
