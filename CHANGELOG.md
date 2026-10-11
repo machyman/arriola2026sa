@@ -10,6 +10,30 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_23_0 (2026-10-11)
+
+Replaces the book draft in `docs/` with v1_23_0, stamped "Draft" on every page, and updates six of the
+nine Python notebooks in `software/python/`. The MATLAB library is unchanged in this release. This
+release also carries the changes of v1_22_3 and v1_22_4, which were not posted on their own.
+
+### Book draft
+- Chapter 7 has a new figure, Figure 7.1: the computation graph of the annuity function in Section 7.1,
+  drawn once for forward mode, one pass per input, and once for reverse mode, one backward pass for all
+  three inputs. Its generator checks every derivative it draws before it writes the figure.
+- Exercises 9.3 and 9.5 now state their parameter ranges as plus or minus 50 percent about the nominal
+  values (v1_22_4).
+- The Preface's statement on the use of generative AI tools now ties the reader's own check to the
+  companion notebooks, which readers can run for themselves (v1_22_3).
+
+### Notebooks
+- Nine cells in the Chapter 1, 2, 3, 4 and 9 notebooks have new descriptive IDs, such as
+  `ch01-printed-numbers` and `ch09-bootstrap-example`. Colab and GitHub do not display cell IDs.
+- Two failure messages are reworded, in Chapter 4 (Test 6) and Chapter 5. They print only if a check
+  fails.
+- No computation changes; every check and every printed result is as in v1_22_2.
+
+---
+
 ## v1_22_2 (2026-10-08)
 
 Replaces the book draft in `docs/` with v1_22_2, stamped "Draft" on every page, and updates the nine
