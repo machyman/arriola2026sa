@@ -1,7 +1,7 @@
 # Changelog
 
 Changes to the companion materials in this repository: the Python notebooks, the
-MATLAB library, and a draft of the book in `docs/`.
+MATLAB library, and drafts of the book and its solutions manual in `docs/`.
 
 Versions match the manuscript, so a change here can be traced to the draft it
 accompanies. The full development history of the book itself is not recorded
@@ -9,6 +9,20 @@ here; earlier revisions of this file tracked manuscript sessions rather than
 changes to these materials, and are preserved in the repository's Git history.
 
 ---
+
+## v1_24_0 (2026-10-11)
+
+Adds the solutions manual to `docs/`, as a draft stamped on every page, and replaces the book draft with v1_24_0.
+The notebooks and the MATLAB library are unchanged in this release.
+
+### Solutions manual
+- `docs/solutions_manual_v1_24_0.pdf` gives a worked solution to every exercise in the book. It is written for
+  self-study as much as for use as an instructor's key, and it carries the same version as the book draft.
+
+### Book draft
+- The Preface names the solutions manual among the materials hosted here.
+- To the Instructor notes that the worked solutions are public, so an exercise used for grading is best varied
+  from its printed form.
 
 ## v1_23_0 (2026-10-11)
 
