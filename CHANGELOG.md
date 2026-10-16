@@ -10,6 +10,76 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_25_0 (2026-10-16)
+
+Corrects errors found in a close reading of v1_24_0, in all nine chapters and in Appendices B to E, and
+replaces both drafts in `docs/` with v1_25_0, stamped "Draft" on every page. Seven of the nine Python
+notebooks in `software/python/` change with the text. The MATLAB library is unchanged in this release.
+
+### Book draft
+- **Counting solves.** Section 1.2 now states one convention, and Chapters 1 to 7 and the solutions follow
+  it: the baseline solve always counts. Forward sensitivity analysis costs m + 1 solves for m parameters;
+  the adjoint costs two solves for one quantity of interest and r + 1 for r. Table 5.1, Table 7.2 and the
+  cost comparisons use one rule, the adjoint when m > r and forward sensitivities when m ≤ r. Headings
+  that counted solves changed with it, for example "Two Solves Instead of Fifty-One" in Chapter 6.
+- **Chapter 1.** The description of Figure 1.2 matches the figure. The self-check on the recovery period
+  now gives an index of +1.0, since R0 is linear in τ_R. Example 1.1 is introduced as the example it is.
+  The claim that every sensitivity method reduces to the normalized derivative is narrowed. The Preface
+  no longer says that Chapter 1 has a laboratory.
+- **Chapter 2.** Remark 2.3 no longer says I(t) reaches zero in finite time. The footnote on R0 with
+  demography, the rate form of recovery, and the reading of negative indices for rates and durations are
+  corrected.
+- **Chapter 3.** The step-size workflow is retitled "Checking the Step with an Error Indicator": the
+  forward and backward checks are one indicator, not two, and the rounding and truncation errors at the
+  optimal step are stated correctly. The second-derivative example, the claim about correlated
+  parameters, and the curvature note (q = √p: a 10% rise in p raises q by 4.88%, not 5%) are corrected.
+- **Chapter 4.** "One linear solve per parameter" is limited to equilibrium outputs. The role of the
+  Jacobian in explicit and implicit solvers, the normalization that equation (4.1) needs, and the
+  accuracy of default solver tolerances are stated correctly. The two values of R0 compared for the
+  time-dependent indices no longer behave "alike": the recovery-period index turns negative near day 62
+  at the nominal value and stays positive at R0 = 5.
+- **Chapter 5.** Section 5.5's model is a competition model, so the section is now "The Competitive
+  Population" (it was "The Symbiotic Population"). Its forward problem is the nonlinear equilibrium
+  condition; only the forward sensitivity equations are linear.
+- **Chapter 6.** The integral of I(t) is infectious person-time. The functional g takes one argument list
+  throughout. The second quantity of interest is S(T), a case the chapter's method covers. The vector
+  adjoint carries its arrow in Figure 6.1 and the text.
+- **Chapter 7.** The annuity example's operation counts follow one stated convention (Section 7.1.5): 6
+  for the function, 33 for forward mode with three inputs, 21 for reverse mode. Reverse mode is counted
+  as two passes. Table 7.2's caption, its decision rule and the gray-box infection rate are corrected.
+- **Chapter 8.** A new Section 8.4.1, "What Is Differentiated Decides the Failure," gives one account of
+  why local sensitivity analysis fails near thresholds and bifurcations: six cases, sorted by what is
+  differentiated, each with what to compute instead. The Unifying Ideas, the conditioning rules, the
+  meaning of small and near-zero indices, and the recommended procedure now agree with it.
+- **Chapter 9.** PRCC is described as a partial correlation. The Jansen estimator is explained by the law
+  of total variance. The sampler is named once: one scrambled Sobol' sequence, N a power of two. The worked
+  example's 95% intervals now come from 32 independent scrambles; the row bootstrap is kept for IID
+  samples. The variance estimate is the pooled variance of all 2N model runs, as computed. Figure 9.1's
+  caption, Table 9.3's claims, the finite-difference cost 2m + 1, and Exercises 9.1 and 9.9 are corrected.
+- **Appendices.** B.3, C.1.2 and D.4 agree with Section 8.4.1. In D.4 a period-doubling needs a multiplier
+  through -1. Appendix E's linear program has new data, so the indices sum to 1 by strong duality
+  (z* = 1715), and its exercise statement and answer agree.
+- **Notation and glossary.** The note on λ and the scope of N_v and N_h are corrected; the glossary's
+  bifurcation entry agrees with Section 8.4.1.
+
+### Solutions manual
+- Every solution affected by the corrections above follows the corrected text, including the solve
+  counts, the operation counts of Exercises 7.1 and 7.5, the answers to Exercises 8.2 to 8.6, and the
+  Chapter 9 sampler and intervals. The chapter summaries agree.
+
+### Notebooks
+- Chapters 1 and 5: the cost figures and solve counts follow the book's convention. Chapter 1 also checks
+  the corrected self-check and Example 1.1.
+- Chapter 3: checks the curvature note's 4.88%.
+- Chapter 4: one check also cites a sentence the text added; a guard's tolerance is named. No computation
+  changes.
+- Chapter 7: computes the operation counts under the stated convention, plots passes rather than
+  operations, and checks Appendix E's exercise with z* = 1715.
+- Chapter 8: new checks of the recovery-rate index with demography and of Appendix C's eigenvalue
+  example.
+- Chapter 9: computes the worked example's intervals from 32 independent scrambles and keeps the
+  bootstrap as the comparison.
+
 ## v1_24_0 (2026-10-11)
 
 Adds the solutions manual to `docs/`, as a draft stamped on every page, and replaces the book draft with v1_24_0.
