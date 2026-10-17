@@ -10,6 +10,63 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_26_0 (2026-10-17)
+
+Revises v1_25_0 throughout. A new Appendix F covers the probability the book uses. The notation is uniform,
+every self-check answer and every exercise solution was recomputed, and the answers now sit at the end of each
+chapter. Cross-references and citations were checked against their sources. Both drafts in `docs/` are
+replaced with v1_26_0, stamped "Draft" on every page. All nine Python notebooks in `software/python/` change
+with the text. The MATLAB library is unchanged in this release.
+
+### Book draft
+- **Appendix F, "Probability Toolkit."** A new appendix of about six pages: expectation, variance (the
+  variance of U(0, 1), 1/12, worked), conditional expectation and the law of total variance on Chapter 9's
+  model, covariance and correlation, and three self-checks. The Preface's prerequisites, To the Instructor
+  and Chapters 1, 3, 8 and 9 point to it where the terms first appear. The book now has six appendices.
+- **Forward and adjoint.** Section 1.2, Figure 1.2, Exercise 1.2 and the Chapter 1 summary say that forward
+  and adjoint sensitivity analysis compute the same derivatives from opposite ends. The choice between them
+  is one of cost: m + 1 solves against r + 1.
+- **Accuracy.** Tables 3.1 and 7.2 and Chapters 4 and 7 tie accuracy to the solver tolerance. RelTol and
+  AbsTol are defined at first use.
+- **Notation.** The Notation section is the standard throughout. In Chapters 4, 5 and 7 a parameter is p and
+  the quantity of interest q. The Jacobian is J_F, the vector adjoint carries its arrow, and the coupling
+  coefficient is ω_ij. Chapter 6's control is p(t), as in Appendix E.
+- **Self-checks.** Every self-check answer was recomputed from the question as printed, and the wrong ones
+  are corrected. Self-checks are numbered within each chapter. Their answers are collected at the end of
+  each chapter and appendix, linked both ways, and the Preface says where they are.
+- **Pointers and counts.** Cross-references, section pointers and statements of scope were checked. Wrong
+  pointers are fixed and broad claims narrowed. Solve and run counts follow Section 1.2's convention
+  everywhere, Table 3.1's cost among them. Chapter 9's "factor of 5 to 10" is replaced by the computed case:
+  65,536 evaluations against 14,336.
+- **Exposition.** Terms are defined at first use, steps are written out, and captions say what each figure
+  shows. Glossary entries are corrected. Section 7.1.5 has a new numbered table of the annuity's operation
+  counts, Table 7.1, so Chapter 7's later tables renumber. Exercise 5.5(d) uses a latent period of 5.5 days, as in
+  Exercise 2.5.
+- **Citations.** Each citation was checked against the cited work. Statements the source does not support
+  are narrowed, corrected or removed. Two references are added: Campolongo, Saltelli and Cariboni (2011) and
+  Song, Nelson and Staum (2016). Several bibliography entries are corrected: DOIs, pages, editors and
+  publication types.
+
+### Solutions manual
+- Every solution was recomputed against its exercise as printed. Wrong solutions are corrected, and
+  solutions that answered a different question are rewritten. The manual follows the book's notation, its
+  solve-count convention and its citations.
+
+### Notebooks
+- Chapter 1: checks the solve counts in the transport-model self-check.
+- Chapter 2: new checks of printed numbers, among them relative changes of counts and probabilities.
+- Chapter 3: checks the self-checks of Sections 3.2 to 3.6 and reads SciPy's default tolerances from the
+  library.
+- Chapter 4: checks two statements about the figure at R0 = 5.
+- Chapter 5: the parameters are p1 and p2, as in the text. New checks of the solve counts on both routes,
+  the preview self-check and Appendix A's ANOVA example.
+- Chapter 6: checks the self-check on λ_I for J = S(T), and that Figure 6.2 moves by less than 2 percent of
+  its peak without the demographic turnover term.
+- Chapter 7: a new verification cell checks the self-check answers of Sections 7.1 to 7.4.
+- Chapter 8: checks the conditioning of A(ε) and Appendix D's linear-oscillator self-check.
+- Chapter 9: a new verification cell recomputes Appendix F's numbers three ways: exact arithmetic,
+  quadrature and a seeded Monte Carlo sample. It also checks the screening cost comparison.
+
 ## v1_25_0 (2026-10-16)
 
 Corrects errors found in a close reading of v1_24_0, in all nine chapters and in Appendices B to E, and
