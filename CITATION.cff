@@ -23,8 +23,8 @@ keywords:
   - uncertainty quantification
   - mathematical modeling
   - graduate textbook
-version: "v1_26_0"
-date-released: "2026-10-17"
+version: "v1_26_1"
+date-released: "2026-11-01"
 repository-code: "https://github.com/machyman/arriola2026sa"
 abstract: >
   A graduate textbook developing sensitivity analysis as a mathematical

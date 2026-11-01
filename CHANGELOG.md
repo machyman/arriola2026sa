@@ -10,6 +10,30 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_26_1 (2026-11-01)
+
+Corrects citations in v1_26_0. Statements that cite a source were checked against the source itself, and the
+references to Smith (2024) against its second edition. Where a source does not support a statement, the
+statement is narrowed or the citation is removed. Both drafts in `docs/` are replaced with v1_26_1, stamped
+"Draft" on every page. The notebooks and the MATLAB library are unchanged in this release.
+
+### Book draft
+- **Smith (2024).** References to Smith's *Uncertainty Quantification* now cite the second edition only, by
+  its chapters and sections. The first edition is no longer cited. The Preface, Chapters 1, 5, 6, 8 and 9
+  and Appendix A describe what the second edition covers. Chapters 1, 5 and 9 say that Smith's sensitivity
+  matrix is the unscaled form of the book's sensitivity Jacobian.
+- **Other citations.** Statements citing Cacuci (1981), Arriola and Hyman (2007), Anderson and May (1991),
+  Box and Draper (1987), Saltelli and coauthors, Sobol' (2001), Owen (1997) and Iman and Conover (1982) were
+  checked against those works, in Chapters 1 to 6, 8 and 9. Each is cut back to what its source says.
+  Chapter 1's discussion of the sign of the sensitivity index now cites Arriola and Hyman (2009).
+- **Bibliography.** 65 references, one fewer than v1_26_0: the first edition of Smith is removed, and the
+  second edition's entry gives its series volume, 30. Reference numbers after the removed entry shift down by one.
+- The book is 283 pages, two more than v1_26_0: Chapter 9 now ends on a right-hand page, so the
+  appendices start two pages later.
+
+### Solutions manual
+- The text is unchanged. It is rebuilt as v1_26_1, so its cross-references point to the v1_26_1 book.
+
 ## v1_26_0 (2026-10-17)
 
 Revises v1_25_0 throughout. A new Appendix F covers the probability the book uses. The notation is uniform,
