@@ -9,7 +9,7 @@ function h = plot_time_si(t, SI_t, Y_state, p, options)
 %
 %   Inputs:
 %       t       - time vector (n_t x 1, days)
-%       SI_t    - n_t x 4 sensitivity index matrix [SI_k, SI_beta, SI_tau, SI_L]
+%       SI_t    - n_t x 4 sensitivity index matrix [SI_c, SI_beta, SI_tau_R, SI_tau_m]
 %       Y_state - n_t x 3 state matrix [S, I, R]
 %       p       - parameter struct from SIR_NOMINAL
 %       options - (optional) struct:
@@ -34,12 +34,12 @@ fig_num  = getfield_default(options, 'fig_num', []);
 if isempty(fig_num), h = figure(); else, h = figure(fig_num); clf; end
 set(h, 'Units','inches','Position',[1 1 9 4]);
 
-colors = [0.8 0.1 0.1;   % k  - red
+colors = [0.8 0.1 0.1;   % c  - red
           0.1 0.5 0.8;   % beta - blue
-          0.1 0.7 0.2;   % tau - green
-          0.6 0.3 0.8];  % L   - purple
+          0.1 0.7 0.2;   % tau_R - green
+          0.6 0.3 0.8];  % tau_m - purple
 styles = {'-','--','-.',':'};
-labels = {'$S_k^I(t)$','$S_\beta^I(t)$','$S_\tau^I(t)$','$S_L^I(t)$'};
+labels = {'$\Upsilon_c^I(t)$','$\Upsilon_\beta^I(t)$','$\Upsilon_{\tau_R}^I(t)$','$\Upsilon_{\tau_m}^I(t)$'};
 
 I = Y_state(:,2);
 
@@ -83,8 +83,8 @@ grid(ax2,'on'); box(ax2,'on');
 xlim(ax2, [0 p.T]);
 
 %% --- Overall title ------------------------------------------------------
-param_str = sprintf('$k=%g$, $\\beta=%g$, $\\tau=%g$, $L=%g$, $R_0=%.1f$', ...
-                    p.k, p.beta, p.tau, p.L, p.R0);
+param_str = sprintf('$c=%g$, $\\beta=%g$, $\\tau_R=%g$, $\\tau_m=%g$, $R_0=%.1f$', ...
+                    p.c, p.beta, p.tau_R, p.tau_m, p.R0);
 sgtitle(h, param_str, 'Interpreter','latex', 'FontSize',11);
 
 %% --- Save if requested -------------------------------------------------

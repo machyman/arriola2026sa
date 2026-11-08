@@ -1,4 +1,4 @@
-function [rho, pval] = compute_prcc(X, Y, param_names)
+function [prcc, pval] = compute_prcc(X, Y, param_names)
 %COMPUTE_PRCC  Partial Rank Correlation Coefficients (PRCC).
 %   Computes PRCC between each column of X and the output vector Y,
 %   controlling for all other columns.  PRCC is the standard global
@@ -9,18 +9,18 @@ function [rho, pval] = compute_prcc(X, Y, param_names)
 %     2. Computing partial correlations of each X_j with Y given all
 %        other X columns.
 %
-%   [RHO, PVAL] = COMPUTE_PRCC(X, Y) returns PRCC values and p-values.
-%   [RHO, PVAL] = COMPUTE_PRCC(X, Y, PARAM_NAMES) also prints a table.
+%   [PRCC, PVAL] = COMPUTE_PRCC(X, Y) returns PRCC values and p-values.
+%   [PRCC, PVAL] = COMPUTE_PRCC(X, Y, PARAM_NAMES) also prints a table.
 %
 %   Inputs:
-%       X           - N-by-m matrix of parameter samples (from LHS_SAMPLE)
-%       Y           - N-by-1 vector of model outputs
+%       X           - M-by-m matrix of parameter samples (from LHS_SAMPLE)
+%       Y           - M-by-1 vector of model outputs
 %       param_names - (optional) m-element cell array of parameter names
 %                     for display.  If omitted, prints p1...pm.
 %
 %   Outputs:
-%       rho  - 1-by-m vector of PRCC values (in [-1, 1])
-%       pval - 1-by-m vector of p-values for the null hypothesis rho=0
+%       prcc - 1-by-m vector of PRCC values (in [-1, 1])
+%       pval - 1-by-m vector of p-values for the null hypothesis prcc=0
 %
 %   Notes:
 %       - Requires Statistics Toolbox (partialcorr function).
@@ -32,12 +32,12 @@ function [rho, pval] = compute_prcc(X, Y, param_names)
 %
 %   Example:
 %       p   = sir_nominal();
-%       lb  = 0.5 * [p.k, p.beta, p.tau, p.L];
-%       ub  = 2.0 * [p.k, p.beta, p.tau, p.L];
+%       lb  = 0.5 * [p.c, p.beta, p.tau_R, p.tau_m];
+%       ub  = 2.0 * [p.c, p.beta, p.tau_R, p.tau_m];
 %       rng(42);
 %       X   = lhs_sample(500, 4, lb, ub);
 %       Y   = arrayfun(@(i) sir_R0(X(i,:)), 1:500)';
-%       [rho, pval] = compute_prcc(X, Y, {'k','beta','tau','L'});
+%       [prcc, pval] = compute_prcc(X, Y, {'c','beta','tau_R','tau_m'});
 %
 %   Reference: Marino, S. et al. (2008). "A methodology for performing
 %   global uncertainty and sensitivity analysis in systems biology."
@@ -50,10 +50,10 @@ validateattributes(X, {'numeric'}, {'2d','nonempty','finite'}, ...
 validateattributes(Y, {'numeric'}, {'vector','nonempty','finite'}, ...
                    'compute_prcc', 'Y');
 Y = Y(:);
-[N, m] = size(X);
-if length(Y) ~= N
+[M, m] = size(X);
+if length(Y) ~= M
     error('compute_prcc:DimensionMismatch', ...
-          'X has %d rows but Y has %d elements.', N, length(Y));
+          'X has %d rows but Y has %d elements.', M, length(Y));
 end
 if nargin < 3 || isempty(param_names)
     param_names = arrayfun(@(j) sprintf('p%d',j), 1:m, 'UniformOutput',false);
@@ -63,7 +63,7 @@ else
 end
 
 %% --- Rank transform (ties handled by average rank) ---------------------
-X_rank = zeros(N, m);
+X_rank = zeros(M, m);
 for j = 1:m
     X_rank(:,j) = tiedrank(X(:,j));
 end
@@ -74,9 +74,9 @@ if license('test', 'Statistics_Toolbox')
     % partialcorr computes partial Pearson correlations on rank-transformed data
     % = PRCC by definition
     Z = [X_rank, Y_rank];
-    [rho_mat, pval_mat] = partialcorr(Z, 'Type', 'Pearson');
-    % Last row/column of rho_mat gives correlation of Y with each X_j
-    rho  = rho_mat(end, 1:m);
+    [prcc_mat, pval_mat] = partialcorr(Z, 'Type', 'Pearson');
+    % Last row/column of prcc_mat gives correlation of Y with each X_j
+    prcc = prcc_mat(end, 1:m);
     pval = pval_mat(end, 1:m);
 else
     % Fallback: Spearman rank correlation (not partial)
@@ -84,10 +84,10 @@ else
             ['Statistics Toolbox not available. ', ...
              'Computing Spearman rank correlation instead of PRCC. ', ...
              'Results are not partial correlations.']);
-    rho  = zeros(1, m);
+    prcc = zeros(1, m);
     pval = zeros(1, m);
     for j = 1:m
-        [rho(j), pval(j)] = corr(X_rank(:,j), Y_rank, 'Type','Pearson');
+        [prcc(j), pval(j)] = corr(X_rank(:,j), Y_rank, 'Type','Pearson');
     end
 end
 
@@ -103,7 +103,7 @@ if do_print
         elseif pval(j) < 0.05,  sig = '*';
         end
         fprintf('  %-12s %8.4f %8.4f %10s\n', ...
-                param_names{j}, rho(j), pval(j), sig);
+                param_names{j}, prcc(j), pval(j), sig);
     end
     fprintf('\n  Signif. codes: *** p<0.001  ** p<0.01  * p<0.05\n\n');
 end

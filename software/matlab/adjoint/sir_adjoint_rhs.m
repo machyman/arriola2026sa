@@ -1,4 +1,4 @@
-function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, k, beta, tau, L)
+function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, c, beta, tau_R, tau_m)
 %SIR_ADJOINT_RHS  Right-hand side of the SIR adjoint ODE.
 %   Implements the adjoint equations derived in Chapter 6 of
 %   Arriola & Hyman (eq. 6.17-6.19) for the response functional J = int I dt.
@@ -8,7 +8,7 @@ function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, k, beta, tau, L)
 %       -d lambda_S/dt = J_F^T(t) * lambda(t) - grad_u g(t)
 %   where J_F is the SIR Jacobian and g = (0, I, 0)^T (integrand for J=int I dt).
 %
-%   DLAM = SIR_ADJOINT_RHS(T, LAM, S_FN, I_FN, R_FN, K, BETA, TAU, L)
+%   DLAM = SIR_ADJOINT_RHS(T, LAM, S_FN, I_FN, R_FN, C, BETA, TAU_R, TAU_M)
 %   returns the adjoint derivative vector at time T.
 %
 %   Inputs:
@@ -16,7 +16,7 @@ function dlam = sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, k, beta, tau, L)
 %       lam            - adjoint vector [lambda_S; lambda_I; lambda_R] (3x1)
 %       S_fn, I_fn, R_fn - interpolating functions for S(t), I(t), R(t)
 %                          (from griddedInterpolant or similar)
-%       k, beta, tau, L - scalar parameters
+%       c, beta, tau_R, tau_m - scalar parameters
 %
 %   Outputs:
 %       dlam - time derivative of adjoint (3x1)
@@ -44,7 +44,7 @@ I = I_fn(t);
 R = R_fn(t);
 
 %% --- Jacobian at current state -----------------------------------------
-J = sir_jacobian(S, I, R, k, beta, tau, L);
+J = sir_jacobian(S, I, R, c, beta, tau_R, tau_m);
 
 %% --- Running cost gradient: g = I, so grad_u g = [0; 1; 0] ------------
 grad_g = [0; 1; 0];

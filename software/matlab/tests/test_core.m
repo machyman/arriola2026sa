@@ -22,20 +22,20 @@ fprintf('Block 1: sir_nominal...\n');
 p = sir_nominal();
 
 %T1.1: struct has required fields
-required = {'k','beta','tau','L','N','S0','I0','R0_ic','T','gamma','mu','R0'};
+required = {'c','beta','tau_R','tau_m','N','S0','I0','R0_ic','T','gamma_R','nu_m','R0'};
 for i = 1:length(required)
     assert(isfield(p, required{i}), 'Missing field: %s', required{i});
 end
 n_pass = n_pass + 1; fprintf('  T1.1 PASS: all fields present\n');
 
 %T1.2: R0 consistency
-assert(abs(p.R0 - p.k*p.beta/(p.gamma + p.mu)) < 1e-14, 'R0 inconsistent');
-n_pass = n_pass + 1; fprintf('  T1.2 PASS: R0 = k*beta/(gamma+mu) = %.4f\n', p.R0);
+assert(abs(p.R0 - p.c*p.beta/(p.gamma_R + p.nu_m)) < 1e-14, 'R0 inconsistent');
+n_pass = n_pass + 1; fprintf('  T1.2 PASS: R0 = c*beta/(gamma_R+nu_m) = %.4f\n', p.R0);
 
 %T1.3: derived quantities
-assert(abs(p.gamma - 1/p.tau) < 1e-14, 'gamma inconsistent');
-assert(abs(p.mu    - 1/p.L)   < 1e-14, 'mu inconsistent');
-n_pass = n_pass + 1; fprintf('  T1.3 PASS: gamma and mu consistent\n');
+assert(abs(p.gamma_R - 1/p.tau_R) < 1e-14, 'gamma_R inconsistent');
+assert(abs(p.nu_m    - 1/p.tau_m)   < 1e-14, 'nu_m inconsistent');
+n_pass = n_pass + 1; fprintf('  T1.3 PASS: gamma_R and nu_m consistent\n');
 
 %T1.4: population conservation check
 assert(p.S0 + p.I0 + p.R0_ic == p.N, 'S0+I0+R0_ic must equal N');
@@ -48,24 +48,24 @@ fprintf('\nBlock 2: sir_model...\n');
 
 %T2.1: output is 3x1
 y0 = [p.S0; p.I0; p.R0_ic];
-dy = sir_model(0, y0, p.k, p.beta, p.tau, p.L);
+dy = sir_model(0, y0, p.c, p.beta, p.tau_R, p.tau_m);
 assert(isequal(size(dy), [3 1]), 'Output must be 3x1');
 n_pass = n_pass + 1; fprintf('  T2.1 PASS: output is 3x1\n');
 
 %T2.2: population conservation (dS+dI+dR = 0 for closed population)
-% With demography: mu*N is born, mu*(S+I+R) die, net = 0
+% With demography: nu_m*N is born, nu_m*(S+I+R) die, net = 0
 dy_sum = sum(dy);
 assert(abs(dy_sum) < 1e-10, 'dS+dI+dR = %.2e (should be ~0)', dy_sum);
 n_pass = n_pass + 1; fprintf('  T2.2 PASS: population conserved (dS+dI+dR = %.2e)\n', dy_sum);
 
 %T2.3: disease-free equilibrium (I=0 -> dI/dt = 0, dS/dt = 0 at S=N)
-dy_dfe = sir_model(0, [p.N; 0; 0], p.k, p.beta, p.tau, p.L);
+dy_dfe = sir_model(0, [p.N; 0; 0], p.c, p.beta, p.tau_R, p.tau_m);
 assert(abs(dy_dfe(1)) < 1e-10, 'At DFE: dS/dt should be 0');
 assert(abs(dy_dfe(2)) < 1e-10, 'At DFE: dI/dt should be 0');
 n_pass = n_pass + 1; fprintf('  T2.3 PASS: disease-free equilibrium is correct\n');
 
 %T2.4: row input handled (MLS robustness requirement)
-dy_row = sir_model(0, y0', p.k, p.beta, p.tau, p.L);
+dy_row = sir_model(0, y0', p.c, p.beta, p.tau_R, p.tau_m);
 assert(isequal(dy_row, dy), 'Row vs column input should give same result');
 n_pass = n_pass + 1; fprintf('  T2.4 PASS: row/column input consistency\n');
 
@@ -74,28 +74,28 @@ n_pass = n_pass + 1; fprintf('  T2.4 PASS: row/column input consistency\n');
 %% ====================================================================
 fprintf('\nBlock 3: sensitivity_index...\n');
 
-%T3.1: SI_tau(R0) = 1 (analytic)
+%T3.1: SI_tau_R(R0) = 1 (analytic)
 R0_nom = p.R0;
-h      = 1e-5 * p.tau;
+h      = 1e-5 * p.tau_R;
 % R0_p MUST use the same formula as p.R0, or the finite difference measures
 % the formula mismatch instead of the derivative.
-gamma_p = 1 / (p.tau + h);
-R0_p    = p.k * p.beta / (gamma_p + p.mu);
-SI_tau  = sensitivity_index(R0_p, R0_nom, p.tau + h, p.tau);
-SI_tau_exact = p.L / (p.L + p.tau);          % = 0.99930 for L = 10,000
-assert(abs(SI_tau - SI_tau_exact) < 1e-4, ...
-       'SI_tau(R0) should be %.5f, got %.8f', SI_tau_exact, SI_tau);
-n_pass = n_pass + 1; fprintf('  T3.1 PASS: SI_tau(R0) = %.8f (exact: %.5f)\n', SI_tau, SI_tau_exact);
+gamma_R_p = 1 / (p.tau_R + h);
+R0_p    = p.c * p.beta / (gamma_R_p + p.nu_m);
+SI_tau_R  = sensitivity_index(R0_p, R0_nom, p.tau_R + h, p.tau_R);
+SI_tau_R_exact = p.tau_m / (p.tau_m + p.tau_R);          % = 0.99930 for tau_m = 10,000
+assert(abs(SI_tau_R - SI_tau_R_exact) < 1e-4, ...
+       'SI_tau_R(R0) should be %.5f, got %.8f', SI_tau_R_exact, SI_tau_R);
+n_pass = n_pass + 1; fprintf('  T3.1 PASS: SI_tau_R(R0) = %.8f (exact: %.5f)\n', SI_tau_R, SI_tau_R_exact);
 
-%T3.2: SI_L(R0) = tau/(L+tau), small but NOT zero under demography
-% mu = 1/L enters R0 through (gamma + mu), so R0 DOES change with L.
-L_p    = p.L * 1.0001;       % small step: a 1% step in L is too coarse here
-R0_Lp  = p.k * p.beta / (p.gamma + 1/L_p);
-SI_L   = sensitivity_index(R0_Lp, R0_nom, L_p, p.L);
-SI_L_exact = p.tau / (p.L + p.tau);          % = 6.9951e-04
-assert(abs(SI_L - SI_L_exact) < 1e-5, ...
-       'SI_L(R0) should be %.5e, got %.5e', SI_L_exact, SI_L);
-n_pass = n_pass + 1; fprintf('  T3.2 PASS: SI_L(R0) = %.4e (exact: %.4e)\n', SI_L, SI_L_exact);
+%T3.2: SI_tau_m(R0) = tau_R/(tau_m+tau_R), small but NOT zero under demography
+% nu_m = 1/tau_m enters R0 through (gamma_R + nu_m), so R0 DOES change with tau_m.
+tau_m_p    = p.tau_m * 1.0001;       % small step: a 1% step in tau_m is too coarse here
+R0_tau_m_p  = p.c * p.beta / (p.gamma_R + 1/tau_m_p);
+SI_tau_m   = sensitivity_index(R0_tau_m_p, R0_nom, tau_m_p, p.tau_m);
+SI_tau_m_exact = p.tau_R / (p.tau_m + p.tau_R);          % = 6.9951e-04
+assert(abs(SI_tau_m - SI_tau_m_exact) < 1e-5, ...
+       'SI_tau_m(R0) should be %.5e, got %.5e', SI_tau_m_exact, SI_tau_m);
+n_pass = n_pass + 1; fprintf('  T3.2 PASS: SI_tau_m(R0) = %.4e (exact: %.4e)\n', SI_tau_m, SI_tau_m_exact);
 
 %T3.3: dimension mismatch error
 try
@@ -112,15 +112,15 @@ n_pass = n_pass + 1; fprintf('  T3.3 PASS: dimension mismatch caught correctly\n
 %% ====================================================================
 fprintf('\nBlock 4: sensitivity_jacobian...\n');
 
-%T4.1: known analytic result — R0 = k*beta*tau, all SIs = 1 except L
-R0_fn    = @(pv) pv(1)*pv(2)*pv(3);   % ignores L = pv(4)
-p_vec    = [p.k; p.beta; p.tau; p.L];
+%T4.1: known analytic result: R0 = c*beta*tau_R, all SIs = 1 except tau_m
+R0_fn    = @(pv) pv(1)*pv(2)*pv(3);   % ignores tau_m = pv(4)
+p_vec    = [p.c; p.beta; p.tau_R; p.tau_m];
 [S4, i4] = sensitivity_jacobian(R0_fn, p_vec, 1);
 
-assert(abs(S4(1) - 1.0) < tol, 'SI_k = %.8f, expected 1', S4(1));
+assert(abs(S4(1) - 1.0) < tol, 'SI_c = %.8f, expected 1', S4(1));
 assert(abs(S4(2) - 1.0) < tol, 'SI_beta = %.8f, expected 1', S4(2));
-assert(abs(S4(3) - 1.0) < tol, 'SI_tau = %.8f, expected 1', S4(3));
-assert(abs(S4(4) - 0.0) < tol, 'SI_L = %.2e, expected 0', S4(4));
+assert(abs(S4(3) - 1.0) < tol, 'SI_tau_R = %.8f, expected 1', S4(3));
+assert(abs(S4(4) - 0.0) < tol, 'SI_tau_m = %.2e, expected 0', S4(4));
 n_pass = n_pass + 1;
 fprintf('  T4.1 PASS: R0 Jacobian [%.6f %.6f %.6f %.6f] (exact: [1 1 1 0])\n',...
         S4(1),S4(2),S4(3),S4(4));
@@ -151,7 +151,7 @@ fprintf('\nBlock 5: tornado_plot...\n');
 
 %T5.1: basic call succeeds
 try
-    h_fig = tornado_plot([1;1;-1;0], {'$k$','$\beta$','$\tau$','$L$'}, 'R_0');
+    h_fig = tornado_plot([1;1;-1;0], {'$c$','$\beta$','$\tau_R$','$\tau_m$'}, 'R_0');
     assert(isgraphics(h_fig), 'Should return a figure handle');
     close(h_fig);
     n_pass = n_pass + 1; fprintf('  T5.1 PASS: basic tornado plot created\n');

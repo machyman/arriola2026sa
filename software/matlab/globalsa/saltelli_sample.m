@@ -1,27 +1,27 @@
-function [A, B] = saltelli_sample(N, m, lb, ub, use_qmc)
+function [A, B] = saltelli_sample(M, m, lb, ub, use_qmc)
 %SALTELLI_SAMPLE  Generate A and B sample matrices for Sobol analysis.
-%   Builds the two base N-by-m sample matrices A and B needed by
+%   Builds the two base M-by-m sample matrices A and B needed by
 %   SOBOL_JANSEN for variance-based global sensitivity analysis.
-%   The total number of model evaluations is N*(m+2).
+%   The total number of model evaluations is M*(m+2).
 %
-%   [A, B] = SALTELLI_SAMPLE(N, M, LB, UB) generates A and B using
+%   [A, B] = SALTELLI_SAMPLE(M, m, LB, UB) generates A and B using
 %   Latin hypercube sampling (recommended; requires Statistics Toolbox)
 %   or plain random sampling as a fallback.
 %
-%   [A, B] = SALTELLI_SAMPLE(N, M, LB, UB, USE_QMC) forces quasi-
+%   [A, B] = SALTELLI_SAMPLE(M, m, LB, UB, USE_QMC) forces quasi-
 %   Monte Carlo (Sobol sequence) if USE_QMC=true and Statistics Toolbox
 %   is available.
 %
 %   Inputs:
-%       N        - number of samples per matrix (integer >= 100 recommended)
+%       M        - number of samples per matrix (integer >= 100 recommended)
 %       m        - number of parameters (integer >= 1)
 %       lb       - 1-by-m vector of lower bounds
 %       ub       - 1-by-m vector of upper bounds
 %       use_qmc  - logical: use quasi-Monte Carlo [default: false]
 %
 %   Outputs:
-%       A - N-by-m sample matrix (scaled to [lb, ub])
-%       B - N-by-m independent sample matrix (same distribution)
+%       A - M-by-m sample matrix (scaled to [lb, ub])
+%       B - M-by-m independent sample matrix (same distribution)
 %
 %   Notes:
 %       - A and B must be statistically independent.
@@ -38,13 +38,13 @@ function [A, B] = saltelli_sample(N, m, lb, ub, use_qmc)
 %   See also: SOBOL_JANSEN, LHS_SAMPLE, MORRIS_SCREENING
 
 % Default to the quasi-Monte Carlo path.  Section 9.12 instructs the reader
-% to draw a Sobol' sequence and justifies a power-of-two N by its balance
+% to draw a Sobol' sequence and justifies a power-of-two M by its balance
 % property, so the shipped default must be the sampler the book describes.
 if nargin < 5, use_qmc = true; end
 
 %% --- Input validation --------------------------------------------------
-validateattributes(N, {'numeric'}, {'scalar','integer','>=',10}, ...
-                   'saltelli_sample','N');
+validateattributes(M, {'numeric'}, {'scalar','integer','>=',10}, ...
+                   'saltelli_sample','M');
 validateattributes(m, {'numeric'}, {'scalar','integer','>=',1}, ...
                    'saltelli_sample','m');
 lb = lb(:)';  ub = ub(:)';  % ensure row vectors
@@ -63,19 +63,19 @@ has_stats_tb = license('test','Statistics_Toolbox');
 if use_qmc && has_stats_tb
     % Quasi-Monte Carlo: Sobol sequence (best convergence)
     sob = sobolset(2*m, 'Skip', 1024, 'Leap', 0);
-    U   = net(sob, N);   % N-by-2m in [0,1]
+    U   = net(sob, M);   % M-by-2m in [0,1]
     U_A = U(:, 1:m);
     U_B = U(:, m+1:2*m);
 elseif has_stats_tb
     % Latin hypercube (default: better coverage than random)
-    U_A = lhsdesign(N, m);
-    U_B = lhsdesign(N, m);
+    U_A = lhsdesign(M, m);
+    U_B = lhsdesign(M, m);
 else
     % Plain random (Statistics Toolbox not available)
     warning('saltelli_sample:NoStatsTB', ...
             'Statistics Toolbox not found. Using plain random sampling.');
-    U_A = rand(N, m);
-    U_B = rand(N, m);
+    U_A = rand(M, m);
+    U_B = rand(M, m);
 end
 
 %% --- Scale to [lb, ub] ------------------------------------------------

@@ -2,7 +2,7 @@ function [SI_t, t, Y_state] = compute_time_si(p, qoi_idx, t_span, ode_opts)
 %COMPUTE_TIME_SI  Time-dependent sensitivity indices for the SIR model.
 %   Solves the 15-equation augmented ODE (SIR + FSE) and returns the
 %   four normalized sensitivity index curves SI_{p_j}^{q}(t) for the
-%   chosen QOI, where p = [k, beta, tau, L].
+%   chosen QOI, where p = [c, beta, tau_R, tau_m].
 %
 %   [SI_T, T, Y_STATE] = COMPUTE_TIME_SI(P) uses all defaults.
 %   [SI_T, T, Y_STATE] = COMPUTE_TIME_SI(P, QOI_IDX) specifies the QOI.
@@ -15,8 +15,8 @@ function [SI_t, t, Y_state] = compute_time_si(p, qoi_idx, t_span, ode_opts)
 %       ode_opts - odeset options struct [default: RelTol=1e-8, AbsTol=1e-10]
 %
 %   Outputs:
-%       SI_t    - n_t-by-4 matrix: SI_t(i,j) = S_{p_j}^{q}(t_i)
-%                 Columns: [SI_k, SI_beta, SI_tau, SI_L]
+%       SI_t    - n_t-by-4 matrix: SI_t(i,j) = Upsilon_{p_j}^{q}(t_i)
+%                 Columns: [SI_c, SI_beta, SI_tau_R, SI_tau_m]
 %       t       - n_t-vector of output times
 %       Y_state - n_t-by-3 matrix of [S(t), I(t), R(t)]
 %
@@ -28,7 +28,7 @@ function [SI_t, t, Y_state] = compute_time_si(p, qoi_idx, t_span, ode_opts)
 %       p = sir_nominal();
 %       [SI_t, t, Y] = compute_time_si(p, 2);   % QOI = I(t)
 %       plot(t, SI_t);
-%       legend({'$S_{k}^{I}$','$S_{\beta}^{I}$','$S_{\tau}^{I}$','$S_L^I$'}, ...
+%       legend({'$\Upsilon_{c}^{I}$','$\Upsilon_{\beta}^{I}$','$\Upsilon_{\tau_R}^{I}$','$\Upsilon_{\tau_m}^{I}$'}, ...
 %              'Interpreter','latex');
 %
 %   See also: SIR_AUGMENTED, PLOT_TIME_SI, SIR_NOMINAL
@@ -45,7 +45,7 @@ validateattributes(qoi_idx, {'numeric'}, {'scalar','integer','>=',1,'<=',3}, ...
 
 %% --- Solve augmented ODE -----------------------------------------------
 y0  = [p.S0; p.I0; p.R0_ic; zeros(12,1)];
-f   = @(t,y) sir_augmented(t, y, p.k, p.beta, p.tau, p.L);
+f   = @(t,y) sir_augmented(t, y, p.c, p.beta, p.tau_R, p.tau_m);
 [t, Y] = ode45(f, t_span, y0, ode_opts);
 
 %% --- Extract state and sensitivity vectors -----------------------------
@@ -53,7 +53,7 @@ Y_state = Y(:, 1:3);           % [S, I, R]  (n_t x 3)
 q       = Y(:, qoi_idx);        % QOI time series (n_t x 1)
 
 % POI nominal values
-p_nom = [p.k, p.beta, p.tau, p.L];
+p_nom = [p.c, p.beta, p.tau_R, p.tau_m];
 
 % Sensitivity vectors: w_{xj}(t) = dq/dp_j at qoi component
 % qoi_idx selects which compartment sensitivity we extract:

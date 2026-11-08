@@ -20,7 +20,7 @@ function [SI_adj, t_fwd, Y_fwd, t_adj, LAM] = run_sir_adjoint(p, options)
 %
 %   Outputs:
 %       SI_adj  - 1x4 vector of adjoint-computed sensitivity indices
-%                 [SI_k, SI_beta, SI_tau, SI_L] for J = integral(I, 0, T)
+%                 [SI_c, SI_beta, SI_tau_R, SI_tau_m] for J = integral(I, 0, T)
 %       t_fwd   - forward solution time vector
 %       Y_fwd   - forward solution [S, I, R] (n_t x 3)
 %       t_adj   - adjoint solution time vector (reversed)
@@ -44,7 +44,7 @@ ode_opts = odeset('RelTol',1e-8,'AbsTol',1e-10,'MaxStep',0.5);
 if verbose, fprintf('Step 1: Forward SIR solve (t=0..%g days)...\n', p.T); end
 
 y0_fwd  = [p.S0; p.I0; p.R0_ic];
-f_fwd   = @(t,y) sir_model(t, y, p.k, p.beta, p.tau, p.L);
+f_fwd   = @(t,y) sir_model(t, y, p.c, p.beta, p.tau_R, p.tau_m);
 [t_fwd, Y_fwd] = ode45(f_fwd, [0, p.T], y0_fwd, ode_opts);
 
 if verbose
@@ -69,7 +69,7 @@ if verbose, fprintf('Step 3: Backward adjoint solve (t=%g..0)...\n', p.T); end
 
 lam_T   = [0; 0; 0];
 f_adj   = @(t,lam) sir_adjoint_rhs(t, lam, S_fn, I_fn, R_fn, ...
-                                    p.k, p.beta, p.tau, p.L);
+                                    p.c, p.beta, p.tau_R, p.tau_m);
 [t_adj, LAM] = ode45(f_adj, [p.T, 0], lam_T, ode_opts);
 
 %% -----------------------------------------------------------------------
@@ -84,7 +84,7 @@ lam_I_fn = griddedInterpolant(flip(t_adj), flip(LAM(:,2)), 'pchip');
 lam_R_fn = griddedInterpolant(flip(t_adj), flip(LAM(:,3)), 'pchip');
 
 SI_adj = zeros(1, 4);
-p_nom  = [p.k, p.beta, p.tau, p.L];
+p_nom  = [p.c, p.beta, p.tau_R, p.tau_m];
 
 % Evaluate integrands on the forward time grid
 S_vec = Y_fwd(:,1);
@@ -96,26 +96,26 @@ lam_I = lam_I_fn(t_fwd);
 lam_R = lam_R_fn(t_fwd);
 
 % dF/dp_j vectors at each time point (only S and I components matter
-% since lam_R contributes through gamma/mu terms)
-integrand_k    = -lam_S .* (p.beta .* S_vec .* I_vec / N_val) + ...
+% since lam_R contributes through gamma_R/nu_m terms)
+integrand_c    = -lam_S .* (p.beta .* S_vec .* I_vec / N_val) + ...
                   lam_I .* (p.beta .* S_vec .* I_vec / N_val);
-integrand_beta = -lam_S .* (p.k   .* S_vec .* I_vec / N_val) + ...
-                  lam_I .* (p.k   .* S_vec .* I_vec / N_val);
-% dF/dtau = [0, I/tau^2, -I/tau^2]; the R-equation term is NOT zero
-integrand_tau  =  lam_I .* (I_vec / p.tau^2) ...
-                - lam_R .* (I_vec / p.tau^2);
-% dF/dL = [-(N-S)/L^2, I/L^2, R/L^2], since mu = 1/L enters all three equations
-integrand_L    = -lam_S .* ((N_val - S_vec) / p.L^2) ...
-                + lam_I .* (I_vec / p.L^2) ...
-                + lam_R .* (R_vec / p.L^2);
+integrand_beta = -lam_S .* (p.c   .* S_vec .* I_vec / N_val) + ...
+                  lam_I .* (p.c   .* S_vec .* I_vec / N_val);
+% dF/dtau_R = [0, I/tau_R^2, -I/tau_R^2]; the R-equation term is NOT zero
+integrand_tau_R =  lam_I .* (I_vec / p.tau_R^2) ...
+                - lam_R .* (I_vec / p.tau_R^2);
+% dF/dtau_m = [-(N-S)/tau_m^2, I/tau_m^2, R/tau_m^2], since nu_m = 1/tau_m enters all three equations
+integrand_tau_m = -lam_S .* ((N_val - S_vec) / p.tau_m^2) ...
+                + lam_I .* (I_vec / p.tau_m^2) ...
+                + lam_R .* (R_vec / p.tau_m^2);
 
 % Numerical integration (trapezoid rule on ode45 output)
 % Sign convention: eq. (sensfml_vec) reads dJ/dp_j = +int lam^T dF/dp_j dt.
 % No leading minus; sir_adjoint_rhs.m now integrates eq. (adjODE) directly.
-raw_SI = [ trapz(t_fwd, integrand_k),    ...
+raw_SI = [ trapz(t_fwd, integrand_c),    ...
            trapz(t_fwd, integrand_beta), ...
-           trapz(t_fwd, integrand_tau),  ...
-           trapz(t_fwd, integrand_L)];
+           trapz(t_fwd, integrand_tau_R), ...
+           trapz(t_fwd, integrand_tau_m)];
 
 % Normalize: SI_j = (p_j / J) * raw_SI_j  where J = integral(I, 0, T)
 J_nom = trapz(t_fwd, I_vec);
@@ -123,8 +123,8 @@ SI_adj = (p_nom / J_nom) .* raw_SI;
 
 if verbose
     fprintf('  J = integral(I, 0, T) = %.4f\n', J_nom);
-    param_names = {'k','beta','tau','L'};
-    pnames_si = {'k','beta','tau','L'};   % MATLAB cannot index a cell literal
+    param_names = {'c','beta','tau_R','tau_m'};
+    pnames_si = {'c','beta','tau_R','tau_m'};   % MATLAB cannot index a cell literal
     for j = 1:4
         fprintf('  SI_%s(J) = %8.4f\n', param_names{j}, SI_adj(j));
     end
@@ -185,8 +185,8 @@ if do_plot
            'Interpreter','latex','Location','best');
     grid on; xlim([0 p.T]);
     
-    sgtitle(sprintf('Adjoint solution: $k=%g$, $\\beta=%g$, $\\tau=%g$', ...
-                    p.k, p.beta, p.tau), 'Interpreter','latex');
+    sgtitle(sprintf('Adjoint solution: $c=%g$, $\\beta=%g$, $\\tau_R=%g$', ...
+                    p.c, p.beta, p.tau_R), 'Interpreter','latex');
     
     if ~isempty(save_pdf)
         exportgraphics(h_fig, save_pdf, 'ContentType','vector');

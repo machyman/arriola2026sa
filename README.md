@@ -1,11 +1,11 @@
 # Companion materials for *Foundations of Sensitivity Analysis*
 
-Companion code for ***Foundations of Sensitivity Analysis: From Local Sensitivity to Global
-Uncertainty*** by Leon M. Arriola and James M. Hyman. In preparation for submission to the SIAM
+Companion code for ***Foundations of Sensitivity Analysis: From Local to Global
+Sensitivity*** by Leon M. Arriola and James M. Hyman. In preparation for submission to the SIAM
 *Computational Science and Engineering* series. The book has not been submitted, is not under
 review, and has not been accepted for publication.
 
-These materials match manuscript version v1_26_1.
+These materials match manuscript version v1_28_0.
 
 ---
 
@@ -41,12 +41,12 @@ Automated tests are in [`software/matlab/tests`](https://github.com/machyman/arr
 [`CHANGELOG.md`](CHANGELOG.md).
 
 **A draft of the book**,
-[`docs/sensitivity_analysis_book_v1_26_1.pdf`](docs/sensitivity_analysis_book_v1_26_1.pdf). It is a
+[`docs/sensitivity_analysis_book_v1_28_0.pdf`](docs/sensitivity_analysis_book_v1_28_0.pdf). It is a
 preliminary version, not yet edited by SIAM. The version is in the filename, on the title page and
 in the footer of every page, so review comments can cite it unambiguously.
 
 **A draft of the solutions manual**,
-[`docs/solutions_manual_v1_26_1.pdf`](docs/solutions_manual_v1_26_1.pdf), with a worked solution to every
+[`docs/solutions_manual_v1_28_0.pdf`](docs/solutions_manual_v1_28_0.pdf), with a worked solution to every
 exercise. It is written for self-study as much as for use as an instructor's key, and it carries the same
 version as the book draft.
 
@@ -104,14 +104,14 @@ To cite a specific draft, give its version. It appears in the filename, on the t
 footer of every page:
 
 > Arriola, L. M. and Hyman, J. M. (2026). *Foundations of Sensitivity Analysis: From Local
-> Sensitivity to Global Uncertainty*, v1_26_1. Manuscript in preparation.
+> to Global Sensitivity*, v1_28_0. Manuscript in preparation.
 > https://github.com/machyman/arriola2026sa
 
 ```bibtex
 @unpublished{arriola2026foundations,
   author = {Arriola, Leon M. and Hyman, James M.},
-  title  = {Foundations of Sensitivity Analysis: From Local Sensitivity
-            to Global Uncertainty},
+  title  = {Foundations of Sensitivity Analysis: From Local to Global
+            Sensitivity},
   note   = {Manuscript in preparation for submission to SIAM
             (Computational Science and Engineering series). Not submitted,
             not under review, not accepted. Details subject to change.},

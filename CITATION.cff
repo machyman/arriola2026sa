@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "This book is in preparation and has not been published. If you use the notebooks or exercises, please cite the work as below and note that details may change."
 type: book
-title: "Foundations of Sensitivity Analysis: From Local Sensitivity to Global Uncertainty"
+title: "Foundations of Sensitivity Analysis: From Local to Global Sensitivity"
 authors:
   - family-names: Arriola
     given-names: Leon M.
@@ -23,8 +23,8 @@ keywords:
   - uncertainty quantification
   - mathematical modeling
   - graduate textbook
-version: "v1_26_1"
-date-released: "2026-11-01"
+version: "v1_28_0"
+date-released: "2026-11-08"
 repository-code: "https://github.com/machyman/arriola2026sa"
 abstract: >
   A graduate textbook developing sensitivity analysis as a mathematical
@@ -33,7 +33,7 @@ abstract: >
   working in; local sensitivity analysis as a linearization; and, underlying all
   of them, that a sensitivity index describes a model rather than the world.
   Uses the SIR epidemic model as a running example across all nine chapters.
-  Pitched at a more elementary audience than R. C. Smith, Uncertainty
-  Quantification (SIAM, 2nd ed. 2024), which is the closest neighbouring text;
-  this book can be read first, or in parallel with the sensitivity analysis
-  chapters there.
+  It assumes calculus, linear algebra and ordinary differential equations.
+  Readers can find additional information on uncertainty quantification, and
+  on sensitivity analysis within it, in the books of R. G. McClarren (2018),
+  R. C. Smith (2024) and T. J. Sullivan (2015).

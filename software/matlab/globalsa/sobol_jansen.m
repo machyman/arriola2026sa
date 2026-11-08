@@ -15,8 +15,8 @@ function [S1, ST, CI_S1, CI_ST] = sobol_jansen(f, A, B, n_boot, alpha)
 %
 %   Inputs:
 %       f      - model function handle: f(x) -> scalar, x is 1-by-m row
-%       A      - N-by-m base sample matrix (from SALTELLI_SAMPLE)
-%       B      - N-by-m resampling matrix (from SALTELLI_SAMPLE)
+%       A      - M-by-m base sample matrix (from SALTELLI_SAMPLE)
+%       B      - M-by-m resampling matrix (from SALTELLI_SAMPLE)
 %       n_boot - number of bootstrap replicates [default: 0 = no CI]
 %       alpha  - CI significance level [default: 0.05 (95% CI)]
 %
@@ -27,8 +27,8 @@ function [S1, ST, CI_S1, CI_ST] = sobol_jansen(f, A, B, n_boot, alpha)
 %       CI_ST - 2-by-m confidence intervals for ST: [lower; upper]
 %
 %   Notes:
-%       - Total evaluations: N*(m+2) (automatically handled by this function)
-%       - If n_boot > 0, bootstrap resamples the N rows of A and B jointly
+%       - Total evaluations: M*(m+2) (automatically handled by this function)
+%       - If n_boot > 0, bootstrap resamples the M rows of A and B jointly
 %       - S1 values outside [0,1] or ST values outside [0,1] indicate
 %         numerical issues or strong parameter correlations
 %
@@ -71,12 +71,12 @@ if ~isa(f, 'function_handle')
     error('sobol_jansen:InvalidModel', 'F must be a function handle.');
 end
 
-[N, m] = size(A);
+[M, m] = size(A);
 
 %% --- Evaluate model on A and B -----------------------------------------
-fA = zeros(N, 1);
-fB = zeros(N, 1);
-for i = 1:N
+fA = zeros(M, 1);
+fB = zeros(M, 1);
+for i = 1:M
     fA(i) = f(A(i,:));
     fB(i) = f(B(i,:));
 end
@@ -101,8 +101,8 @@ for i = 1:m
     AB_i(:, i) = B(:, i);
     
     % Evaluate model on A_B^(i)
-    f_AB_i = zeros(N, 1);
-    for j = 1:N
+    f_AB_i = zeros(M, 1);
+    for j = 1:M
         f_AB_i(j) = f(AB_i(j,:));
     end
     
@@ -118,7 +118,7 @@ if n_boot > 0
     
     for b = 1:n_boot
         % Resample row indices jointly (preserves joint distribution)
-        idx = randi(N, N, 1);
+        idx = randi(M, M, 1);
         A_b = A(idx, :);
         B_b = B(idx, :);
         % Recursive call without CI to avoid infinite recursion

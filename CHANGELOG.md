@@ -10,6 +10,73 @@ changes to these materials, and are preserved in the repository's Git history.
 
 ---
 
+## v1_28_0 (2026-11-08)
+
+Extends v1_27_0 with methods treated in the books on uncertainty quantification, and gives the book a new subtitle.
+Both drafts in `docs/` are replaced with v1_28_0, stamped "Draft" on every page. The notebooks and four MATLAB files
+are updated to match.
+
+### Book draft
+- **Subtitle.** The book is now *Foundations of Sensitivity Analysis: From Local to Global Sensitivity*.
+- **Further reading.** The Preface and Chapter 9 cite the books of McClarren (2018), Smith (2024) and Sullivan (2015)
+  as further reading on uncertainty quantification. The sentence that implied a reading sequence is removed.
+- **Independence.** Chapter 9 states that Sobol indices assume independent inputs, and that parameters estimated
+  from data are seldom independent. Treating them as independent can rank them wrongly. A worked example gives
+  covariance-based indices of 2/3, 2/3 and -1/3, and a negative estimate is not reported as an index.
+- **Complex step.** Section 3.3.3 adds the complex-step derivative, with a comparison table, a curve on the
+  U-curve figure and Exercise 3.10. Chapter 7 presents the complex step as forward-mode differentiation.
+- **Correlated inputs.** Section F.4 adds the delta method with correlated inputs, checked against Monte Carlo,
+  with Self-check F.3(b). Chapter 3 points to it.
+- **Many inputs, one adjoint.** The Chapter 6 laboratory finds the sensitivity to ninety daily contact rates from
+  one forward and one adjoint solve, with a new figure and Exercise 6.8.
+- **Identifiability from data.** Section 8.6.1 asks which parameters weekly case counts can identify, through the
+  singular values of the sensitivity matrix, the Fisher information and subset selection. Exercise 8.7 is new.
+- **Derivative-based and active-subspace measures.** Section 9.7 adds derivative-based global sensitivity
+  measures and active subspaces, with a new figure and Exercise 9.11.
+- **Checking a fixed factor.** The Chapter 9 laboratory checks that fixing a parameter that screening found
+  unimportant leaves the distribution of the output unchanged within sampling noise, with a new figure.
+- The book is 293 pages, twelve more than v1_27_0. The bibliography is unchanged at 67 references.
+
+### Solutions manual
+- Worked solutions to Exercises 3.10, 6.8, 8.7 and 9.11 and to the new part (e) of Exercise 9.10. It is rebuilt
+  as v1_28_0, with 106 pages, five more than v1_27_0, and its cross-references point to the v1_28_0 book.
+
+### Code and notebooks
+- The notebooks for Chapters 3, 6, 8 and 9 add cells for the new material, each checked by assertions against the
+  numbers the book prints: the complex step and the correlated delta method (Chapter 3), the ninety contact rates
+  (Chapter 6), subset selection (Chapter 8), and the fixed-factor check, derivative-based measures and active
+  subspaces (Chapter 9).
+- All nine notebooks and four MATLAB files carry the new subtitle in their headers.
+
+## v1_27_0 (2026-11-07)
+
+Revises v1_26_1 in notation, terminology and framing. The notation now follows the companion book on epidemic
+modeling, and the text separates global sensitivity analysis from uncertainty quantification. Both drafts in `docs/`
+are replaced with v1_27_0, stamped "Draft" on every page. The notebooks and the MATLAB library are updated to match.
+
+### Book draft
+- **Notation.** Symbols follow the companion epidemic-modeling book. The local sensitivity index is written
+  Υ, Sobol indices use a calligraphic S, and the sample size is M. The SIR model is written with the force from
+  infection α = cβS/N. Indices for time parameters are reported in durations.
+- **Uncertainty quantification.** Uncertainty quantification is defined as in Smith (2024), Definition 9.1.
+  Global sensitivity analysis is described as distinct from it: it apportions the variation of an output among
+  the inputs, and it uses no data.
+- **Citations.** McClarren (2018) and Sullivan (2015) are cited beside Smith (2024), in the same manner.
+- **Terminology.** Parameters that enter a model only in a fixed combination, such as c and β in cβ, show
+  "structural redundancy". The term replaces "structural correlation" and has a Glossary entry.
+- **Turnover rate.** ν_m = 1/τ_m is named the turnover rate throughout.
+- **Bibliography.** 67 references, two more than v1_26_1. Reference numbers after the new entries shift.
+- The book is 281 pages, two fewer than v1_26_1.
+
+### Solutions manual
+- The same notation, terminology and turnover rate as the book. It is rebuilt as v1_27_0, so its
+  cross-references point to the v1_27_0 book.
+
+### Code and notebooks
+- The MATLAB functions use the book's parameter names (c, tau_R, tau_m, gamma_R, nu_m), and the sample size is M.
+- The notebooks use the same names and the term "structural redundancy". The Chapter 3 laboratory uses the SIR
+  model with demography, as its text describes.
+
 ## v1_26_1 (2026-11-01)
 
 Corrects citations in v1_26_0. Statements that cite a source were checked against the source itself, and the

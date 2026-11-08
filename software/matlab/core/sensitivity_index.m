@@ -1,13 +1,13 @@
 function SI = sensitivity_index(q, q_nom, p, p_nom)
-%SENSITIVITY_INDEX  Normalized sensitivity index S_p^q.
+%SENSITIVITY_INDEX  Normalized sensitivity index Upsilon_p^q.
 %   Computes the normalized sensitivity index of a quantity of interest Q
 %   with respect to a parameter P, using either analytic derivatives or
 %   finite-difference approximations.
 %
 %   The normalized SI is defined as (Chapter 2 of Arriola & Hyman):
-%       S_p^q = (p/q) * (dq/dp)
+%       Upsilon_p^q = (p/q) * (dq/dp)
 %   Equivalently, via the discrete ratio form:
-%       S_p^q ≈ (delta_q / q) / (delta_p / p)
+%       Upsilon_p^q ≈ (delta_q / q) / (delta_p / p)
 %
 %   SI = SENSITIVITY_INDEX(Q, Q_NOM, P, P_NOM) computes the SI using
 %   the discrete-ratio form.  Q and P may be scalars or vectors of
@@ -20,7 +20,7 @@ function SI = sensitivity_index(q, q_nom, p, p_nom)
 %       p_nom - nominal POI value (scalar, must be nonzero)
 %
 %   Outputs:
-%       SI    - sensitivity index S_p^q (scalar or n-vector)
+%       SI    - sensitivity index Upsilon_p^q (scalar or n-vector)
 %
 %   Notes:
 %       For centered finite differences, pass q = [q(p+h), q(p-h)] and
@@ -31,13 +31,13 @@ function SI = sensitivity_index(q, q_nom, p, p_nom)
 %       instead (see Chapter 2).
 %
 %   Example:
-%       % Verify S_tau^R0 = 1 analytically
+%       % Verify Upsilon_tau_R^R0 = 1 analytically
 %       p = sir_nominal();
-%       R0     = @(tau) p.k * p.beta * tau;
-%       h      = 1e-6 * p.tau;
-%       SI_tau = sensitivity_index(R0(p.tau + h), R0(p.tau), ...
-%                                  p.tau + h,     p.tau);
-%       fprintf('S_tau^R0 = %.6f  (exact: 1.000000)\n', SI_tau);
+%       R0       = @(tau_R) p.c * p.beta * tau_R;
+%       h        = 1e-6 * p.tau_R;
+%       SI_tau_R = sensitivity_index(R0(p.tau_R + h), R0(p.tau_R), ...
+%                                    p.tau_R + h,     p.tau_R);
+%       fprintf('Upsilon_tau_R^R0 = %.6f  (exact: 1.000000)\n', SI_tau_R);
 %
 %   See also: SENSITIVITY_JACOBIAN, SIR_NOMINAL
 

@@ -8,7 +8,7 @@
 %   2. Ishigami function (standard SA benchmark):
 %      S1_1 = 0.3139, S1_2 = 0.4424, S1_3 = 0
 %      ST_1 = 0.5576, ST_2 = 0.4424, ST_3 = 2437/6859
-%   3. R0 = k*beta*tau: analytic S1 = ST = [1,1,1]/3 for uniform ±50%
+%   3. R0 = c*beta*tau_R: analytic S1 = ST = [1,1,1]/3 for uniform ±50%
 %      (approximate; exact depends on distribution)
 %
 %   Run from the repository root:
@@ -18,7 +18,7 @@
 fprintf('=== test_globalsa: Global SA Library Tests ===\n\n');
 rng(42);   % fixed seed for reproducibility
 n_pass = 0;
-tol_loose = 0.05;   % tolerance for stochastic tests (N=2000)
+tol_loose = 0.05;   % tolerance for stochastic tests (M=2000)
 
 %% ====================================================================
 %% BLOCK 1: lhs_sample
@@ -133,20 +133,20 @@ fprintf('\nBlock 4: compute_prcc...\n');
 % For Y = X1 + X2: PRCC_1 = PRCC_2 = 0 (symmetric additive model)
 % For Y = X1: PRCC_1 = 1, PRCC_2 = 0 (controlling for X2)
 rng(42);
-N_prcc = 500;
-X_test = lhs_sample(N_prcc, 2, [0 0], [1 1]);
+M_prcc = 500;
+X_test = lhs_sample(M_prcc, 2, [0 0], [1 1]);
 
 %T4.1: purely X1-dependent model
 % Y = X1 exactly makes the residual after regressing out X1 identically
 % zero, so PRCC(X2) is 0/0 = NaN.  A small noise term keeps the intended
 % meaning, X1 dominant and X2 irrelevant, without the degeneracy.
-Y_1 = X_test(:,1) + 0.01*randn(N_prcc,1);
-[rho_1, pval_1] = compute_prcc(X_test, Y_1);
-assert(abs(rho_1(1) - 1) < 0.05, 'PRCC(X1) = %.4f, expected ~1', rho_1(1));
-assert(abs(rho_1(2))     < 0.15, 'PRCC(X2) = %.4f, expected ~0', rho_1(2));
+Y_1 = X_test(:,1) + 0.01*randn(M_prcc,1);
+[prcc_1, pval_1] = compute_prcc(X_test, Y_1);
+assert(abs(prcc_1(1) - 1) < 0.05, 'PRCC(X1) = %.4f, expected ~1', prcc_1(1));
+assert(abs(prcc_1(2))     < 0.15, 'PRCC(X2) = %.4f, expected ~0', prcc_1(2));
 n_pass=n_pass+1;
 fprintf('  T4.1 PASS: PRCC = [%.4f, %.4f] for Y=X1 (expected [1, 0])\n',...
-        rho_1(1), rho_1(2));
+        prcc_1(1), prcc_1(2));
 
 %T4.2: p-values significant/not significant
 assert(pval_1(1) < 0.001, 'p-value for X1 should be very small');

@@ -26,21 +26,21 @@ fprintf('Block 1: sir_jacobian...\n');
 S = p.S0; I = p.I0; R = p.R0_ic;
 
 %T1.1: analytic vs finite difference at t=0
-J_anal = sir_jacobian(S, I, R, p.k, p.beta, p.tau, p.L);
+J_anal = sir_jacobian(S, I, R, p.c, p.beta, p.tau_R, p.tau_m);
 assert(isequal(size(J_anal), [3 3]), 'Jacobian must be 3x3');
 n_pass=n_pass+1; fprintf('  T1.1 PASS: Jacobian is 3x3\n');
 
 %T1.2: entrywise agreement with eq. (sirJacobian), the canonical book form.
 %  The book holds N fixed at the nominal total population, so the birth term
-%  contributes no state derivative and the columns sum to -mu, not zero.  Do
+%  contributes no state derivative and the columns sum to -nu_m, not zero.  Do
 %  not assert zero column sums here: that identity holds for a
 %  state-dependent-N Jacobian, which is a different convention from the
 %  book's.  Compare entrywise against the book's equation instead.
 N_nom = S + I + R;
-gam   = 1/p.tau;  mu_ = 1/p.L;
-J_book = [ -p.k*p.beta*I/N_nom - mu_,  -p.k*p.beta*S/N_nom,               0    ;
-            p.k*p.beta*I/N_nom,         p.k*p.beta*S/N_nom - (gam + mu_), 0    ;
-            0,                          gam,                             -mu_ ];
+gamma_R   = 1/p.tau_R;  nu_m_ = 1/p.tau_m;
+J_book = [ -p.c*p.beta*I/N_nom - nu_m_,  -p.c*p.beta*S/N_nom,               0    ;
+            p.c*p.beta*I/N_nom,         p.c*p.beta*S/N_nom - (gamma_R + nu_m_), 0    ;
+            0,                          gamma_R,                             -nu_m_ ];
 assert(max(max(abs(J_anal - J_book))) < 1e-12, ...
        'Jacobian differs from eq. (sirJacobian): max diff = %.2e', ...
        max(max(abs(J_anal - J_book))));
@@ -51,9 +51,9 @@ n_pass=n_pass+1; fprintf('  T1.2 PASS: Jacobian matches eq. (sirJacobian) entryw
 %  reproduce the state-dependent linearization the book does not use.  The
 %  book's Jacobian is that of the field with N frozen at nominal, so freeze it.
 h = 1e-5;
-F_fixedN = @(y) [ mu_*N_nom - p.k*p.beta*y(1)*y(2)/N_nom - mu_*y(1);
-                  p.k*p.beta*y(1)*y(2)/N_nom - (gam + mu_)*y(2);
-                  gam*y(2) - mu_*y(3) ];
+F_fixedN = @(y) [ nu_m_*N_nom - p.c*p.beta*y(1)*y(2)/N_nom - nu_m_*y(1);
+                  p.c*p.beta*y(1)*y(2)/N_nom - (gamma_R + nu_m_)*y(2);
+                  gamma_R*y(2) - nu_m_*y(3) ];
 rhs_p = F_fixedN([S; I+h; R]);
 rhs_m = F_fixedN([S; I-h; R]);
 J_fd_col2 = (rhs_p - rhs_m)/(2*h);
@@ -70,12 +70,12 @@ fprintf('\nBlock 2: sir_augmented...\n');
 
 %T2.1: output dimension
 y0_aug = [p.S0; p.I0; p.R0_ic; zeros(12,1)];
-dy_aug = sir_augmented(0, y0_aug, p.k,p.beta,p.tau,p.L);
+dy_aug = sir_augmented(0, y0_aug, p.c,p.beta,p.tau_R,p.tau_m);
 assert(length(dy_aug) == 15, 'Output should be 15x1');
 n_pass=n_pass+1; fprintf('  T2.1 PASS: augmented RHS is 15x1\n');
 
 %T2.2: first 3 components match sir_model
-dy_sir = sir_model(0, [p.S0;p.I0;p.R0_ic], p.k,p.beta,p.tau,p.L);
+dy_sir = sir_model(0, [p.S0;p.I0;p.R0_ic], p.c,p.beta,p.tau_R,p.tau_m);
 assert(max(abs(dy_aug(1:3) - dy_sir)) < 1e-12, ...
        'Augmented ODE: first 3 components differ from sir_model');
 n_pass=n_pass+1; fprintf('  T2.2 PASS: first 3 components match sir_model\n');
@@ -85,7 +85,7 @@ n_pass=n_pass+1; fprintf('  T2.2 PASS: first 3 components match sir_model\n');
 % could never pass: for the nominal parameters the beta-block alone is
 % about 5.0, so the assertion failed by a factor of 5e6.
 % FSE RHS = J*w + dF/dp, and w(0) = 0, so the RHS must equal dF/dp exactly.
-dFdp_beta = [-p.k*p.S0*p.I0/p.N;  p.k*p.S0*p.I0/p.N;  0];
+dFdp_beta = [-p.c*p.S0*p.I0/p.N;  p.c*p.S0*p.I0/p.N;  0];
 assert(max(abs(dy_aug(7:9) - dFdp_beta)) < 1e-10, ...
        'At t=0 the FSE RHS must equal dF/dp exactly, since w(0) = 0');
 assert(max(abs(dy_aug(7:9))) > 1e-3, ...
@@ -96,27 +96,27 @@ n_pass=n_pass+1; fprintf('  T2.3 PASS: FSE RHS is finite at t=0\n');
 
 %T2.4: FSE vs FD comparison at t=30 days
 fprintf('  T2.4: FSE vs FD comparison at t=30 days...\n');
-f_aug = @(t,y) sir_augmented(t,y,p.k,p.beta,p.tau,p.L);
+f_aug = @(t,y) sir_augmented(t,y,p.c,p.beta,p.tau_R,p.tau_m);
 [~, Y_aug] = ode45(f_aug, [0 30], y0_aug, ode_opts);
 y30 = Y_aug(end,:)';
 
-% Time-dependent SI at t=30 via FSE: SI_k(I)(30) = (k/I(30)) * w_I1(30)
+% Time-dependent SI at t=30 via FSE: SI_c(I)(30) = (c/I(30)) * w_I1(30)
 I30  = y30(2);
-w_I1_fse = y30(5);   % d I/d k at t=30
-SI_k_fse = (p.k/I30) * w_I1_fse;
+w_I1_fse = y30(5);   % d I/d c at t=30
+SI_c_fse = (p.c/I30) * w_I1_fse;
 
 % Same via centered FD
-h_fd = 1e-5 * p.k;
-f_fwd_p = @(t,y) sir_model(t,y,p.k+h_fd,p.beta,p.tau,p.L);
-f_fwd_m = @(t,y) sir_model(t,y,p.k-h_fd,p.beta,p.tau,p.L);
+h_fd = 1e-5 * p.c;
+f_fwd_p = @(t,y) sir_model(t,y,p.c+h_fd,p.beta,p.tau_R,p.tau_m);
+f_fwd_m = @(t,y) sir_model(t,y,p.c-h_fd,p.beta,p.tau_R,p.tau_m);
 [~,Yp] = ode45(f_fwd_p, [0 30], [p.S0;p.I0;p.R0_ic], ode_opts);
 [~,Ym] = ode45(f_fwd_m, [0 30], [p.S0;p.I0;p.R0_ic], ode_opts);
-SI_k_fd = (p.k/I30) * (Yp(end,2)-Ym(end,2))/(2*h_fd);
+SI_c_fd = (p.c/I30) * (Yp(end,2)-Ym(end,2))/(2*h_fd);
 
-fprintf('    SI_k(I)(t=30): FSE = %.6f, FD = %.6f, diff = %.2e\n', ...
-        SI_k_fse, SI_k_fd, abs(SI_k_fse - SI_k_fd));
-assert(abs(SI_k_fse - SI_k_fd) < tol_fd, ...
-       'FSE vs FD mismatch at t=30: diff = %.2e', abs(SI_k_fse - SI_k_fd));
+fprintf('    SI_c(I)(t=30): FSE = %.6f, FD = %.6f, diff = %.2e\n', ...
+        SI_c_fse, SI_c_fd, abs(SI_c_fse - SI_c_fd));
+assert(abs(SI_c_fse - SI_c_fd) < tol_fd, ...
+       'FSE vs FD mismatch at t=30: diff = %.2e', abs(SI_c_fse - SI_c_fd));
 n_pass=n_pass+1; fprintf('  T2.4 PASS: FSE matches FD at t=30\n');
 
 %% ====================================================================
@@ -137,17 +137,17 @@ assert(all(abs(SI_adj) < 10), 'Adjoint SI values seem too large: max=%.2f', max(
 n_pass=n_pass+1;
 fprintf('  T3.2 PASS: SI_adj = [%.4f %.4f %.4f %.4f] (all finite)\n', SI_adj);
 
-%T3.3: qualitative check — k and beta should have similar SI (symmetric role in R0)
+%T3.3: qualitative check: c and beta should have similar SI (symmetric role in R0)
 assert(abs(SI_adj(1) - SI_adj(2)) < 0.3, ...
-       'SI_k and SI_beta should be similar (both appear as k*beta): diff=%.4f', ...
+       'SI_c and SI_beta should be similar (both appear as c*beta): diff=%.4f', ...
        abs(SI_adj(1)-SI_adj(2)));
-n_pass=n_pass+1; fprintf('  T3.3 PASS: SI_k ≈ SI_beta (%.4f vs %.4f)\n', ...
+n_pass=n_pass+1; fprintf('  T3.3 PASS: SI_c ≈ SI_beta (%.4f vs %.4f)\n', ...
                           SI_adj(1), SI_adj(2));
 
-%T3.4: L should have small SI (lifespan >> tau, mu effect is small)
+%T3.4: tau_m should have small SI (tau_m >> tau_R, nu_m effect is small)
 assert(abs(SI_adj(4)) < abs(SI_adj(1)), ...
-       'SI_L should be smaller than SI_k for this time horizon');
-n_pass=n_pass+1; fprintf('  T3.4 PASS: |SI_L| = %.4f < |SI_k| = %.4f (expected)\n', ...
+       'SI_tau_m should be smaller than SI_c for this time horizon');
+n_pass=n_pass+1; fprintf('  T3.4 PASS: |SI_tau_m| = %.4f < |SI_c| = %.4f (expected)\n', ...
                           abs(SI_adj(4)), abs(SI_adj(1)));
 
 %% ====================================================================

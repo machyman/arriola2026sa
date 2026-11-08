@@ -12,9 +12,9 @@ function h = tornado_plot(SI_values, labels, QOI_name, options)
 %   user-supplied display options.
 %
 %   Inputs:
-%       SI_values - n-vector of sensitivity indices S_{p_i}^q
+%       SI_values - n-vector of sensitivity indices Upsilon_{p_i}^q
 %       labels    - n-element cell array of POI name strings
-%                   (LaTeX allowed, e.g., {'$k$','$\beta$','$\tau$'})
+%                   (LaTeX allowed, e.g., {'$c$','$\beta$','$\tau_R$'})
 %       QOI_name  - string identifying the QOI (for axis/title label)
 %       options   - (optional) struct with fields:
 %           .fig_num    : figure number [default: new figure]
@@ -30,8 +30,8 @@ function h = tornado_plot(SI_values, labels, QOI_name, options)
 %
 %   Example:
 %       p      = sir_nominal();
-%       SI     = [1; 1; -1; 0];   % S_k, S_beta, S_tau, S_L for R0
-%       labels = {'$k$','$\beta$','$\tau$','$L$'};
+%       SI     = [1; 1; 1; 0];    % Upsilon_c, Upsilon_beta, Upsilon_tau_R, Upsilon_tau_m for R0
+%       labels = {'$c$','$\beta$','$\tau_R$','$\tau_m$'};
 %       h = tornado_plot(SI, labels, 'R_0');
 %
 %   Algorithm:
@@ -97,7 +97,7 @@ xline(ax, 0, 'k-', 'LineWidth', 1.2);
 %% --- Axes formatting ---------------------------------------------------
 set(ax, 'YTick', y_pos, 'YTickLabel', labels_sorted, ...
         'FontSize', font_size, 'TickLabelInterpreter', 'latex');
-xlabel(ax, sprintf('Sensitivity index $S_p^{%s}$', QOI_name), ...
+xlabel(ax, sprintf('Sensitivity index $\\Upsilon_p^{%s}$', QOI_name), ...
        'Interpreter', 'latex', 'FontSize', font_size);
 
 if isempty(title_str)

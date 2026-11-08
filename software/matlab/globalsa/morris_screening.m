@@ -38,10 +38,10 @@ function [mu_star, sigma, EE, h_fig] = morris_screening(f, p_nom, lb, ub, ...
 %
 %   Example:
 %       p = sir_nominal();
-%       R0_fn = @(pv) pv(1)*pv(2)*pv(3);  % R0 = k*beta*tau
-%       lb = 0.5*[p.k, p.beta, p.tau];
-%       ub = 2.0*[p.k, p.beta, p.tau];
-%       [mu_star, sigma] = morris_screening(R0_fn, [p.k,p.beta,p.tau], ...
+%       R0_fn = @(pv) pv(1)*pv(2)*pv(3);  % R0 = c*beta*tau_R
+%       lb = 0.5*[p.c, p.beta, p.tau_R];
+%       ub = 2.0*[p.c, p.beta, p.tau_R];
+%       [mu_star, sigma] = morris_screening(R0_fn, [p.c,p.beta,p.tau_R], ...
 %                                           lb, ub, 20, 4);
 %
 %   Reference: Morris, M.D. (1991). "Factorial sampling plans for

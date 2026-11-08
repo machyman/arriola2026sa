@@ -1,6 +1,6 @@
 function [S, info] = sensitivity_jacobian(model, p_nom, n_q, options)
 %SENSITIVITY_JACOBIAN  Normalized sensitivity Jacobian via centered differences.
-%   Computes the n_q-by-n_p matrix S where S(k,j) = S_{p_j}^{q_k} is the
+%   Computes the n_q-by-n_p matrix S where S(k,j) = Upsilon_{p_j}^{q_k} is the
 %   normalized sensitivity index of the k-th QOI with respect to the j-th
 %   POI.  Uses second-order centered differences with automatic step-size
 %   selection (Chapter 3 of Arriola & Hyman).
@@ -33,8 +33,8 @@ function [S, info] = sensitivity_jacobian(model, p_nom, n_q, options)
 %
 %   Example:
 %       p   = sir_nominal();
-%       R0  = @(pv) p.k * pv(1) * pv(3);   % QOI = R0 = k*beta*tau
-%       pv0 = [p.beta; p.tau];               % two POIs
+%       R0  = @(pv) p.c * pv(1) * pv(3);   % QOI = R0 = c*beta*tau_R
+%       pv0 = [p.beta; p.tau_R];               % two POIs
 %       [S, info] = sensitivity_jacobian(R0, pv0, 1);
 %       % Expected: S = [1, 1]  (both SI_beta and SI_tau = 1 for R0)
 %
